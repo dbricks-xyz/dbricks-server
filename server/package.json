@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@blockworks-foundation/mango-client": "^3.0.13",
+    "@project-serum/serum": "^0.13.58",
+    "@saberhq/stableswap-sdk": "^0.16.0",
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.24.2",
+    "bn.js": "^5.2.0",
+    "borsh": "^0.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.2"
+  }
+}
