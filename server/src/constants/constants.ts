@@ -10,7 +10,7 @@ if (process.env.NETWORK === 'mainnet') {
     SERUM_PROG_ID = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
     SABER_PROG_ID = new PublicKey("SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ");
     MANGO_PROG_ID = new PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH");
-    CONNECTION_URL = 'https://solana-api.projectserum.com'; //a little faster than solana's original one
+    CONNECTION_URL = 'http://18.210.27.203:8899';
 
 } else if (process.env.NETWORK === 'devnet') {
     SERUM_PROG_ID = new PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
@@ -32,7 +32,7 @@ export function getMint(name: string) {
     if (targetMint.length === 0) {
         throw `Mint with name ${name} and network ${process.env.NETWORK} not found`
     }
-    return targetMint[0].address
+    return new PublicKey(targetMint[0].address)
 }
 
 export function getSerumMarket(name: string) {
@@ -47,5 +47,5 @@ export function getSerumMarket(name: string) {
     } else if (targetMarket[0].deprecated) {
         throw `Market with name ${name} and network ${process.env.NETWORK} is deprecated`
     }
-    return targetMarket[0].address
+    return new PublicKey(targetMarket[0].address)
 }

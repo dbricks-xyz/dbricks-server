@@ -50,6 +50,11 @@
     "network": "mainnet"
   },
   {
+    "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "name": "USDC",
+    "network": "devnet"
+  },
+  {
     "address": "MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L",
     "name": "MSRM",
     "network": "mainnet"
@@ -58,6 +63,11 @@
     "address": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
     "name": "SRM",
     "network": "mainnet"
+  },
+  {
+    "address": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
+    "name": "SRM",
+    "network": "devnet"
   },
   {
     "address": "AR1Mtgh7zAtxuxGd2XPovXPVjcSdY3i4rQYisNadjfKy",
@@ -227,6 +237,11 @@
   {
     "address": "GsNzxJfFn6zQdJGeYsupJWzUAm57Ba7335mfhWvFiE9Z",
     "name": "DXL",
+    "network": "mainnet"
+  },
+  {
+    "address": "Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1",
+    "name": "SBR",
     "network": "mainnet"
   }
 ]
