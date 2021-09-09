@@ -1,7 +1,9 @@
 import {Token, TOKEN_PROGRAM_ID, u64} from "@solana/spl-token";
 import {Connection, Keypair, PublicKey} from "@solana/web3.js";
 import {Market} from "@project-serum/serum";
-import {getMint, getSerumMarket, SERUM_PROG_ID} from "../constants/constants";
+import {getMint, getSerumMarket, SERUM_PROG_ID} from "../../constants/constants";
+import fs from "fs";
+import SolClient from '../../common/logic/client'
 
 async function getTokenAccByMint(
     connection: Connection,
@@ -34,6 +36,7 @@ export async function loadSerumMarket(
     return Market.load(connection, getSerumMarket(name), {}, SERUM_PROG_ID);
 }
 
+//todo import from interface
 type side = 'buy' | 'sell';
 type orderType = "limit" | "ioc" | "postOnly" | undefined;
 
@@ -87,3 +90,47 @@ export async function getSettleFundsTx(
     );
 }
 
+export async function serumTradeAndSettle(
+    side: side,
+    price: number,
+    size: number,
+    orderType: orderType,
+) {
+    const BASE = 'SRM';
+    const QUOTE = 'USDC';
+    const MARKET = `${BASE}/${QUOTE}`;
+
+    const secretKey = JSON.parse(fs.readFileSync('/Users/ilmoi/.config/solana/id.json', 'utf8'));
+    const ownerKp = Keypair.fromSecretKey(Uint8Array.from(secretKey));
+
+    const market = await loadSerumMarket(SolClient.connection, MARKET);
+    const tradeTx = await getNewOrderV3Tx(
+        SolClient.connection,
+        market,
+        MARKET,
+        ownerKp,
+        side,
+        price,
+        size,
+        orderType,
+    );
+    const settleTx = await getSettleFundsTx(
+        SolClient.connection,
+        market,
+        ownerKp,
+        MARKET,
+    );
+    const settleIx = settleTx ? settleTx.transaction.instructions : []
+    const settleSigners = settleTx ? settleTx.signers : []
+    await SolClient.prepareAndSendTx(
+        [
+            ...tradeTx.transaction.instructions,
+            ...settleIx,
+        ],
+        [
+            ownerKp,
+            ...tradeTx.signers,
+            ...settleSigners,
+        ]
+    )
+}

@@ -1,12 +1,15 @@
+require('dotenv').config()
+
 import e from 'express';
+import debug from 'debug';
 import * as http from 'http';
 
 import * as winston from 'winston';
 import * as expressWinston from 'express-winston';
 import cors from 'cors';
-import {CommonRoutesConfig} from './common/common.routes.config';
+import {CommonRoutesConfig} from './common/routes/common.routes.config';
 import {UsersRoutes} from './users/users.routes.config';
-import debug from 'debug';
+import {SerumRoutes} from "./serum/routes/serum.routes";
 
 const app: e.Application = e();
 const server: http.Server = http.createServer(app);
@@ -32,6 +35,7 @@ if (!process.env.DEBUG) {
 app.use(expressWinston.logger(loggerOptions));
 
 routes.push(new UsersRoutes(app));
+routes.push(new SerumRoutes(app));
 
 //test route
 const runningMessage = `Server running at http://localhost:${port}`;
