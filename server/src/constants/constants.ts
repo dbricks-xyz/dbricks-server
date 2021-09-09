@@ -10,7 +10,7 @@ if (process.env.NETWORK === 'mainnet') {
     SERUM_PROG_ID = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
     SABER_PROG_ID = new PublicKey("SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ");
     MANGO_PROG_ID = new PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH");
-    CONNECTION_URL = 'http://18.210.27.203:8899';
+    CONNECTION_URL = 'https://api.mainnet-beta.solana.com';
 
 } else if (process.env.NETWORK === 'devnet') {
     SERUM_PROG_ID = new PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
