@@ -7,15 +7,17 @@ export let MANGO_PROG_ID: PublicKey;
 export let CONNECTION_URL: string;
 
 if (process.env.NETWORK === 'mainnet') {
-  SERUM_PROG_ID = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin');
-  SABER_PROG_ID = new PublicKey('SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ');
-  MANGO_PROG_ID = new PublicKey('5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH');
-  CONNECTION_URL = 'https://api.mainnet-beta.solana.com';
+    SERUM_PROG_ID = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
+    SABER_PROG_ID = new PublicKey("SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ");
+    MANGO_PROG_ID = new PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68"); 
+    CONNECTION_URL = 'https://api.mainnet-beta.solana.com';
+
 } else if (process.env.NETWORK === 'devnet') {
-  SERUM_PROG_ID = new PublicKey('DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY');
-  SABER_PROG_ID = new PublicKey('Crt7UoUR6QgrFrN7j8rmSQpUTNWNSitSwWvsWGf1qZ5t');
-  MANGO_PROG_ID = new PublicKey('9XzhtAtDXxW2rjbeVFhTq4fnhD8dqzr154r5b2z6pxEp');
-  CONNECTION_URL = 'https://api.devnet.solana.com';
+    SERUM_PROG_ID = new PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
+    SABER_PROG_ID = new PublicKey("Crt7UoUR6QgrFrN7j8rmSQpUTNWNSitSwWvsWGf1qZ5t");
+    MANGO_PROG_ID = new PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E");
+    CONNECTION_URL = 'https://api.devnet.solana.com';
+
 } else {
   throw `Network unrecognized. Should be mainnet or devnet. Currently: ${process.env.NETWORK}`;
 }
