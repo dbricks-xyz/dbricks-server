@@ -1,5 +1,5 @@
 import {
-  Connection,
+  Connection, Keypair,
   PublicKey,
   sendAndConfirmTransaction,
   Signer,
@@ -8,6 +8,7 @@ import {
 } from '@solana/web3.js';
 import axios from 'axios';
 import BN from 'bn.js';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ownerKp } from './keypair';
 
 const BASE = 'SRM';
@@ -39,6 +40,24 @@ function deserializeIx(instructions: any[]) {
     ix.data = Buffer.from(ix.data.data);
   });
 }
+
+async function getTokenAccsForOwner(
+  ownerKp: Keypair,
+) {
+  const payerAccs = await connection.getParsedTokenAccountsByOwner(
+    ownerKp.publicKey,
+    {
+      programId: TOKEN_PROGRAM_ID,
+    },
+  );
+  payerAccs.value.forEach((a) => {
+    console.log('// ---------------------------------------');
+    console.log(a.pubkey.toBase58());
+    console.log(a.account.data.parsed.info);
+  });
+}
+
+// --------------------------------------- play
 
 async function play() {
   // place order

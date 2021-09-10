@@ -6,7 +6,6 @@ import SerumController from '../controller/serum.controller';
 export class SerumRoutes extends CommonRoutesConfig {
   constructor(app: e.Application) {
     super(app, 'SerumRoutes');
-    this.configureRoutes();
   }
 
   configureRoutes(): e.Application {
