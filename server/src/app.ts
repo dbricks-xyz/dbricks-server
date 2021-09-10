@@ -1,102 +1,51 @@
-require('dotenv').config()
+require('dotenv').config();
 
-import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
-import {
-    getNewOrderV3Tx,
-    getSettleFundsTx,
-    loadSerumMarket
-} from "./bricks/serum";
-import {
-    Connection,
-    Keypair,
-    sendAndConfirmTransaction,
-    Signer,
-    Transaction,
-    TransactionInstruction
-} from "@solana/web3.js";
-import fs from 'fs'
-import {CONNECTION_URL} from "./constants/constants";
+/*eslint-disable */
+import e from 'express';
+import debug from 'debug';
+import * as http from 'http';
+import * as winston from 'winston';
+import * as expressWinston from 'express-winston';
+import cors from 'cors';
+import CommonRoutesConfig from './common/routes/common.routes.config';
+import { SerumRoutes } from './serum/routes/serum.routes';
+/* eslint-enable */
 
-let connection: Connection;
+const app: e.Application = e();
+const server: http.Server = http.createServer(app);
+const port = 3000;
+const routes: Array<CommonRoutesConfig> = [];
+// replacement for console.log that will be enabled by DEBUG env variable
+const debugLog: debug.IDebugger = debug('app');
 
-// ============================================================================= helpers
-
-async function getConnection() {
-    connection = new Connection(CONNECTION_URL, 'processed');
-    const version = await connection.getVersion();
-    console.log('Connection to cluster established:', CONNECTION_URL, version);
+app.use(e.json());
+app.use(cors());
+// automatic logging of all HTTP requests handled by express.js
+const loggerOptions: expressWinston.LoggerOptions = {
+  transports: [new winston.transports.Console()],
+  format: winston.format.combine(
+    winston.format.json(),
+    winston.format.prettyPrint(),
+    winston.format.colorize({ all: true }),
+  ),
+};
+if (!process.env.DEBUG) {
+  loggerOptions.meta = false;
 }
+app.use(expressWinston.logger(loggerOptions));
 
-async function prepareAndSendTx(instructions: TransactionInstruction[], signers: Signer[]) {
-    const tx = new Transaction().add(...instructions);
-    const sig = await sendAndConfirmTransaction(connection, tx, signers);
-    console.log(sig);
-}
+routes.push(new SerumRoutes(app));
 
-async function getTokenAccsForOwner(
-    connection: Connection,
-    ownerKp: Keypair,
-) {
-    const payerAccs = await connection.getParsedTokenAccountsByOwner(
-        ownerKp.publicKey,
-        {
-            programId: TOKEN_PROGRAM_ID,
-        }
-    )
-    payerAccs.value.forEach(a => {
-        console.log('// ---------------------------------------')
-        console.log(a.pubkey.toBase58())
-        console.log(a.account.data.parsed.info)
-    })
-}
+// test route
+const runningMessage = `Server running at http://localhost:${port}`;
+app.get('/', (req: e.Request, res: e.Response) => {
+  res.status(200).send(runningMessage);
+});
 
-// ============================================================================= play
-
-const BASE = 'SRM';
-const QUOTE = 'USDC';
-const MARKET = `${BASE}/${QUOTE}`;
-
-const secretKey = JSON.parse(fs.readFileSync('/Users/ilmoi/.config/solana/id.json', 'utf8'));
-const ownerKp = Keypair.fromSecretKey(Uint8Array.from(secretKey));
-
-// works for √SOL, √tokens that already have an acc, √tokens that don't
-async function serumTradeAndSettle() {
-    const market = await loadSerumMarket(connection, MARKET);
-    const tradeTx = await getNewOrderV3Tx(
-        connection,
-        market,
-        MARKET,
-        ownerKp,
-        'sell',
-        0.1,
-        0.1,
-        'ioc'
-    );
-    const settleTx = await getSettleFundsTx(
-        connection,
-        market,
-        ownerKp,
-        MARKET,
-    );
-    const settleIx = settleTx ? settleTx.transaction.instructions : []
-    const settleSigners = settleTx ? settleTx.signers : []
-    await prepareAndSendTx(
-        [
-            ...tradeTx.transaction.instructions,
-            ...settleIx,
-        ],
-        [
-            ownerKp,
-            ...tradeTx.signers,
-            ...settleSigners,
-        ]
-    )
-}
-
-async function play() {
-    await getConnection();
-    // await getTokenAccsForOwner(connection, ownerKp);
-    await serumTradeAndSettle();
-}
-
-play()
+server.listen(port, () => {
+  routes.forEach((route: CommonRoutesConfig) => {
+    debugLog(`Routes configured for ${route.getName()}`);
+  });
+  // the only time we want to use console.log
+  console.log(runningMessage);
+});
