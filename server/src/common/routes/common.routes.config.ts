@@ -8,6 +8,7 @@ export default abstract class CommonRoutesConfig {
   protected constructor(app: e.Application, name: string) {
     this.app = app;
     this.name = name;
+    this.configureRoutes();
   }
 
   getName() {
