@@ -10,9 +10,7 @@ export class SerumRoutes extends CommonRoutesConfig {
 
   configureRoutes(): e.Application {
     this.app.route('/serum/orders')
-      .get(
-        SerumController.getOrders,
-      )
+      .get() // todo returns all orders
       .post(
         SerumMiddleware.validateStuff,
         SerumController.placeOrder,

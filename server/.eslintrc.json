@@ -21,7 +21,9 @@
       "rules": {
         "import/extensions": "off",
         "import/no-unresolved": "off",
-        "no-shadow": "off"
+        "no-shadow": "off",
+        "no-unused-vars": "off",
+        "no-underscore-dangle": "off"
       }
     }
   ]

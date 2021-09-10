@@ -1,19 +1,20 @@
 import {
-  Connection, Keypair,
-  PublicKey,
+  Connection,
+  Keypair,
   sendAndConfirmTransaction,
   Signer,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import axios from 'axios';
-import BN from 'bn.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ownerKp } from './keypair';
+import {
+  deserializeIxs,
+  deserializeSigners,
+} from '../src/common/util/serializers';
 
-const BASE = 'SRM';
-const QUOTE = 'USDC';
-const MARKET = `${BASE}/${QUOTE}`;
+// --------------------------------------- helpers
 
 let connection: Connection;
 
@@ -28,17 +29,6 @@ async function prepareAndSendTx(instructions: TransactionInstruction[], signers:
   const tx = new Transaction().add(...instructions);
   const sig = await sendAndConfirmTransaction(connection, tx, signers);
   console.log(sig);
-}
-
-function deserializeIx(instructions: any[]) {
-  instructions.forEach((ix: any) => {
-    const { keys } = ix;
-    keys.forEach((k: any) => {
-      k.pubkey = new PublicKey(new BN(k.pubkey._bn, 16));
-    });
-    ix.programId = new PublicKey(new BN(ix.programId._bn, 16));
-    ix.data = Buffer.from(ix.data.data);
-  });
 }
 
 async function getTokenAccsForOwner(
@@ -59,30 +49,45 @@ async function getTokenAccsForOwner(
 
 // --------------------------------------- play
 
+const BASE = 'ATLAS';
+const QUOTE = 'USDC';
+const MARKET = `${BASE}/${QUOTE}`;
+
 async function play() {
   // place order
   const placeOrderTx = await axios.post('http://localhost:3000/serum/orders', {
     market: MARKET,
     side: 'buy',
-    price: 20,
+    price: 0.2,
     size: 0.1,
     orderType: 'ioc',
+    ownerPk: ownerKp.publicKey.toBase58(),
   });
-  const [placeOrderIx, placeOrderSigners] = placeOrderTx.data;
-  deserializeIx(placeOrderIx);
+  let [placeOrderIx, placeOrderSigners] = placeOrderTx.data;
+  placeOrderIx = deserializeIxs(placeOrderIx);
+  placeOrderSigners = deserializeSigners(placeOrderSigners);
 
   // settle funds
   const settleTx = await axios.post('http://localhost:3000/serum/settle', {
     market: MARKET,
+    ownerPk: ownerKp.publicKey.toBase58(),
   });
-  const [settleIx, settleSigners] = settleTx.data;
-  deserializeIx(settleIx);
+  let [settleIx, settleSigners] = settleTx.data;
+  settleIx = deserializeIxs(settleIx);
+  settleSigners = deserializeSigners(settleSigners);
 
   // execute both together
   await getConnection();
   const hash = await prepareAndSendTx(
-    [...placeOrderIx, ...settleIx],
-    [ownerKp, ...placeOrderSigners, ...settleSigners],
+    [
+      ...placeOrderIx,
+      ...settleIx,
+    ],
+    [
+      ownerKp,
+      ...placeOrderSigners,
+      ...settleSigners,
+    ],
   );
   console.log(hash);
 }

@@ -1,5 +1,4 @@
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Connection, Keypair } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { Market } from '@project-serum/serum';
 import debug from 'debug';
 import {
@@ -7,32 +6,40 @@ import {
   getSerumMarket,
   SERUM_PROG_ID,
 } from '../../constants/constants';
+import {
+  ixAndSigners,
+  orderType,
+  side,
+} from '../../common/interfaces/dex/dex.order.interface';
+import SolClient from '../../common/logic/client';
 
-const log: debug.IDebugger = debug('app:serum-logis');
+const log: debug.IDebugger = debug('app:serum-logic');
 
-async function getTokenAccByMint(
+async function getOrCreateTokenAccByMint(
   connection: Connection,
   market: Market,
-  ownerKp: Keypair,
+  ownerPk: PublicKey,
   mintName: string,
-) {
+): Promise<[ ixAndSigners, PublicKey ]> {
+  let ixAndSigners: ixAndSigners = [[], []];
+  let tokenAccPk: PublicKey;
   if (mintName === 'SOL') {
-    return ownerKp.publicKey;
+    return [ixAndSigners, ownerPk];
   }
   const mintPk = getMint(mintName);
   const tokenAccounts = await market.getTokenAccountsByOwnerForMint(
-    connection, ownerKp.publicKey, mintPk,
+    connection, ownerPk, mintPk,
   );
 
   if (tokenAccounts.length === 0) {
     log(`Creating token account for mint ${mintName}, ${mintPk.toBase58()}`);
-    const mint = new Token(connection, mintPk, TOKEN_PROGRAM_ID, ownerKp);
-    // todo this really should be an instruction and bundled into the same tx
-    return mint.createAccount(ownerKp.publicKey);
+    [ixAndSigners, tokenAccPk] = await SolClient.prepCreateTokenAccTx(ownerPk, mintPk);
+  } else {
+    tokenAccPk = tokenAccounts[0].pubkey;
   }
-  log(`User's account for mint ${mintName} (${mintPk.toBase58()}) is ${tokenAccounts[0].pubkey.toBase58()}`);
+  log(`User's account for mint ${mintName} (${mintPk.toBase58()}) is ${tokenAccPk.toBase58()}`);
 
-  return tokenAccounts[0].pubkey;
+  return [ixAndSigners, tokenAccPk];
 }
 
 export async function loadSerumMarket(
@@ -43,58 +50,80 @@ export async function loadSerumMarket(
   return Market.load(connection, getSerumMarket(name), {}, SERUM_PROG_ID);
 }
 
-// todo import from interface
-type side = 'buy' | 'sell';
-type orderType = 'limit' | 'ioc' | 'postOnly' | undefined;
-
-export async function getNewOrderV3Tx(
+export async function prepPlaceOrderV3Tx(
   connection: Connection,
   market: Market,
   marketName: string,
-  ownerKp: Keypair,
   side: side,
   price: number,
   size: number,
   orderType: orderType,
-) {
+  ownerPk: PublicKey,
+): Promise<ixAndSigners> {
+  // log('ownerPk is ', ownerPk.toBase58());
   const [base, quote] = marketName.split('/');
-  let payer;
-  if (side == 'buy') {
-    payer = await getTokenAccByMint(connection, market, ownerKp, quote);
+  let tokenIxAndSigners;
+  let payerPk;
+  if (side === 'buy') {
+    [tokenIxAndSigners, payerPk] = await getOrCreateTokenAccByMint(
+      connection, market, ownerPk, quote,
+    );
   } else {
-    payer = await getTokenAccByMint(connection, market, ownerKp, base);
+    [tokenIxAndSigners, payerPk] = await getOrCreateTokenAccByMint(
+      connection, market, ownerPk, base,
+    );
   }
-  return market.makePlaceOrderTransaction(connection, {
-    owner: ownerKp as any,
-    payer,
+  const placeOrderTx = await market.makePlaceOrderTransaction(connection, {
+    owner: ownerPk,
+    payer: payerPk,
     side,
     price,
     size,
     orderType,
   });
+  // log(`token ix: ${tokenIxAndSigners[0]}`);
+  // log(`order ix: ${placeOrderTx.transaction.instructions}`);
+  // log(`token signers: ${tokenIxAndSigners[1]}`);
+  // log(`order signers: ${placeOrderTx.signers}`);
+  return [
+    [...tokenIxAndSigners[0], ...placeOrderTx.transaction.instructions],
+    [...tokenIxAndSigners[1], ...placeOrderTx.signers],
+  ];
 }
 
-export async function getSettleFundsTx(
+export async function prepSettleFundsTx(
   connection: Connection,
   market: Market,
-  ownerKp: Keypair,
   marketName: string,
-) {
+  ownerPk: PublicKey,
+): Promise<ixAndSigners> {
   const [base, quote] = marketName.split('/');
-  const baseWallet = await getTokenAccByMint(connection, market, ownerKp, base);
-  const quoteWallet = await getTokenAccByMint(connection, market, ownerKp, quote);
+  const [ownerBaseIxAndSigners, ownerBasePk] = await getOrCreateTokenAccByMint(
+    connection, market, ownerPk, base,
+  );
+  const [ownerQuoteIxAndSigners, ownerQuotePk] = await getOrCreateTokenAccByMint(
+    connection, market, ownerPk, quote,
+  );
   // todo currently this will fail if this is the first ever trade for this user in this market
   // this means the 1st trade won't settle and we have to run this twice to actually settle it
   const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
-    connection, ownerKp.publicKey,
+    connection, ownerPk,
   );
   if (openOrdersAccounts.length === 0) {
-    return;
+    return [[], []];
   }
-  return market.makeSettleFundsTransaction(
+  const settleFundsTx = await market.makeSettleFundsTransaction(
     connection,
     openOrdersAccounts[0],
-    baseWallet,
-    quoteWallet,
+    ownerBasePk,
+    ownerQuotePk,
   );
+  return [
+    [
+      ...ownerBaseIxAndSigners[0],
+      ...ownerQuoteIxAndSigners[0],
+      ...settleFundsTx.transaction.instructions,
+    ],
+    [...ownerBaseIxAndSigners[1], ...ownerQuoteIxAndSigners[1], ...settleFundsTx.signers],
+  ];
 }

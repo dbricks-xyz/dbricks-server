@@ -1,21 +1,28 @@
+import { PublicKey } from '@solana/web3.js';
+import { spawn, Worker } from 'threads';
 import { IDEXSettle } from '../../common/interfaces/dex/dex.settle.interface';
 import { ixAndSigners } from '../../common/interfaces/dex/dex.order.interface';
-import { getSettleFundsTx, loadSerumMarket } from '../logic/serum.order.logic';
+import { loadSerumMarket, prepSettleFundsTx } from '../logic/serum.order.logic';
 import SolClient from '../../common/logic/client';
-import { ownerKp } from '../../../play/keypair';
+import { deserializePk } from '../../common/util/serializers';
 
 class SerumSettleService implements IDEXSettle {
-  async settle(market: string): Promise<ixAndSigners> {
+  async settle(market: string, ownerPk: string): Promise<ixAndSigners> {
+    // --------------------------------------- worker
+    // const worker = await spawn(new Worker('./worker.ts'));
+    // return worker.settle({
+    //   market,
+    //   ownerPk,
+    // });
+
+    // --------------------------------------- main thread
     const marketInstance = await loadSerumMarket(SolClient.connection, market);
-    const settleTx = await getSettleFundsTx(
+    return prepSettleFundsTx(
       SolClient.connection,
       marketInstance,
-      ownerKp, // todo this should absolutely not be here, but right now I just want the function to work
       market,
+      deserializePk(ownerPk),
     );
-    const settleIx = settleTx ? settleTx.transaction.instructions : [];
-    const settleSigners = settleTx ? settleTx.signers : [];
-    return [settleIx, settleSigners];
   }
 }
 

@@ -1,4 +1,4 @@
-import { Signer, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, Signer, TransactionInstruction } from '@solana/web3.js';
 
 export type side = 'buy' | 'sell';
 export type orderType = 'limit' | 'ioc' | 'postOnly' | undefined;
@@ -10,7 +10,8 @@ export interface IDEXOrder {
     side: side,
     price: number,
     size: number,
-    orderType: orderType
+    orderType: orderType,
+    ownerPk: string,
   ) => Promise<ixAndSigners>;
   // todo placeTrigger
   // todo modify
