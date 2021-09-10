@@ -1,11 +1,14 @@
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, Keypair } from '@solana/web3.js';
 import { Market } from '@project-serum/serum';
+import debug from 'debug';
 import {
   getMint,
   getSerumMarket,
   SERUM_PROG_ID,
 } from '../../constants/constants';
+
+const log: debug.IDebugger = debug('app:serum-logis');
 
 async function getTokenAccByMint(
   connection: Connection,
@@ -17,15 +20,17 @@ async function getTokenAccByMint(
     return ownerKp.publicKey;
   }
   const mintPk = getMint(mintName);
-  const tokenAccounts = await market.getTokenAccountsByOwnerForMint(connection, ownerKp.publicKey, mintPk);
+  const tokenAccounts = await market.getTokenAccountsByOwnerForMint(
+    connection, ownerKp.publicKey, mintPk,
+  );
 
   if (tokenAccounts.length === 0) {
-    console.log(`Creating token account for mint ${mintName}, ${mintPk.toBase58()}`);
+    log(`Creating token account for mint ${mintName}, ${mintPk.toBase58()}`);
     const mint = new Token(connection, mintPk, TOKEN_PROGRAM_ID, ownerKp);
     // todo this really should be an instruction and bundled into the same tx
     return mint.createAccount(ownerKp.publicKey);
   }
-  console.log(`User's account for mint ${mintName} (${mintPk.toBase58()}) is ${tokenAccounts[0].pubkey.toBase58()}`);
+  log(`User's account for mint ${mintName} (${mintPk.toBase58()}) is ${tokenAccounts[0].pubkey.toBase58()}`);
 
   return tokenAccounts[0].pubkey;
 }
@@ -34,7 +39,7 @@ export async function loadSerumMarket(
   connection: Connection,
   name: string,
 ) {
-  console.log(`Market pk for market ${name} is ${getSerumMarket(name)}`);
+  log(`Market pk for market ${name} is ${getSerumMarket(name)}`);
   return Market.load(connection, getSerumMarket(name), {}, SERUM_PROG_ID);
 }
 
@@ -80,7 +85,9 @@ export async function getSettleFundsTx(
   const quoteWallet = await getTokenAccByMint(connection, market, ownerKp, quote);
   // todo currently this will fail if this is the first ever trade for this user in this market
   // this means the 1st trade won't settle and we have to run this twice to actually settle it
-  const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(connection, ownerKp.publicKey);
+  const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
+    connection, ownerKp.publicKey,
+  );
   if (openOrdersAccounts.length === 0) {
     return;
   }

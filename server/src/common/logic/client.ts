@@ -1,11 +1,14 @@
 import {
-  Connection, Keypair, sendAndConfirmTransaction,
+  Connection,
+  sendAndConfirmTransaction,
   Signer,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import debug from 'debug';
 import { CONNECTION_URL } from '../../constants/constants';
+
+const log: debug.IDebugger = debug('app:sol-client');
 
 class SolClient {
   connection: Connection;
@@ -16,29 +19,13 @@ class SolClient {
 
   async checkConnection() {
     const version = await this.connection.getVersion();
-    console.log('Connection to cluster established:', CONNECTION_URL, version);
+    log('Connection to cluster established:', CONNECTION_URL, version);
   }
 
   async prepareAndSendTx(instructions: TransactionInstruction[], signers: Signer[]) {
     const tx = new Transaction().add(...instructions);
     const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
-    console.log(sig);
-  }
-
-  async getTokenAccsForOwner(
-    ownerKp: Keypair,
-  ) {
-    const payerAccs = await this.connection.getParsedTokenAccountsByOwner(
-      ownerKp.publicKey,
-      {
-        programId: TOKEN_PROGRAM_ID,
-      },
-    );
-    payerAccs.value.forEach((a) => {
-      console.log('// ---------------------------------------');
-      console.log(a.pubkey.toBase58());
-      console.log(a.account.data.parsed.info);
-    });
+    log(sig);
   }
 }
 
