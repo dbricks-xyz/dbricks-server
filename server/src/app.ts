@@ -9,6 +9,7 @@ import * as expressWinston from 'express-winston';
 import cors from 'cors';
 import CommonRoutesConfig from './common/routes/common.routes.config';
 import { SerumRoutes } from './serum/routes/serum.routes';
+import { MangoRoutes } from './mango/routes/mango.routes';
 /* eslint-enable */
 
 const app: e.Application = e();
@@ -35,6 +36,7 @@ if (!process.env.DEBUG) {
 app.use(expressWinston.logger(loggerOptions));
 
 routes.push(new SerumRoutes(app));
+routes.push(new MangoRoutes(app));
 
 // test route
 const runningMessage = `Server running at http://localhost:${port}`;
