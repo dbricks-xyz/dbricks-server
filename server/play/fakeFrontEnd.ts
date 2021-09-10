@@ -17,20 +17,20 @@ const MARKET = `${BASE}/${QUOTE}`;
 
 let connection: Connection;
 
-async function getConnection() {
+export async function getConnection() {
   const url = 'https://api.mainnet-beta.solana.com';
   connection = new Connection(url, 'processed');
   const version = await connection.getVersion();
   console.log('connection to cluster established:', url, version);
 }
 
-async function prepareAndSendTx(instructions: TransactionInstruction[], signers: Signer[]) {
+export async function prepareAndSendTx(instructions: TransactionInstruction[], signers: Signer[]) {
   const tx = new Transaction().add(...instructions);
   const sig = await sendAndConfirmTransaction(connection, tx, signers);
   console.log(sig);
 }
 
-function deserializeIx(instructions: any[]) {
+export function deserializeIx(instructions: any[]) {
   instructions.forEach((ix: any) => {
     const { keys } = ix;
     keys.forEach((k: any) => {
