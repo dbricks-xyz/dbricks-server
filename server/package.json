@@ -19,11 +19,6 @@
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "express-winston": "^4.2.0",
-    "path": "^0.12.7",
-    "piscina": "^3.1.0",
-    "threads": "^1.6.5",
-    "tiny-worker": "^2.3.0",
-    "util": "^0.12.4",
     "winston": "^3.3.3"
   },
   "devDependencies": {

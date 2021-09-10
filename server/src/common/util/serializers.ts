@@ -5,19 +5,19 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 
-type serializedAcc = {
+export type serializedAcc = {
   pubkey: string,
   isSigner: boolean,
   isWritable: boolean,
 }
 
-type serializedIx = {
+export type serializedIx = {
   keys: serializedAcc[],
   programId: string,
   data: string,
 }
 
-type serializedSigner = {
+export type serializedSigner = {
   secretKey: Uint8Array,
 }
 

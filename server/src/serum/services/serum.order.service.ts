@@ -1,5 +1,4 @@
-import { Signer, TransactionInstruction } from '@solana/web3.js';
-import { spawn, Thread, Worker } from 'threads';
+import { PublicKey, Signer, TransactionInstruction } from '@solana/web3.js';
 import {
   IDEXOrder,
   orderType,
@@ -7,7 +6,6 @@ import {
 } from '../../common/interfaces/dex/dex.order.interface';
 import { loadSerumMarket, prepPlaceOrderV3Tx } from '../logic/serum.order.logic';
 import SolClient from '../../common/logic/client';
-import { deserializePk } from '../../common/util/serializers';
 
 class SerumOrderService implements IDEXOrder {
   async place(
@@ -16,20 +14,8 @@ class SerumOrderService implements IDEXOrder {
     price: number,
     size: number,
     orderType: orderType,
-    ownerPk: string,
+    ownerPk: PublicKey,
   ): Promise<[TransactionInstruction[], Signer[]]> {
-    // --------------------------------------- worker
-    // const worker = await spawn(new Worker('./worker.ts'));
-    // return worker.order({
-    //   market,
-    //   side,
-    //   price,
-    //   size,
-    //   orderType,
-    //   ownerPk,
-    // });
-
-    // --------------------------------------- main thread
     const marketInstance = await loadSerumMarket(SolClient.connection, market);
     return prepPlaceOrderV3Tx(
       SolClient.connection,
@@ -39,10 +25,8 @@ class SerumOrderService implements IDEXOrder {
       price,
       size,
       orderType,
-      deserializePk(ownerPk),
+      ownerPk,
     );
-
-    // todo ideally serialization would be in controller - but with workers doesn't make sense
   }
 }
 

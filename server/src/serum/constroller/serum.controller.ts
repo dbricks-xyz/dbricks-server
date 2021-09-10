@@ -12,30 +12,26 @@ const log: debug.IDebugger = debug('app:serum-controller');
 
 class SerumController {
   async placeOrder(req: e.Request, res: e.Response) {
+    log('Begin place order');
     const [ix, signers] = await SerumOrderService.place(
       req.body.market,
       req.body.side,
       req.body.price,
       req.body.size,
       req.body.orderType,
-      req.body.ownerPk,
+      deserializePk(req.body.ownerPk),
     );
     log('Order instruction/signers generated');
-    // --------------------------------------- worker
-    // res.status(200).send([ix, signers]);
-    // --------------------------------------- main thread
     res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
   }
 
   async settleBalance(req: e.Request, res: e.Response) {
+    log('Begin settle balance');
     const [ix, signers] = await SerumSettleService.settle(
       req.body.market,
-      req.body.ownerPk,
+      deserializePk(req.body.ownerPk),
     );
     log('Settle instruction/signers generated');
-    // --------------------------------------- workers
-    // res.status(200).send([ix, signers]);
-    // --------------------------------------- main thread
     res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
   }
 }

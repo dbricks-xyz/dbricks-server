@@ -54,8 +54,8 @@ const QUOTE = 'USDC';
 const MARKET = `${BASE}/${QUOTE}`;
 
 async function play() {
-  // place order
-  const placeOrderTx = await axios.post('http://localhost:3000/serum/orders', {
+  // prepare requests
+  const r1 = axios.post('http://localhost:3000/serum/orders', {
     market: MARKET,
     side: 'buy',
     price: 0.2,
@@ -63,20 +63,22 @@ async function play() {
     orderType: 'ioc',
     ownerPk: ownerKp.publicKey.toBase58(),
   });
+  const r2 = axios.post('http://localhost:3000/serum/settle', {
+    market: MARKET,
+    ownerPk: ownerKp.publicKey.toBase58(),
+  });
+  const [placeOrderTx, settleTx] = await axios.all([r1, r2]);
+
+  // deserialize
   let [placeOrderIx, placeOrderSigners] = placeOrderTx.data;
   placeOrderIx = deserializeIxs(placeOrderIx);
   placeOrderSigners = deserializeSigners(placeOrderSigners);
 
-  // settle funds
-  const settleTx = await axios.post('http://localhost:3000/serum/settle', {
-    market: MARKET,
-    ownerPk: ownerKp.publicKey.toBase58(),
-  });
   let [settleIx, settleSigners] = settleTx.data;
   settleIx = deserializeIxs(settleIx);
   settleSigners = deserializeSigners(settleSigners);
 
-  // execute both together
+  // execute tx
   await getConnection();
   const hash = await prepareAndSendTx(
     [

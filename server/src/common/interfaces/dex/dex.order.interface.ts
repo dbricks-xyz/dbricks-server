@@ -11,7 +11,7 @@ export interface IDEXOrder {
     price: number,
     size: number,
     orderType: orderType,
-    ownerPk: string,
+    ownerPk: PublicKey,
   ) => Promise<ixAndSigners>;
   // todo placeTrigger
   // todo modify
