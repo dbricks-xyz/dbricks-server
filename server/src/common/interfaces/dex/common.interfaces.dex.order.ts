@@ -13,12 +13,4 @@ export interface IDEXOrder {
     orderType: orderType,
     ownerPk: PublicKey,
   ) => Promise<ixAndSigners>;
-  // todo placeTrigger
-  // todo modify
-  // todo modifyByClientID
-  // todo modifyTrigger
-  // todo cancel
-  // todo cancelByClientID
-  // todo cancelTrigger
-  // todo cancelAll
 }
