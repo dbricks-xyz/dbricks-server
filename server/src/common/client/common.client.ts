@@ -1,33 +1,23 @@
 import {
-  Connection, Keypair, PublicKey,
-  sendAndConfirmTransaction,
-  Signer, SystemProgram,
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
   Transaction,
-  TransactionInstruction,
 } from '@solana/web3.js';
 import debug from 'debug';
 import { AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { CONNECTION_URL } from '../../constants/constants';
-import { ixAndSigners } from '../interfaces/dex/dex.order.interface';
+import { CONNECTION_URL } from '../../config/config';
+import { ixAndSigners } from '../interfaces/dex/common.interfaces.dex.order';
 
 const log: debug.IDebugger = debug('app:sol-client');
 
-class SolClient {
+export class SolClient {
   connection: Connection;
 
   constructor() {
     this.connection = new Connection(CONNECTION_URL, 'processed');
-  }
-
-  async checkConnection() {
-    const version = await this.connection.getVersion();
-    log('Connection to cluster established:', CONNECTION_URL, version);
-  }
-
-  async prepareAndSendTx(instructions: TransactionInstruction[], signers: Signer[]) {
-    const tx = new Transaction().add(...instructions);
-    const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
-    log(sig);
+    log('Initialized Sol Client');
   }
 
   /**
@@ -49,7 +39,7 @@ class SolClient {
   async prepCreateTokenAccTx(
     ownerPk: PublicKey,
     mintPk: PublicKey,
-  ): Promise<[ ixAndSigners, PublicKey ]> {
+  ): Promise<[ixAndSigners, PublicKey]> {
     // Allocate memory for the account
     const balanceNeeded = await this.getMinBalanceRentForExemptAccount();
 

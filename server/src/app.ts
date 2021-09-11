@@ -1,6 +1,3 @@
-require('dotenv').config();
-
-/*eslint-disable */
 import e from 'express';
 import debug from 'debug';
 import * as http from 'http';
@@ -9,7 +6,6 @@ import * as expressWinston from 'express-winston';
 import cors from 'cors';
 import CommonRoutesConfig from './common/routes/common.routes.config';
 import { SerumRoutes } from './serum/routes/serum.routes';
-/* eslint-enable */
 
 const app: e.Application = e();
 const server: http.Server = http.createServer(app);

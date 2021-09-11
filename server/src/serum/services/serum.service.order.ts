@@ -3,9 +3,10 @@ import {
   IDEXOrder,
   orderType,
   side,
-} from '../../common/interfaces/dex/dex.order.interface';
-import { loadSerumMarket, prepPlaceOrderV3Tx } from '../logic/serum.order.logic';
-import SolClient from '../../common/logic/client';
+} from '../../common/interfaces/dex/common.interfaces.dex.order';
+import { prepPlaceOrderV3Tx } from '../logic/serum.logic.order';
+import SolClient from '../../common/client/common.client';
+import { loadSerumMarket } from '../serum.util';
 
 class SerumOrderService implements IDEXOrder {
   async place(

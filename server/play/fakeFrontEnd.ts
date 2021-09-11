@@ -1,57 +1,15 @@
-import {
-  Connection,
-  Keypair,
-  sendAndConfirmTransaction,
-  Signer,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
 import axios from 'axios';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { ownerKp } from './keypair';
 import {
   deserializeIxs,
   deserializeSigners,
-} from '../src/common/util/serializers';
-
-// --------------------------------------- helpers
-
-let connection: Connection;
-
-async function getConnection() {
-  const url = 'https://api.mainnet-beta.solana.com';
-  connection = new Connection(url, 'processed');
-  const version = await connection.getVersion();
-  console.log('connection to cluster established:', url, version);
-}
-
-async function prepareAndSendTx(instructions: TransactionInstruction[], signers: Signer[]) {
-  const tx = new Transaction().add(...instructions);
-  const sig = await sendAndConfirmTransaction(connection, tx, signers);
-  console.log(sig);
-}
-
-async function getTokenAccsForOwner(
-  ownerKp: Keypair,
-) {
-  const payerAccs = await connection.getParsedTokenAccountsByOwner(
-    ownerKp.publicKey,
-    {
-      programId: TOKEN_PROGRAM_ID,
-    },
-  );
-  payerAccs.value.forEach((a) => {
-    console.log('// ---------------------------------------');
-    console.log(a.pubkey.toBase58());
-    console.log(a.account.data.parsed.info);
-  });
-}
-
-// --------------------------------------- play
+} from '../src/common/util/common.serializers';
+import { SolTestingClient } from '../src/common/client/common.client.testing';
 
 const BASE = 'ATLAS';
 const QUOTE = 'USDC';
 const MARKET = `${BASE}/${QUOTE}`;
+const testingClient = new SolTestingClient();
+const ownerKp = testingClient.testingKp;
 
 async function play() {
   // prepare requests
@@ -79,8 +37,7 @@ async function play() {
   settleSigners = deserializeSigners(settleSigners);
 
   // execute tx
-  await getConnection();
-  const hash = await prepareAndSendTx(
+  await testingClient.prepareAndSendTx(
     [
       ...placeOrderIx,
       ...settleIx,
@@ -91,7 +48,6 @@ async function play() {
       ...settleSigners,
     ],
   );
-  console.log(hash);
 }
 
 play();
