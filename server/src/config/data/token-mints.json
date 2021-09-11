@@ -243,5 +243,10 @@
     "address": "Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1",
     "name": "SBR",
     "network": "mainnet"
+  },
+    {
+    "address": "ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx",
+    "name": "ATLAS",
+    "network": "mainnet"
   }
 ]
