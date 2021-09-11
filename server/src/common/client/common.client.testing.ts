@@ -23,7 +23,11 @@ export class SolTestingClient extends SolClient {
     console.log('Initialized Sol Testing Client');
   }
 
-  // --------------------------------------- getters
+  // --------------------------------------- passive
+
+  get testingPk() {
+    return this.testingKp.publicKey;
+  }
 
   async getConnectionVersion() {
     const version = await this.connection.getVersion();
@@ -46,7 +50,7 @@ export class SolTestingClient extends SolClient {
     });
   }
 
-  // --------------------------------------- actions
+  // --------------------------------------- active
 
   async prepareAndSendTx(ix: TransactionInstruction[], signers: Signer[]) {
     const tx = new Transaction().add(...ix);

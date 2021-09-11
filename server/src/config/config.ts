@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+console.log('ENV:', process.env.NETWORK);
+
 /*eslint-disable */
 import {PublicKey} from '@solana/web3.js';
 
@@ -28,9 +30,9 @@ if (process.env.NETWORK === 'mainnet') {
   //  2)cargo build-bpf,
   //  3)solana program deploy [path]
   //  4)paste the IDs below
-  SERUM_PROG_ID = new PublicKey('2Zotx3RHqCds8ZTh2inRRXZqhvyvxWAqHeRCf4mspaoh');
-  SABER_PROG_ID = new PublicKey('2Zotx3RHqCds8ZTh2inRRXZqhvyvxWAqHeRCf4mspaoh');
-  MANGO_PROG_ID = new PublicKey('2Zotx3RHqCds8ZTh2inRRXZqhvyvxWAqHeRCf4mspaoh');
+  SERUM_PROG_ID = new PublicKey('DVieqxNimmtbZpZTw2sZiSAohNJuHLywGaMs47RAW97Z');
+  SABER_PROG_ID = new PublicKey('32X9WvCHTtab6QUujy3edG1ogdAWUKrJ3VXApZjNq7dD');
+  MANGO_PROG_ID = new PublicKey('32X9WvCHTtab6QUujy3edG1ogdAWUKrJ3VXApZjNq7dD');
   CONNECTION_URL = 'http://localhost:8899';
 } else {
   throw new Error(`Network unrecognized. Should be mainnet/devnet/localnet. Currently: ${process.env.NETWORK}`);

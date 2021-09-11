@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Account, Connection, PublicKey } from '@solana/web3.js';
 import { Market } from '@project-serum/serum';
 import debug from 'debug';
 import { ixAndSigners } from '../common/interfaces/dex/common.interfaces.dex.order';
@@ -35,10 +35,48 @@ export async function getOrCreateTokenAccByMint(
   return [ixAndSigners, tokenAccPk];
 }
 
-export async function loadSerumMarket(
+export async function loadSerumMarketFromName(
   connection: Connection,
   name: string,
 ) {
   log(`Market pk for market ${name} is ${getSerumMarket(name)}`);
   return Market.load(connection, getSerumMarket(name), {}, SERUM_PROG_ID);
+}
+
+export async function loadSerumMarketFromPk(
+  connection: Connection,
+  marketPk: PublicKey,
+) {
+  return Market.load(connection, marketPk, {}, SERUM_PROG_ID);
+}
+
+export async function newAccountWithLamports(
+  connection: Connection,
+  lamports: number = 1000000,
+): Promise<Account> {
+  const account = new Account();
+
+  let retries = 30;
+  await connection.requestAirdrop(account.publicKey, lamports);
+  for (;;) {
+    await sleep(500);
+    if (lamports == (await connection.getBalance(account.publicKey))) {
+      return account;
+    }
+    if (--retries <= 0) {
+      break;
+    }
+  }
+  throw new Error(`Airdrop of ${lamports} failed`);
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function assert(condition: boolean, message?: string) {
+  if (!condition) {
+    console.log(`${Error().stack}:main.ts`);
+    throw message || 'Assertion failed';
+  }
 }

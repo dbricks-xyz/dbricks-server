@@ -6,12 +6,12 @@ import { getOrCreateTokenAccByMint } from '../serum.util';
 
 const log: debug.IDebugger = debug('app:serum-logic');
 
-export async function prepSettleFundsTx(
+export async function getBaseAndQuoteTokenAccs(
   connection: Connection,
   market: Market,
   marketName: string,
   ownerPk: PublicKey,
-): Promise<ixAndSigners> {
+): Promise<[ixAndSigners, PublicKey][]> {
   const [base, quote] = marketName.split('/');
   const [ownerBaseIxAndSigners, ownerBasePk] = await getOrCreateTokenAccByMint(
     connection, market, ownerPk, base,
@@ -19,6 +19,19 @@ export async function prepSettleFundsTx(
   const [ownerQuoteIxAndSigners, ownerQuotePk] = await getOrCreateTokenAccByMint(
     connection, market, ownerPk, quote,
   );
+  return [
+    [ownerBaseIxAndSigners, ownerBasePk],
+    [ownerQuoteIxAndSigners, ownerQuotePk],
+  ];
+}
+
+export async function prepSettleFundsTx(
+  connection: Connection,
+  market: Market,
+  ownerPk: PublicKey,
+  ownerBasePk: PublicKey,
+  ownerQuotePk: PublicKey,
+): Promise<ixAndSigners> {
   // todo currently this will fail if this is the first ever trade for this user in this market
   // this means the 1st trade won't settle and we have to run this twice to actually settle it
   const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
@@ -34,11 +47,7 @@ export async function prepSettleFundsTx(
     ownerQuotePk,
   );
   return [
-    [
-      ...ownerBaseIxAndSigners[0],
-      ...ownerQuoteIxAndSigners[0],
-      ...settleFundsTx.transaction.instructions,
-    ],
-    [...ownerBaseIxAndSigners[1], ...ownerQuoteIxAndSigners[1], ...settleFundsTx.signers],
+    [...settleFundsTx.transaction.instructions],
+    [...settleFundsTx.signers],
   ];
 }
