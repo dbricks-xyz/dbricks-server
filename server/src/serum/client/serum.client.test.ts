@@ -9,7 +9,6 @@ describe('Serum', () => {
     const serumTester = new SerumClientTester();
     await serumTester.initMarket();
 
-    // --------------------------------------- execute a successful order
     await serumTester.placeAndSettleOrder(
       'buy',
       1,
@@ -27,21 +26,34 @@ describe('Serum', () => {
     );
     userBaseBalance = await serumTester.getTokenBalance(serumTester.baseUserPk as PublicKey);
     assert(userBaseBalance === 10);
+  });
 
-    // --------------------------------------- cancel remaining order
-    let orders = await serumTester.loadOrdersForOwner(
-      serumTester.market as Market,
-      serumTester.testingPk,
-    );
-    assert(orders.length === 1);
+  describe('Serum', () => {
+    it('Cancels a trade', async () => {
+      const serumTester = new SerumClientTester();
+      await serumTester.initMarket();
 
-    const orderId = new BN('36893488147419103231', 10);
-    await serumTester.cancelOrder(orderId);
+      await serumTester.placeAndSettleOrder(
+        'buy',
+        1,
+        20,
+        serumTester.quoteUserPk as PublicKey,
+      );
 
-    orders = await serumTester.loadOrdersForOwner(
-      serumTester.market as Market,
-      serumTester.testingPk,
-    );
-    assert(orders.length === 0);
+      let orders = await serumTester.loadOrdersForOwner(
+        serumTester.market as Market,
+        serumTester.testingPk,
+      );
+      assert(orders.length === 1);
+
+      const orderId = new BN('36893488147419103231', 10);
+      await serumTester.cancelOrder(orderId);
+
+      orders = await serumTester.loadOrdersForOwner(
+        serumTester.market as Market,
+        serumTester.testingPk,
+      );
+      assert(orders.length === 0);
+    });
   });
 });
