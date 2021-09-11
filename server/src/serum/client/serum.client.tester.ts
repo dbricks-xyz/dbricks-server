@@ -12,7 +12,7 @@ import {
   side,
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
 
-class SerumClientTester extends SerumClient {
+export class SerumClientTester extends SerumClient {
   testingKp: Keypair;
 
   baseMint?: Token;
@@ -132,8 +132,7 @@ class SerumClientTester extends SerumClient {
     );
   }
 
-  async placeAndSettleOrder(side: side, price: number, size: number) {
-    const payer = side === 'buy' ? this.quoteUserPk as PublicKey : this.baseUserPk as PublicKey;
+  async placeAndSettleOrder(side: side, price: number, size: number, payerPk: PublicKey) {
     const [ixO, signersO] = await this.prepPlaceOrderTx(
       this.market as Market,
       side,
@@ -141,7 +140,7 @@ class SerumClientTester extends SerumClient {
       size,
       'limit',
       this.testingPk,
-      payer,
+      payerPk,
     );
     await this.prepareAndSendTx(
       [...ixO],
@@ -154,9 +153,15 @@ class SerumClientTester extends SerumClient {
       this.baseUserPk as PublicKey,
       this.quoteUserPk as PublicKey,
     );
+    const [ixS2, signersS2] = await this.prepSettleFundsTx(
+      this.market as Market,
+      this.testingPk,
+      this.baseUser2Pk as PublicKey,
+      this.quoteUser2Pk as PublicKey,
+    );
     await this.prepareAndSendTx(
-      [...ixS],
-      [this.testingKp, ...signersS],
+      [...ixS, ...ixS2],
+      [this.testingKp, ...signersS, ...signersS2],
     );
 
     console.log(`${side} order for ${size} at ${price}$ placed`);

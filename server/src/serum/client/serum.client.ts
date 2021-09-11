@@ -258,6 +258,16 @@ export class SerumClient extends SolClient {
       [ownerKp],
     );
   }
+
+  async loadOrdersForOwner(
+    market: Market,
+    ownerPk: PublicKey,
+  ): Promise<Order[]> {
+    return market.loadOrdersForOwner(
+      this.connection,
+      ownerPk,
+    );
+  }
 }
 
 export default new SerumClient();
