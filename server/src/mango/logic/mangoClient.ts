@@ -52,4 +52,4 @@ class MangoInformation {
   }
 }
 
-export default new MangoInformation(SolClient.connection, new PublicKey('DAETLz1E6ThdzRYqx131swWGLqzA4UjyPC3M7nTvSQve')); // user will need to make one of these objects on the FE?
+export default new MangoInformation(SolClient.connection, new PublicKey('BXLtyWtzuDiC5Y9AXEvayr47XMRcM5oQ7Na5Cmyd1Ewd')); // user will need to make one of these objects on the FE?

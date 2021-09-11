@@ -87,4 +87,4 @@ async function play() {
   console.log(hash);
 }
 
-play();
+//play();

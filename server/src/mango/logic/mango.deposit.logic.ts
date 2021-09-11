@@ -11,37 +11,23 @@ import debug from 'debug';
 import { ixAndSigners } from '../../common/interfaces/lender/lender.deposit.interface';
 import { MANGO_PROG_ID } from '../../constants/constants';
 
-
 const log: debug.IDebugger = debug('app:mango-deposit-logic');
 
 export async function getDepositTxn(
   mangoAccount: MangoAccount,
   mangoGroup: MangoGroup,
   walletPk: PublicKey,
+  rootBank: PublicKey,
+  nodeBank: PublicKey,
+  vault: PublicKey,
   tokenAcc: TokenAccount,
   quantity: number,
-): Promise<ixAndSigners> { // TODO: if no already exisiting Mango account, will need init and deposit instructions
-  // if (!mangoGroup) {
-  //   return;
-  // }
-  // Check and get the right type of deposit from here
+): Promise<ixAndSigners> {
+  // TODO: if no already exisiting Mango account, will need init and deposit instructions
   const transactionIx = [];
   const additionalSigners: Array<Keypair> = [];
   const tokenIndex = mangoGroup.getTokenIndex(tokenAcc.mint);
-  // const tokenIndex = mangoGroup.getRootBankIndex(rootBank);
   const tokenMint = mangoGroup.tokens[tokenIndex].mint;
-
-  const rootbank = mangoGroup.tokens[tokenIndex].rootBank;
-  const nodeBank = mangoGroup.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].publicKey;
-  const vault = mangoGroup.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].vault;
-  log(tokenMint);
-  log(tokenIndex);
-  log(nodeBank);
-  log(vault);
-  log(mangoGroup);
-  // if (!nodeBank || !vault) {
-  //   return;
-  // }
 
   let wrappedSolAccount: Keypair | null = null;
   if (
@@ -82,9 +68,9 @@ export async function getDepositTxn(
     walletPk,
     mangoGroup.mangoCache,
     mangoAccount.publicKey,
-    rootbank,
-    nodeBank ?? new PublicKey('123'), // TODO: fix
-    vault ?? new PublicKey('123'),
+    rootBank,
+    nodeBank,
+    vault,
     wrappedSolAccount?.publicKey ?? tokenAcc.publicKey,
     nativeQuantity,
   );
@@ -101,5 +87,5 @@ export async function getDepositTxn(
     );
   }
 
-  return [transactionIx, additionalSigners]; // might need OG signer too, walltPK keypair?
+  return [transactionIx, additionalSigners];
 }
