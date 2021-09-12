@@ -9,6 +9,4 @@ export interface ILenderDeposit {
     ownerPk: PublicKey,
     destinationPk?: PublicKey,
   ) => Promise<ixAndSigners>;
-
-
 }
