@@ -1276,5 +1276,12 @@
     "programId": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
     "deprecated": false,
     "address": "3d4rzwpy9iGdCZvgxcu7B1YocYffVLsQXPXkBZKt2zLc"
+  },
+    {
+    "name": "ATLAS/USDC",
+    "programId": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
+    "deprecated": false,
+    "address": "Di66GTLsV64JgCCYGVcY21RZ173BHkjJVgPyezNN7P1K"
   }
+
 ]

@@ -1,6 +1,3 @@
-require('dotenv').config();
-
-/*eslint-disable */
 import e from 'express';
 import debug from 'debug';
 import * as http from 'http';
