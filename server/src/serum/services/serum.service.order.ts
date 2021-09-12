@@ -4,9 +4,7 @@ import {
   orderType,
   side,
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
-import { prepPlaceOrderV3Tx } from '../logic/serum.logic.order';
-import SolClient from '../../common/client/common.client';
-import { loadSerumMarket } from '../serum.util';
+import SerumClient from '../client/serum.client';
 
 class SerumOrderService implements IDEXOrder {
   async place(
@@ -17,17 +15,26 @@ class SerumOrderService implements IDEXOrder {
     orderType: orderType,
     ownerPk: PublicKey,
   ): Promise<[TransactionInstruction[], Signer[]]> {
-    const marketInstance = await loadSerumMarket(SolClient.connection, market);
-    return prepPlaceOrderV3Tx(
-      SolClient.connection,
+    const marketInstance = await SerumClient.loadSerumMarketFromName(market);
+    const [[ixT, signersT], payerPk] = await SerumClient.getPayerFromMarket(
       marketInstance,
       market,
+      side,
+      ownerPk,
+    );
+    const [ix, signers] = await SerumClient.prepPlaceOrderTx(
+      marketInstance,
       side,
       price,
       size,
       orderType,
       ownerPk,
+      payerPk,
     );
+    return [
+      [...ixT, ...ix],
+      [...signersT, ...signers],
+    ];
   }
 }
 

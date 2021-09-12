@@ -3,13 +3,14 @@ import {
   deserializeIxs,
   deserializeSigners,
 } from '../src/common/util/common.serializers';
-import { SolTestingClient } from '../src/common/client/common.client.testing';
+import { loadKpSync } from '../src/common/util/common.util';
+import { TESTING_KP_PATH } from '../src/config/config';
+import SolClient from '../src/common/client/common.client';
 
 const BASE = 'ATLAS';
 const QUOTE = 'USDC';
 const MARKET = `${BASE}/${QUOTE}`;
-const testingClient = new SolTestingClient();
-const ownerKp = testingClient.testingKp;
+const ownerKp = loadKpSync(TESTING_KP_PATH);
 
 async function play() {
   // prepare requests
@@ -37,7 +38,7 @@ async function play() {
   settleSigners = deserializeSigners(settleSigners);
 
   // execute tx
-  await testingClient.prepareAndSendTx(
+  await SolClient.prepareAndSendTx(
     [
       ...placeOrderIx,
       ...settleIx,

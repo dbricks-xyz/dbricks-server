@@ -4,6 +4,7 @@ export type side = 'buy' | 'sell';
 export type orderType = 'limit' | 'ioc' | 'postOnly' | undefined;
 export type ixAndSigners = [TransactionInstruction[], Signer[]];
 
+// todo tbh doesn't make sense to have in separate files
 export interface IDEXOrder {
   place: (
     market: string,
@@ -13,12 +14,4 @@ export interface IDEXOrder {
     orderType: orderType,
     ownerPk: PublicKey,
   ) => Promise<ixAndSigners>;
-  // todo placeTrigger
-  // todo modify
-  // todo modifyByClientID
-  // todo modifyTrigger
-  // todo cancel
-  // todo cancelByClientID
-  // todo cancelTrigger
-  // todo cancelAll
 }
