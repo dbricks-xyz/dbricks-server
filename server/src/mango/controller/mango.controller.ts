@@ -1,25 +1,22 @@
 import e from 'express';
 import debug from 'debug';
-// import MangoAccountService from '../services/mango.account.service';
-import MangoDepositService from '../services/mango.deposit.service';
+import MangoDepositService from '../services/mango.service.deposit';
+import { deserializePk, serializeIxs, serializeSigners } from '../../common/util/common.serializers';
 
 const log: debug.IDebugger = debug('app:mango-controller');
 
 class MangoController {
-  // async getMangoAccounts(req: e.Request, res: e.Response) {
-  //   const mangoAccounts = await MangoAccountService.getMangoAccounts(req.params.publicKey);
-  //   res.status(200).send(mangoAccounts);
-  // }
 
   async deposit(req: e.Request, res: e.Response) {
-    const ixAndSigners = await MangoDepositService.deposit(
-      req.body.walletPk,
-      req.body.mangoPk,
-      req.body.tokenMintPk,
+    log('Begin deposit');
+    const [ix, signers] = await MangoDepositService.deposit(
+      req.body.token,
       req.body.quantity,
+      deserializePk(req.body.ownerPk),
+      req.body.destinationPk ? deserializePk(req.body.destinationPk) : undefined
     );
     log('Deposit instruction generated');
-    res.status(200).send(ixAndSigners);
+    res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
   }
 }
 

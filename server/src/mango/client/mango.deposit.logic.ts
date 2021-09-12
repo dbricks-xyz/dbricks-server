@@ -8,15 +8,15 @@ import {
   Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram,
 } from '@solana/web3.js';
 import debug from 'debug';
-import { ixAndSigners } from '../../common/interfaces/lender/lender.deposit.interface';
-import { MANGO_PROG_ID } from '../../constants/constants';
+import { ixAndSigners } from '../../common/interfaces/lender/common.interfaces.lender.deposit';
+import { MANGO_PROG_ID } from '../../config/config';
 
 const log: debug.IDebugger = debug('app:mango-deposit-logic');
 
 export async function getDepositTxn(
   mangoAccount: MangoAccount,
   mangoGroup: MangoGroup,
-  walletPk: PublicKey,
+  ownerPk: PublicKey,
   rootBank: PublicKey,
   nodeBank: PublicKey,
   vault: PublicKey,
@@ -32,13 +32,13 @@ export async function getDepositTxn(
   let wrappedSolAccount: Keypair | null = null;
   if (
     tokenMint.equals(WRAPPED_SOL_MINT)
-        && tokenAcc.publicKey.toBase58() === walletPk.toBase58()
+        && tokenAcc.publicKey.toBase58() === ownerPk.toBase58()
   ) {
     wrappedSolAccount = new Keypair();
     const lamports = Math.round(quantity * LAMPORTS_PER_SOL) + 1e7;
     transactionIx.push(
       SystemProgram.createAccount({
-        fromPubkey: walletPk,
+        fromPubkey: ownerPk,
         newAccountPubkey: wrappedSolAccount.publicKey,
         lamports,
         space: 165,
@@ -50,7 +50,7 @@ export async function getDepositTxn(
       initializeAccount({
         account: wrappedSolAccount.publicKey,
         mint: WRAPPED_SOL_MINT,
-        owner: walletPk,
+        owner: ownerPk,
       }),
     );
 
@@ -65,7 +65,7 @@ export async function getDepositTxn(
   const instruction = makeDepositInstruction(
     MANGO_PROG_ID,
     mangoGroup.publicKey,
-    walletPk,
+    ownerPk,
     mangoGroup.mangoCache,
     mangoAccount.publicKey,
     rootBank,
@@ -81,8 +81,8 @@ export async function getDepositTxn(
     transactionIx.push(
       closeAccount({
         source: wrappedSolAccount.publicKey,
-        destination: walletPk,
-        owner: walletPk,
+        destination: ownerPk,
+        owner: ownerPk,
       }),
     );
   }

@@ -1,28 +1,35 @@
 import axios from 'axios';
-import { getConnection, prepareAndSendTx } from './fakeFrontEnd';
-import { ownerKp } from './keypair';
+import SolClient from '../src/common/client/common.client';
+import { deserializeIxs, deserializeSigners } from '../src/common/util/common.serializers';
+import { loadKpSync } from '../src/common/util/common.util';
+import { TESTING_KP_PATH } from '../src/config/config';
 
-async function mangoTest() {
-  // const accounts = await axios.get('http://localhost:3000/mango/accounts');
-  // console.log(accounts.data);
-
-
-  await getConnection();
+async function mangoTest() { // TODO: works but throws an error??? Error: No instructions ?? 
 
   const depositTx = await axios.post('http://localhost:3000/mango/deposit', {
-    walletPk: 'BXLtyWtzuDiC5Y9AXEvayr47XMRcM5oQ7Na5Cmyd1Ewd',
-    mangoPk: '9rwTvLv4AbYbx5ybpS2NJTt48ayZ3SKe3bwMjyhwozpR',
-    tokenMintPk: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC authority is 2wmVCSfPxGPjrnMMn7rchp4uaeoTqN39mXFC2zhPdri9
+    token: 'USDC',
     quantity: 1,
+    ownerPk: 'BXLtyWtzuDiC5Y9AXEvayr47XMRcM5oQ7Na5Cmyd1Ewd',
+    destinationPk: '9rwTvLv4AbYbx5ybpS2NJTt48ayZ3SKe3bwMjyhwozpR',
   });
-  const [depositIx, depositSigners] = depositTx.data;
+  let [depositIx, depositSigners] = depositTx.data;
+  depositIx = deserializeIxs(depositIx);
+  depositSigners = deserializeSigners(depositSigners);
+  console.log(depositTx.data)
+  console.log(depositIx);
 
-  // execute both together
-  const hash = await prepareAndSendTx(
-    [...depositIx],
-    [ownerKp, ...depositSigners],
+  const ownerKp = loadKpSync(TESTING_KP_PATH);
+
+  // execute tx
+  await SolClient.prepareAndSendTx(
+    [
+      ...depositIx,
+    ],
+    [
+      ownerKp,
+      ...depositSigners,
+    ],
   );
-  console.log(hash);
 }
 
 mangoTest();
