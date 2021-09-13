@@ -10,15 +10,16 @@ export class MangoRoutes extends CommonRoutesConfig {
   }
 
   configureRoutes(): e.Application {
-    // this.app.route('/mango/accounts/:publicKey')
-    //   .get(
-    //     MangoController.getMangoAccounts,
-    //   );
-
     this.app.route('/mango/deposit')
       .post(
         MangoMiddleware.validateStuff,
         MangoController.deposit,
+      );
+
+      this.app.route('/mango/withdraw')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.withdraw,
       );
 
     return this.app;

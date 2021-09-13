@@ -1,16 +1,44 @@
-// import { PublicKey } from '@solana/web3.js';
-// import debug from 'debug';
-// import { ILenderWithdraw, ixAndSigners } from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
-// import MangoClient from '../client/mango.client';
+import { PublicKey } from '@solana/web3.js';
+import debug from 'debug';
+import { ILenderWithdraw, ixAndSigners } from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
+import MangoClient from '../client/mango.client';
 
-// const log: debug.IDebugger = debug('app:mango-withdraw-service');
+const log: debug.IDebugger = debug('app:mango-withdraw-service');
 
-// class MangoWithdrawService implements ILenderWithdraw {
-//   async withdraw(token: string, quantity: number, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixAndSigners> {
+class MangoWithdrawService implements ILenderWithdraw {
+  async withdraw(token: string, quantity: number, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixAndSigners> {
+    const mangoInformation = await MangoClient.loadAllAccounts(ownerPk, token);
+    if (!mangoInformation) {
+      return [[], []];
+    }
+    const { userAccounts, tokenAccPk, rootBank, nodeBank, vault } =
+      mangoInformation;
 
+      let mangoAccount;
+      if (sourcePk) {
+        mangoAccount = userAccounts.find(
+          (acc) => acc.publicKey.toBase58() === sourcePk.toBase58()
+        );
+        if (!mangoAccount) {
+          log(
+            `${sourcePk.toBase58()} is not owned by ${ownerPk.toBase58()}`
+          );
+          return [[], []];
+        }
+      } else {
+        return [[], []];
+      }
 
-//     return getWithdrawTxn();
-//   }
-// }
+      return MangoClient.prepWithdrawTx(
+        mangoAccount,
+        ownerPk,
+        rootBank,
+        nodeBank,
+        vault,
+        quantity,
+        false
+      );
+  }
+}
 
-// export default new MangoWithdrawService();
+export default new MangoWithdrawService();
