@@ -14,12 +14,12 @@ import {
   AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { CONNECTION_URL, TESTING_KP_PATH } from '../../config/config';
-import { ixAndSigners } from '../interfaces/dex/common.interfaces.dex.order';
+import { ixsAndSigners } from '../interfaces/dex/common.interfaces.dex.order';
 import { loadKpSync, sleep } from '../util/common.util';
 
 const log: debug.IDebugger = debug('app:sol-client');
 
-export class SolClient {
+export default class SolClient {
   connection: Connection;
 
   constructor() {
@@ -87,7 +87,7 @@ export class SolClient {
   async prepCreateTokenAccTx(
     ownerPk: PublicKey,
     mintPk: PublicKey,
-  ): Promise<[ixAndSigners, PublicKey]> {
+  ): Promise<[ixsAndSigners, PublicKey]> {
     // Allocate memory for the account
     const balanceNeeded = await this.getMinBalanceRentForExemptAccount();
 
@@ -115,8 +115,8 @@ export class SolClient {
 
   // --------------------------------------- testing only
 
-  async _prepareAndSendTx(ix: TransactionInstruction[], signers: Signer[]) {
-    const tx = new Transaction().add(...ix);
+  async _prepareAndSendTx(ixs: TransactionInstruction[], signers: Signer[]) {
+    const tx = new Transaction().add(...ixs);
     const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
     log('Tx successful,', sig);
   }
@@ -144,9 +144,9 @@ export class SolClient {
   }
 
   /**
- * WARNING: Doesn't work on localnet
+ * WARNING: Doesn't work on localnet - only devnet
  */
-  async newAccountWithLamports(
+  async _newAccountWithLamports(
     lamports: number = 1000000,
   ): Promise<Account> {
     const account = new Account();

@@ -3,16 +3,16 @@ import { Token } from '@solana/spl-token';
 import { getVaultOwnerAndNonce } from '@project-serum/swap/lib/utils';
 import BN from 'bn.js';
 import { Market } from '@project-serum/serum';
-import { SerumClient } from './serum.client';
+import SerumClient from './serum.client';
 import { loadKpSync } from '../../common/util/common.util';
 import { SERUM_PROG_ID, TESTING_KP_PATH } from '../../config/config';
 import {
-  ixAndSigners,
+  ixsAndSigners,
   orderType,
   side,
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
 
-export class SerumClientTester extends SerumClient {
+export default class SerumClientTester extends SerumClient {
   testingKp: Keypair;
 
   baseMint?: Token;

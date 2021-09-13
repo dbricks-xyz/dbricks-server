@@ -2,7 +2,7 @@ import {
   Connection,
   Keypair,
   PublicKey,
-  SystemProgram,
+  SystemProgram, Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -10,18 +10,18 @@ import { DexInstructions, Market, TokenInstructions } from '@project-serum/serum
 import debug from 'debug';
 import { Order } from '@project-serum/serum/lib/market';
 import {
-  ixAndKp,
-  ixAndSigners,
+  ixsAndKps,
+  ixsAndSigners,
   orderType,
   side,
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
-import { SolClient } from '../../common/client/common.client';
+import SolClient from '../../common/client/common.client';
 import { SERUM_PROG_ID } from '../../config/config';
 import { getMint, getSerumMarket } from '../../config/config.util';
 
 const log: debug.IDebugger = debug('app:serum-client');
 
-export class SerumClient extends SolClient {
+export default class SerumClient extends SolClient {
   constructor() {
     super();
     log('Initialized Serum client');
@@ -42,7 +42,7 @@ export class SerumClient extends SolClient {
     feeRateBps: BN,
     vaultSignerNonce: BN,
     quoteDustThreshold: BN,
-  ): Promise<ixAndSigners> {
+  ): Promise<ixsAndSigners> {
     const initMarketIx = DexInstructions.initializeMarket({
       // dex accounts
       market: marketPk,
@@ -81,7 +81,7 @@ export class SerumClient extends SolClient {
     orderType: orderType,
     ownerPk: PublicKey,
     payerPk: PublicKey,
-  ): Promise<ixAndSigners> {
+  ): Promise<ixsAndSigners> {
     const placeOrderTx = await market.makePlaceOrderTransaction(this.connection, {
       owner: ownerPk,
       payer: payerPk,
@@ -101,7 +101,7 @@ export class SerumClient extends SolClient {
     market: Market,
     ownerPk: PublicKey,
     orderId: BN,
-  ): Promise<ixAndSigners> {
+  ): Promise<ixsAndSigners> {
     const orders = await market.loadOrdersForOwner(
       this.connection,
       ownerPk,
@@ -130,7 +130,7 @@ export class SerumClient extends SolClient {
     ownerPk: PublicKey,
     ownerBasePk: PublicKey,
     ownerQuotePk: PublicKey,
-  ): Promise<ixAndSigners> {
+  ): Promise<ixsAndSigners> {
   // todo currently this will fail if this is the first ever trade for this user in this market
   // this means the 1st trade won't settle and we have to run this twice to actually settle it
     const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
@@ -158,7 +158,7 @@ export class SerumClient extends SolClient {
     marketName: string,
     side: side,
     ownerPk: PublicKey,
-  ): Promise<[ixAndSigners, PublicKey]> {
+  ): Promise<[ixsAndSigners, PublicKey]> {
     let tokenIxAndSigners;
     let payerPk;
     const [base, quote] = marketName.split('/');
@@ -178,7 +178,7 @@ export class SerumClient extends SolClient {
     market: Market,
     marketName: string,
     ownerPk: PublicKey,
-  ): Promise<[ixAndSigners, PublicKey][]> {
+  ): Promise<[ixsAndSigners, PublicKey][]> {
     const [base, quote] = marketName.split('/');
     const [ownerBaseIxAndSigners, ownerBasePk] = await this.getOrCreateTokenAccByMint(
       this.connection, market, ownerPk, base,
@@ -251,8 +251,8 @@ export class SerumClient extends SolClient {
     market: Market,
     ownerPk: PublicKey,
     mintName: string,
-  ): Promise<[ixAndSigners, PublicKey]> {
-    let ixAndSigners: ixAndSigners = [[], []];
+  ): Promise<[ixsAndSigners, PublicKey]> {
+    let ixAndSigners: ixsAndSigners = [[], []];
     let tokenAccPk: PublicKey;
     if (mintName === 'SOL') {
       return [ixAndSigners, ownerPk];
@@ -289,7 +289,7 @@ export class SerumClient extends SolClient {
 
   async prepStateAccsForNewMarket(
     ownerPk: PublicKey, // wallet owner
-  ) : Promise<ixAndKp> {
+  ) : Promise<ixsAndKps> {
     // do we just throw these away? seems to be the case in their Serum DEX UI
     // https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L475
     const marketKp = new Keypair();
@@ -326,7 +326,7 @@ export class SerumClient extends SolClient {
     baseMint: PublicKey,
     quoteMint: PublicKey,
     ownerPk: PublicKey, // wallet owner
-  ): Promise<ixAndKp> {
+  ): Promise<ixsAndKps> {
     const baseVaultKp = new Keypair();
     const quoteVaultKp = new Keypair();
 

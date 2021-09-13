@@ -13,7 +13,8 @@ const log: debug.IDebugger = debug('app:serum-controller');
 class SerumController {
   async placeOrder(req: e.Request, res: e.Response) {
     log('Begin place order');
-    const [ix, signers] = await SerumOrderService.place(
+    const serumOrderService = new SerumOrderService();
+    const [ix, signers] = await serumOrderService.place(
       req.body.market,
       req.body.side,
       req.body.price,
@@ -27,7 +28,8 @@ class SerumController {
 
   async settleBalance(req: e.Request, res: e.Response) {
     log('Begin settle balance');
-    const [ix, signers] = await SerumSettleService.settle(
+    const serumOrderService = new SerumSettleService();
+    const [ix, signers] = await serumOrderService.settle(
       req.body.market,
       deserializePk(req.body.ownerPk),
     );

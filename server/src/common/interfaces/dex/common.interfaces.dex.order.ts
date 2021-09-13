@@ -4,10 +4,9 @@ import {
 
 export type side = 'buy' | 'sell';
 export type orderType = 'limit' | 'ioc' | 'postOnly' | undefined;
-export type ixAndSigners = [TransactionInstruction[], Signer[]];
-export type ixAndKp = [TransactionInstruction[], Keypair[]];
+export type ixsAndSigners = [TransactionInstruction[], Signer[]];
+export type ixsAndKps = [TransactionInstruction[], Keypair[]];
 
-// todo tbh doesn't make sense to have in separate files
 export interface IDEXOrder {
   place: (
     market: string,
@@ -16,5 +15,5 @@ export interface IDEXOrder {
     size: number,
     orderType: orderType,
     ownerPk: PublicKey,
-  ) => Promise<ixAndSigners>;
+  ) => Promise<ixsAndSigners>;
 }

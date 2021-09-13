@@ -1,6 +1,16 @@
 import { PublicKey } from '@solana/web3.js';
-import { ixAndSigners } from './common.interfaces.dex.order';
+import { ixsAndSigners } from './common.interfaces.dex.order';
 
 export interface IDEXMarket {
-  settle: (market: string, ownerPk: PublicKey) => Promise<ixAndSigners>;
+  init: (
+    baseMintPk: PublicKey,
+    quoteMintPk: PublicKey,
+    lotSize: string,
+    tickSize: string,
+    ownerPk: PublicKey,
+    ) => Promise<ixsAndSigners[]>
+  settle: (
+    market: string,
+    ownerPk: PublicKey
+  ) => Promise<ixsAndSigners>;
 }

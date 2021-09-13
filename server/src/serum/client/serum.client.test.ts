@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { Market } from '@project-serum/serum';
 import BN from 'bn.js';
-import { SerumClientTester } from './serum.client.tester';
+import SerumClientTester from './serum.client.tester';
 import { assert } from '../../common/util/common.util';
 
 describe('Serum', () => {

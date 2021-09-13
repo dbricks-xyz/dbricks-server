@@ -4,9 +4,9 @@ import {
   orderType,
   side,
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
-import { SerumClient } from '../client/serum.client';
+import SerumClient from '../client/serum.client';
 
-class SerumOrderService extends SerumClient implements IDEXOrder {
+export default class SerumOrderService extends SerumClient implements IDEXOrder {
   async place(
     market: string,
     side: side,
@@ -37,5 +37,3 @@ class SerumOrderService extends SerumClient implements IDEXOrder {
     ];
   }
 }
-
-export default new SerumOrderService();
