@@ -9,6 +9,7 @@ export class SerumRoutes extends CommonRoutesConfig {
   }
 
   configureRoutes(): e.Application {
+    // --------------------------------------- orders
     this.app.route('/serum/orders')
       .get() // todo returns all orders
       .post(
@@ -16,21 +17,26 @@ export class SerumRoutes extends CommonRoutesConfig {
         SerumController.placeOrder,
       );
 
-    this.app.route('/serum/settle')
+    this.app.route('/serum/orders/cancel')
       .post(
         SerumMiddleware.validateStuff,
-        SerumController.settleBalance,
+        SerumController.cancelOrder,
       );
 
-    this.app.route('/serum/orders/:orderId')
-      .get() // todo returns order details
-      .post(); // todo modifies the order
+    // --------------------------------------- markets
 
-    this.app.route('/serum/orders/by_client_id/:clientId')
-      .get() // todo returns order by client id
-      .post(); // todo modifies order by client id
+    this.app.route('/serum/markets')
+      .get() // todo return all markets
+      .post(
+        SerumMiddleware.validateStuff,
+        SerumController.initMarket,
+      );
 
-    this.app.post('/serum/settle');
+    this.app.route('/serum/markets/settle')
+      .post(
+        SerumMiddleware.validateStuff,
+        SerumController.settleMarket,
+      );
 
     return this.app;
   }

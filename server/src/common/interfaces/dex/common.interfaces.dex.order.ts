@@ -1,10 +1,12 @@
-import { PublicKey, Signer, TransactionInstruction } from '@solana/web3.js';
+import {
+  Keypair, PublicKey, Signer, TransactionInstruction,
+} from '@solana/web3.js';
+import BN from 'bn.js';
 
 export type side = 'buy' | 'sell';
 export type orderType = 'limit' | 'ioc' | 'postOnly' | undefined;
-export type ixAndSigners = [TransactionInstruction[], Signer[]];
+export type ixsAndSigners = [TransactionInstruction[], Signer[]];
 
-// todo tbh doesn't make sense to have in separate files
 export interface IDEXOrder {
   place: (
     market: string,
@@ -13,5 +15,10 @@ export interface IDEXOrder {
     size: number,
     orderType: orderType,
     ownerPk: PublicKey,
-  ) => Promise<ixAndSigners>;
+  ) => Promise<ixsAndSigners>;
+  cancel: (
+    marketName: string,
+    orderId: BN,
+    ownerPk: PublicKey,
+  ) => Promise<ixsAndSigners>
 }
