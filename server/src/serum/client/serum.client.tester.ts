@@ -52,26 +52,26 @@ export default class SerumClientTester extends SerumClient {
     this.quoteMint = await this._createMint(this.testingKp);
 
     console.log('Generating state accounts');
-    const [prepIxs, prepKps] = await this.prepStateAccsForNewMarket(this.testingPk);
-    this.marketKp = prepKps[0];
+    const [prepIxs, prepSigners] = await this.prepStateAccsForNewMarket(this.testingPk);
+    this.marketKp = prepSigners[0] as Keypair;
     await this._prepareAndSendTx(
       prepIxs,
-      [this.testingKp, ...prepKps],
+      [this.testingKp, ...prepSigners],
     );
 
     // create the vault signer PDA
     // (!) IMPORTANT - must use this function and not do manually
     // otherwise will get an error: Provided seeds do not result in a valid address
     // see my question in Serum's dev-questions chat
-    const [vaultSignerPk, vaultSignerNonce] = await getVaultOwnerAndNonce(
-      prepKps[0].publicKey,
+    const [vaultOwnerPk, vaultNonce] = await getVaultOwnerAndNonce(
+      prepSigners[0].publicKey,
       SERUM_PROG_ID,
     );
 
     console.log('Generating token accounts');
     // vaults
-    this.baseVaultPk = await this._createTokenAcc(this.baseMint, vaultSignerPk as PublicKey);
-    this.quoteVaultPk = await this._createTokenAcc(this.quoteMint, vaultSignerPk as PublicKey);
+    this.baseVaultPk = await this._createTokenAcc(this.baseMint, vaultOwnerPk as PublicKey);
+    this.quoteVaultPk = await this._createTokenAcc(this.quoteMint, vaultOwnerPk as PublicKey);
     // user 1
     this.baseUserPk = await this._createTokenAcc(this.baseMint, this.testingPk);
     this.quoteUserPk = await this._createTokenAcc(this.quoteMint, this.testingPk);
@@ -84,10 +84,10 @@ export default class SerumClientTester extends SerumClient {
     console.log('Preparing InitMarket ix');
     const [ixM, signersM] = await this.prepInitMarketTx(
       this.marketKp.publicKey,
-      prepKps[1].publicKey,
-      prepKps[2].publicKey,
-      prepKps[3].publicKey,
-      prepKps[4].publicKey,
+      prepSigners[1].publicKey,
+      prepSigners[2].publicKey,
+      prepSigners[3].publicKey,
+      prepSigners[4].publicKey,
       this.baseVaultPk,
       this.quoteVaultPk,
       this.baseMint.publicKey,
@@ -95,7 +95,7 @@ export default class SerumClientTester extends SerumClient {
       new BN(1),
       new BN(1),
       new BN(50),
-      vaultSignerNonce as BN,
+      vaultNonce as BN,
       new BN(100),
     );
 

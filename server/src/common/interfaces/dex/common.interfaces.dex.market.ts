@@ -8,7 +8,7 @@ export interface IDEXMarket {
     lotSize: string,
     tickSize: string,
     ownerPk: PublicKey,
-    ) => Promise<ixsAndSigners[]>
+    ) => Promise<ixsAndSigners>
   settle: (
     market: string,
     ownerPk: PublicKey

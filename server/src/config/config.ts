@@ -1,9 +1,18 @@
-require('dotenv').config();
-
-console.log('ENV:', process.env.NETWORK);
+import { PublicKey } from '@solana/web3.js';
 
 /*eslint-disable */
-import {PublicKey} from '@solana/web3.js';
+require('dotenv').config();
+
+export let NETWORK: string;
+if (process.env.TESTING_LOCAL) {
+  NETWORK = 'localnet';
+} else if (process.env.TESTING_DEV) {
+  NETWORK = 'mainnet'; //todo change to devnet
+} else {
+  NETWORK = process.env.NETWORK as string;
+}
+console.log('// ---------------------------------------')
+console.log('LOADED ENV:', NETWORK);
 
 export let SERUM_PROG_ID: PublicKey;
 export let SABER_PROG_ID: PublicKey;
@@ -14,17 +23,17 @@ export let CONNECTION_URL: string;
 // todo adjust for local testing
 export const TESTING_KP_PATH = '/Users/ilmoi/.config/solana/id.json';
 
-if (process.env.NETWORK === 'mainnet') {
+if (NETWORK === 'mainnet') {
   SERUM_PROG_ID = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin');
   SABER_PROG_ID = new PublicKey('SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ');
   MANGO_PROG_ID = new PublicKey('5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH');
   CONNECTION_URL = 'https://api.mainnet-beta.solana.com';
-} else if (process.env.NETWORK === 'devnet') {
+} else if (NETWORK === 'devnet') {
   SERUM_PROG_ID = new PublicKey('DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY');
   SABER_PROG_ID = new PublicKey('Crt7UoUR6QgrFrN7j8rmSQpUTNWNSitSwWvsWGf1qZ5t');
   MANGO_PROG_ID = new PublicKey('9XzhtAtDXxW2rjbeVFhTq4fnhD8dqzr154r5b2z6pxEp');
   CONNECTION_URL = 'https://api.devnet.solana.com';
-} else if (process.env.NETWORK === 'localnet') {
+} else if (NETWORK === 'localnet') {
   // todo adjust for local testing:
   //  1)git clone the respective programs
   //  2)cargo build-bpf,
@@ -35,5 +44,5 @@ if (process.env.NETWORK === 'mainnet') {
   MANGO_PROG_ID = new PublicKey('32X9WvCHTtab6QUujy3edG1ogdAWUKrJ3VXApZjNq7dD');
   CONNECTION_URL = 'http://localhost:8899';
 } else {
-  throw new Error(`Network unrecognized. Should be mainnet/devnet/localnet. Currently: ${process.env.NETWORK}`);
+  throw new Error(`Network unrecognized. Should be mainnet/devnet/localnet. Currently: ${NETWORK}`);
 }

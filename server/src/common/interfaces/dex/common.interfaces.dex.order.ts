@@ -1,11 +1,11 @@
 import {
   Keypair, PublicKey, Signer, TransactionInstruction,
 } from '@solana/web3.js';
+import BN from 'bn.js';
 
 export type side = 'buy' | 'sell';
 export type orderType = 'limit' | 'ioc' | 'postOnly' | undefined;
 export type ixsAndSigners = [TransactionInstruction[], Signer[]];
-export type ixsAndKps = [TransactionInstruction[], Keypair[]];
 
 export interface IDEXOrder {
   place: (
@@ -16,4 +16,9 @@ export interface IDEXOrder {
     orderType: orderType,
     ownerPk: PublicKey,
   ) => Promise<ixsAndSigners>;
+  cancel: (
+    marketName: string,
+    orderId: BN,
+    ownerPk: PublicKey,
+  ) => Promise<ixsAndSigners>
 }

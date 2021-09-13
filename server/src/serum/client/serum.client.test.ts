@@ -5,7 +5,7 @@ import SerumClientTester from './serum.client.tester';
 import { assert } from '../../common/util/common.util';
 
 describe('Serum', () => {
-  it('Executes a trade', async () => {
+  it('Inits markert + places/settles a trade', async () => {
     const serumTester = new SerumClientTester();
     await serumTester.initMarket();
 
@@ -29,7 +29,7 @@ describe('Serum', () => {
   });
 
   describe('Serum', () => {
-    it('Cancels a trade', async () => {
+    it('Inits market + places/cancels a trade', async () => {
       const serumTester = new SerumClientTester();
       await serumTester.initMarket();
 

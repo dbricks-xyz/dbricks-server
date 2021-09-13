@@ -1,7 +1,7 @@
 import {
   Account,
   Connection,
-  Keypair,
+  Keypair, ParsedAccountData,
   PublicKey,
   sendAndConfirmTransaction,
   Signer,
@@ -19,6 +19,14 @@ import { loadKpSync, sleep } from '../util/common.util';
 
 const log: debug.IDebugger = debug('app:sol-client');
 
+type FoundTokenAccount = {
+  pubkey: PublicKey,
+  mint: PublicKey,
+  owner: PublicKey,
+  state: string,
+  amount: number,
+}
+
 export default class SolClient {
   connection: Connection;
 
@@ -34,20 +42,37 @@ export default class SolClient {
     log('Connection to cluster established:', CONNECTION_URL, version);
   }
 
-  async getTokenBalance(tokenAccPk: PublicKey): Promise<number | null> {
+  async getTokenBalance(tokenAccPk: PublicKey): Promise<number> {
     const balance = await this.connection.getTokenAccountBalance(tokenAccPk);
+    if (!balance.value.uiAmount) {
+      return 0;
+    }
     return balance.value.uiAmount;
   }
 
-  async getTokenAccsForOwner(ownerKp: Keypair) {
-    const payerAccs = await this.connection.getParsedTokenAccountsByOwner(
-      ownerKp.publicKey,
-      { programId: TOKEN_PROGRAM_ID },
-    );
-    payerAccs.value.forEach((a) => {
-      log(a.pubkey.toBase58());
-      log(a.account.data.parsed.info);
-    });
+  async getTokenAccsForOwner(
+    ownerPk: PublicKey,
+    mintPk?: PublicKey,
+  ): Promise<FoundTokenAccount[]> {
+    let payerAccs;
+    if (mintPk) {
+      payerAccs = await this.connection.getParsedTokenAccountsByOwner(
+        ownerPk,
+        { programId: TOKEN_PROGRAM_ID, mint: mintPk },
+      );
+    } else {
+      payerAccs = await this.connection.getParsedTokenAccountsByOwner(
+        ownerPk,
+        { programId: TOKEN_PROGRAM_ID },
+      );
+    }
+    return payerAccs.value.map((a) => ({
+      pubkey: a.pubkey,
+      mint: new PublicKey(a.account.data.parsed.info.mint),
+      owner: new PublicKey(a.account.data.parsed.info.owner),
+      state: a.account.data.parsed.info.state,
+      amount: a.account.data.parsed.info.tokenAmount.uiAmount,
+    } as FoundTokenAccount));
   }
 
   /**

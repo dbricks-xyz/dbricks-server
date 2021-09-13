@@ -1,6 +1,4 @@
 import e from 'express';
-import debug from 'debug';
-import * as http from 'http';
 import * as winston from 'winston';
 import * as expressWinston from 'express-winston';
 import cors from 'cors';
@@ -8,14 +6,10 @@ import CommonRoutesConfig from './common/routes/common.routes.config';
 import { SerumRoutes } from './serum/routes/serum.routes';
 
 const app: e.Application = e();
-const server: http.Server = http.createServer(app);
-const port = 3000;
-const routes: Array<CommonRoutesConfig> = [];
-// replacement for console-log that will be enabled by DEBUG env variable
-const log: debug.IDebugger = debug('app');
 
 app.use(e.json());
 app.use(cors());
+
 // automatic logging of all HTTP requests handled by express.js
 const loggerOptions: expressWinston.LoggerOptions = {
   transports: [new winston.transports.Console()],
@@ -30,18 +24,13 @@ if (!process.env.DEBUG) {
 }
 app.use(expressWinston.logger(loggerOptions));
 
+// routes
+export const routes: Array<CommonRoutesConfig> = [];
 routes.push(new SerumRoutes(app));
 
 // test route
-const runningMessage = `Server running at http://localhost:${port}`;
-app.get('/', (req: e.Request, res: e.Response) => {
-  res.status(200).send(runningMessage);
+app.get('/ping', (req: e.Request, res: e.Response) => {
+  res.status(200).send('pong');
 });
 
-server.listen(port, () => {
-  routes.forEach((route: CommonRoutesConfig) => {
-    log(`Routes configured for ${route.getName()}`);
-  });
-  // the only time we want to use console-log
-  console.log(runningMessage);
-});
+export default app;

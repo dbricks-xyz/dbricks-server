@@ -13,20 +13,19 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
     lotSize: string,
     tickSize: string,
     ownerPk: PublicKey,
-  ): Promise<ixsAndSigners[]> {
+  ): Promise<ixsAndSigners> {
     // taken from here - https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L499
     const feeRateBps = new BN(0);
     const quoteDustThreshold = new BN(100);
 
     const [prepIxs, prepKps] = await this.prepStateAccsForNewMarket(ownerPk);
 
-    const [vaultSignerPk, vaultSignerNonce] = await getVaultOwnerAndNonce(
+    const [vaultOwnerPk, vaultNonce] = await getVaultOwnerAndNonce(
       prepKps[0].publicKey,
       SERUM_PROG_ID,
     );
-
-    const [vaultIxs, vaultKps] = await this.prepVaultAccs(
-      vaultSignerPk as PublicKey,
+    const [vaultIxs, vaultSigners] = await this.prepVaultAccs(
+      vaultOwnerPk as PublicKey,
       baseMintPk,
       quoteMintPk,
       ownerPk,
@@ -45,45 +44,43 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
       prepKps[2].publicKey,
       prepKps[3].publicKey,
       prepKps[4].publicKey,
-      vaultKps[0].publicKey,
-      vaultKps[1].publicKey,
+      vaultSigners[0].publicKey,
+      vaultSigners[1].publicKey,
       baseMintPk,
       quoteMintPk,
       baseLotSize,
       quoteLotSize,
       feeRateBps,
-      vaultSignerNonce as BN,
+      vaultNonce as BN,
       quoteDustThreshold,
     );
 
     // todo tx size limit
-    const tx1: ixsAndSigners = [prepIxs, prepKps];
-    const tx2: ixsAndSigners = [
-      [...vaultIxs, ...ixInitMarket],
-      [...vaultKps, ...signersInitMarket],
+    return [
+      [...prepIxs, ...vaultIxs, ...ixInitMarket],
+      [...prepKps, ...vaultSigners, ...signersInitMarket],
     ];
-    return [tx1, tx2];
   }
 
-  async settle(market: string, ownerPk: PublicKey): Promise<ixsAndSigners> {
-    const marketInstance = await this.loadSerumMarketFromName(market);
+  async settle(marketName: string, ownerPk: PublicKey): Promise<ixsAndSigners> {
+    const market = await this.loadSerumMarketFromName(marketName);
     const [
-      [ownerBaseIxAndSigners, ownerBasePk],
-      [ownerQuoteIxAndSigners, ownerQuotePk],
+      [ownerBaseIxsAndSigners, ownerBasePk],
+      [ownerQuoteIxsAndSigners, ownerQuotePk],
     ] = await this.getBaseAndQuoteAccsFromMarket(
-      marketInstance,
       market,
+      marketName,
       ownerPk,
     );
     const [ixSettle, signersSettle] = await this.prepSettleFundsTx(
-      marketInstance,
+      market,
       ownerPk,
       ownerBasePk,
       ownerQuotePk,
     );
     return [
-      [...ownerBaseIxAndSigners[0], ...ownerQuoteIxAndSigners[0], ...ixSettle],
-      [...ownerBaseIxAndSigners[1], ...ownerQuoteIxAndSigners[1], ...signersSettle],
+      [...ownerBaseIxsAndSigners[0], ...ownerQuoteIxsAndSigners[0], ...ixSettle],
+      [...ownerBaseIxsAndSigners[1], ...ownerQuoteIxsAndSigners[1], ...signersSettle],
     ];
   }
 }

@@ -10,7 +10,6 @@ import { DexInstructions, Market, TokenInstructions } from '@project-serum/serum
 import debug from 'debug';
 import { Order } from '@project-serum/serum/lib/market';
 import {
-  ixsAndKps,
   ixsAndSigners,
   orderType,
   side,
@@ -40,7 +39,7 @@ export default class SerumClient extends SolClient {
     baseLotSize: BN,
     quoteLotSize: BN,
     feeRateBps: BN,
-    vaultSignerNonce: BN,
+    vaultNonce: BN,
     quoteDustThreshold: BN,
   ): Promise<ixsAndSigners> {
     const initMarketIx = DexInstructions.initializeMarket({
@@ -60,7 +59,7 @@ export default class SerumClient extends SolClient {
       baseLotSize,
       quoteLotSize,
       feeRateBps,
-      vaultSignerNonce,
+      vaultSignerNonce: vaultNonce,
       quoteDustThreshold,
       programId: SERUM_PROG_ID,
       // todo add
@@ -159,19 +158,19 @@ export default class SerumClient extends SolClient {
     side: side,
     ownerPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey]> {
-    let tokenIxAndSigners;
+    let tokenIxsAndSigners;
     let payerPk;
     const [base, quote] = marketName.split('/');
     if (side === 'buy') {
-      [tokenIxAndSigners, payerPk] = await this.getOrCreateTokenAccByMint(
+      [tokenIxsAndSigners, payerPk] = await this.getOrCreateTokenAccByMint(
         this.connection, market, ownerPk, quote,
       );
     } else {
-      [tokenIxAndSigners, payerPk] = await this.getOrCreateTokenAccByMint(
+      [tokenIxsAndSigners, payerPk] = await this.getOrCreateTokenAccByMint(
         this.connection, market, ownerPk, base,
       );
     }
-    return [tokenIxAndSigners, payerPk];
+    return [tokenIxsAndSigners, payerPk];
   }
 
   async getBaseAndQuoteAccsFromMarket(
@@ -180,15 +179,15 @@ export default class SerumClient extends SolClient {
     ownerPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey][]> {
     const [base, quote] = marketName.split('/');
-    const [ownerBaseIxAndSigners, ownerBasePk] = await this.getOrCreateTokenAccByMint(
+    const [ownerBaseIxsAndSigners, ownerBasePk] = await this.getOrCreateTokenAccByMint(
       this.connection, market, ownerPk, base,
     );
-    const [ownerQuoteIxAndSigners, ownerQuotePk] = await this.getOrCreateTokenAccByMint(
+    const [ownerQuoteIxsAndSigners, ownerQuotePk] = await this.getOrCreateTokenAccByMint(
       this.connection, market, ownerPk, quote,
     );
     return [
-      [ownerBaseIxAndSigners, ownerBasePk],
-      [ownerQuoteIxAndSigners, ownerQuotePk],
+      [ownerBaseIxsAndSigners, ownerBasePk],
+      [ownerQuoteIxsAndSigners, ownerQuotePk],
     ];
   }
 
@@ -252,10 +251,10 @@ export default class SerumClient extends SolClient {
     ownerPk: PublicKey,
     mintName: string,
   ): Promise<[ixsAndSigners, PublicKey]> {
-    let ixAndSigners: ixsAndSigners = [[], []];
+    let ixsAndSigners: ixsAndSigners = [[], []];
     let tokenAccPk: PublicKey;
     if (mintName === 'SOL') {
-      return [ixAndSigners, ownerPk];
+      return [ixsAndSigners, ownerPk];
     }
     const mintPk = getMint(mintName);
     const tokenAccounts = await market.getTokenAccountsByOwnerForMint(
@@ -264,13 +263,13 @@ export default class SerumClient extends SolClient {
 
     if (tokenAccounts.length === 0) {
       log(`Creating token account for mint ${mintName}, ${mintPk.toBase58()}`);
-      [ixAndSigners, tokenAccPk] = await this.prepCreateTokenAccTx(ownerPk, mintPk);
+      [ixsAndSigners, tokenAccPk] = await this.prepCreateTokenAccTx(ownerPk, mintPk);
     } else {
       tokenAccPk = tokenAccounts[0].pubkey;
     }
     log(`User's account for mint ${mintName} (${mintPk.toBase58()}) is ${tokenAccPk.toBase58()}`);
 
-    return [ixAndSigners, tokenAccPk];
+    return [ixsAndSigners, tokenAccPk];
   }
 
   async prepCreateStateAccIx(
@@ -289,7 +288,7 @@ export default class SerumClient extends SolClient {
 
   async prepStateAccsForNewMarket(
     ownerPk: PublicKey, // wallet owner
-  ) : Promise<ixsAndKps> {
+  ) : Promise<ixsAndSigners> {
     // do we just throw these away? seems to be the case in their Serum DEX UI
     // https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L475
     const marketKp = new Keypair();
@@ -322,11 +321,11 @@ export default class SerumClient extends SolClient {
   }
 
   async prepVaultAccs(
-    vaultSignerPk: PublicKey,
+    vaultOwnerPk: PublicKey,
     baseMint: PublicKey,
     quoteMint: PublicKey,
     ownerPk: PublicKey, // wallet owner
-  ): Promise<ixsAndKps> {
+  ): Promise<ixsAndSigners> {
     const baseVaultKp = new Keypair();
     const quoteVaultKp = new Keypair();
 
@@ -349,12 +348,12 @@ export default class SerumClient extends SolClient {
       TokenInstructions.initializeAccount({
         account: baseVaultKp.publicKey,
         mint: baseMint,
-        owner: vaultSignerPk,
+        owner: vaultOwnerPk,
       }),
       TokenInstructions.initializeAccount({
         account: quoteVaultKp.publicKey,
         mint: quoteMint,
-        owner: vaultSignerPk,
+        owner: vaultOwnerPk,
       }),
     ];
     return [

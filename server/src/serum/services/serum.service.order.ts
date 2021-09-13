@@ -1,6 +1,7 @@
 import { PublicKey, Signer, TransactionInstruction } from '@solana/web3.js';
+import BN from 'bn.js';
 import {
-  IDEXOrder,
+  IDEXOrder, ixsAndSigners,
   orderType,
   side,
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
@@ -8,22 +9,22 @@ import SerumClient from '../client/serum.client';
 
 export default class SerumOrderService extends SerumClient implements IDEXOrder {
   async place(
-    market: string,
+    marketName: string,
     side: side,
     price: number,
     size: number,
     orderType: orderType,
     ownerPk: PublicKey,
-  ): Promise<[TransactionInstruction[], Signer[]]> {
-    const marketInstance = await this.loadSerumMarketFromName(market);
+  ): Promise<ixsAndSigners> {
+    const market = await this.loadSerumMarketFromName(marketName);
     const [[ixPayer, signersPayer], payerPk] = await this.getPayerFromMarket(
-      marketInstance,
       market,
+      marketName,
       side,
       ownerPk,
     );
     const [ixPlace, signersPlace] = await this.prepPlaceOrderTx(
-      marketInstance,
+      market,
       side,
       price,
       size,
@@ -35,5 +36,18 @@ export default class SerumOrderService extends SerumClient implements IDEXOrder 
       [...ixPayer, ...ixPlace],
       [...signersPayer, ...signersPlace],
     ];
+  }
+
+  async cancel(
+    marketName: string,
+    orderId: BN,
+    ownerPk: PublicKey,
+  ): Promise<ixsAndSigners> {
+    const market = await this.loadSerumMarketFromName(marketName);
+    return this.prepCancelOrderTx(
+      market,
+      ownerPk,
+      orderId,
+    );
   }
 }
