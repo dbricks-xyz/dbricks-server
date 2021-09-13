@@ -48,7 +48,7 @@ export function serializeIxs(ixs: TransactionInstruction[]): serializedIx[] {
 }
 
 export function deserializeIxs(ixs: serializedIx[]): TransactionInstruction[] {
-  const deserializedIx: TransactionInstruction[] = [];
+  const deserializedIxs: TransactionInstruction[] = [];
   ixs.forEach((ix) => {
     const newIx: TransactionInstruction = {
       keys: [],
@@ -60,9 +60,9 @@ export function deserializeIxs(ixs: serializedIx[]): TransactionInstruction[] {
         { pubkey: deserializePk(k.pubkey), isSigner: k.isSigner, isWritable: k.isWritable },
       );
     });
-    deserializedIx.push(newIx);
+    deserializedIxs.push(newIx);
   });
-  return deserializedIx;
+  return deserializedIxs;
 }
 
 export function serializeSigners(signers: Signer[]): serializedSigner[] {

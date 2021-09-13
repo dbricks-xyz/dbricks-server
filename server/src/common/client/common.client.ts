@@ -1,7 +1,7 @@
 import {
   Account,
   Connection,
-  Keypair,
+  Keypair, ParsedAccountData,
   PublicKey,
   sendAndConfirmTransaction,
   Signer,
@@ -10,14 +10,24 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import debug from 'debug';
-import { AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { CONNECTION_URL } from '../../config/config';
-import { ixAndSigners } from '../interfaces/dex/common.interfaces.dex.order';
-import { sleep } from '../util/common.util';
+import {
+  AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+import { CONNECTION_URL, TESTING_KP_PATH } from '../../config/config';
+import { ixsAndSigners } from '../interfaces/dex/common.interfaces.dex.order';
+import { loadKpSync, sleep } from '../util/common.util';
 
 const log: debug.IDebugger = debug('app:sol-client');
 
-export class SolClient {
+type FoundTokenAccount = {
+  pubkey: PublicKey,
+  mint: PublicKey,
+  owner: PublicKey,
+  state: string,
+  amount: number,
+}
+
+export default class SolClient {
   connection: Connection;
 
   constructor() {
@@ -32,20 +42,37 @@ export class SolClient {
     log('Connection to cluster established:', CONNECTION_URL, version);
   }
 
-  async getTokenBalance(tokenAccPk: PublicKey): Promise<number | null> {
+  async getTokenBalance(tokenAccPk: PublicKey): Promise<number> {
     const balance = await this.connection.getTokenAccountBalance(tokenAccPk);
+    if (!balance.value.uiAmount) {
+      return 0;
+    }
     return balance.value.uiAmount;
   }
 
-  async getTokenAccsForOwner(ownerKp: Keypair) {
-    const payerAccs = await this.connection.getParsedTokenAccountsByOwner(
-      ownerKp.publicKey,
-      { programId: TOKEN_PROGRAM_ID },
-    );
-    payerAccs.value.forEach((a) => {
-      log(a.pubkey.toBase58());
-      log(a.account.data.parsed.info);
-    });
+  async getTokenAccsForOwner(
+    ownerPk: PublicKey,
+    mintPk?: PublicKey,
+  ): Promise<FoundTokenAccount[]> {
+    let payerAccs;
+    if (mintPk) {
+      payerAccs = await this.connection.getParsedTokenAccountsByOwner(
+        ownerPk,
+        { programId: TOKEN_PROGRAM_ID, mint: mintPk },
+      );
+    } else {
+      payerAccs = await this.connection.getParsedTokenAccountsByOwner(
+        ownerPk,
+        { programId: TOKEN_PROGRAM_ID },
+      );
+    }
+    return payerAccs.value.map((a) => ({
+      pubkey: a.pubkey,
+      mint: new PublicKey(a.account.data.parsed.info.mint),
+      owner: new PublicKey(a.account.data.parsed.info.owner),
+      state: a.account.data.parsed.info.state,
+      amount: a.account.data.parsed.info.tokenAmount.uiAmount,
+    } as FoundTokenAccount));
   }
 
   /**
@@ -59,6 +86,22 @@ export class SolClient {
     );
   }
 
+  async deserializeToken(mintPk: PublicKey): Promise<Token> {
+    // todo TESTING_KP_PATH should not be used here
+    const tempKp = loadKpSync(TESTING_KP_PATH);
+    return new Token(this.connection, mintPk, TOKEN_PROGRAM_ID, tempKp);
+  }
+
+  async deserializeTokenAcc(mintPk: PublicKey, tokenAccPk: PublicKey): Promise<AccountInfo> {
+    const t = await this.deserializeToken(mintPk);
+    return t.getAccountInfo(tokenAccPk);
+  }
+
+  async deserializeTokenMint(mintPk: PublicKey): Promise<MintInfo> {
+    const t = await this.deserializeToken(mintPk);
+    return t.getMintInfo();
+  }
+
   // --------------------------------------- active
 
   /**
@@ -69,7 +112,7 @@ export class SolClient {
   async prepCreateTokenAccTx(
     ownerPk: PublicKey,
     mintPk: PublicKey,
-  ): Promise<[ixAndSigners, PublicKey]> {
+  ): Promise<[ixsAndSigners, PublicKey]> {
     // Allocate memory for the account
     const balanceNeeded = await this.getMinBalanceRentForExemptAccount();
 
@@ -95,13 +138,15 @@ export class SolClient {
     return [[transaction.instructions, [newAccount]], newAccount.publicKey];
   }
 
-  async prepareAndSendTx(ix: TransactionInstruction[], signers: Signer[]) {
-    const tx = new Transaction().add(...ix);
+  // --------------------------------------- testing only
+
+  async _prepareAndSendTx(ixs: TransactionInstruction[], signers: Signer[]) {
+    const tx = new Transaction().add(...ixs);
     const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
     log('Tx successful,', sig);
   }
 
-  async createMint(ownerKp: Keypair): Promise<Token> {
+  async _createMint(ownerKp: Keypair): Promise<Token> {
     return Token.createMint(
       this.connection,
       ownerKp as any,
@@ -112,21 +157,21 @@ export class SolClient {
     );
   }
 
-  async createTokenAcc(mint: Token, ownerPk: PublicKey): Promise<PublicKey> {
+  async _createTokenAcc(mint: Token, ownerPk: PublicKey): Promise<PublicKey> {
     const newAcc = await mint.createAccount(ownerPk);
     log('Created token account', newAcc.toBase58());
     return newAcc;
   }
 
-  async fundTokenAcc(mint: Token, ownerPk: PublicKey, tokenAccPk: PublicKey, amount: number) {
+  async _fundTokenAcc(mint: Token, ownerPk: PublicKey, tokenAccPk: PublicKey, amount: number) {
     await mint.mintTo(tokenAccPk, ownerPk, [], amount);
     log(`Funded account ${tokenAccPk.toBase58()} with ${amount} tokens of mint ${mint.publicKey.toBase58()}`);
   }
 
   /**
- * WARNING: Doesn't work on localnet
+ * WARNING: Doesn't work on localnet - only devnet
  */
-  async newAccountWithLamports(
+  async _newAccountWithLamports(
     lamports: number = 1000000,
   ): Promise<Account> {
     const account = new Account();
@@ -145,5 +190,3 @@ export class SolClient {
     throw new Error(`Airdrop of ${lamports} failed`);
   }
 }
-
-export default new SolClient();
