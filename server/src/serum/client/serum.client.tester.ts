@@ -19,17 +19,9 @@ export class SerumClientTester extends SerumClient {
 
   quoteMint?: Token;
 
-  marketKp = new Keypair();
+  marketKp?: Keypair;
 
   market?: Market;
-
-  reqQKp = new Keypair();
-
-  eventQKp = new Keypair();
-
-  bidsKp = new Keypair();
-
-  asksKp = new Keypair();
 
   baseVaultPk?: PublicKey;
 
@@ -56,30 +48,15 @@ export class SerumClientTester extends SerumClient {
     // await this.connection.requestAirdrop(this.testingPk, 10 * LAMPORTS_PER_SOL);
 
     console.log('Generating mints');
-    this.baseMint = await this.createMint(this.testingKp);
-    this.quoteMint = await this.createMint(this.testingKp);
+    this.baseMint = await this._createMint(this.testingKp);
+    this.quoteMint = await this._createMint(this.testingKp);
 
     console.log('Generating state accounts');
-    // length taken from here - https://github.com/project-serum/serum-dex/blob/master/dex/crank/src/lib.rs#L1286
-    const marketIx = await this.generateCreateStateAccIx(
-      this.marketKp.publicKey, 376 + 12, this.testingPk,
-    );
-    const requestQueueIx = await this.generateCreateStateAccIx(
-      this.reqQKp.publicKey, 640 + 12, this.testingPk,
-    );
-    const eventQueueIx = await this.generateCreateStateAccIx(
-      this.eventQKp.publicKey, 1048576 + 12, this.testingPk,
-    );
-    const bidsIx = await this.generateCreateStateAccIx(
-      this.bidsKp.publicKey, 65536 + 12, this.testingPk,
-    );
-    const asksIx = await this.generateCreateStateAccIx(
-      this.asksKp.publicKey, 65536 + 12, this.testingPk,
-    );
-
-    await this.prepareAndSendTx(
-      [marketIx, requestQueueIx, eventQueueIx, bidsIx, asksIx],
-      [this.testingKp, this.marketKp, this.reqQKp, this.eventQKp, this.bidsKp, this.asksKp],
+    const [prepIxs, prepKps] = await this.prepStateAccsForNewMarket(this.testingPk);
+    this.marketKp = prepKps[0];
+    await this._prepareAndSendTx(
+      prepIxs,
+      [this.testingKp, ...prepKps],
     );
 
     // create the vault signer PDA
@@ -87,29 +64,30 @@ export class SerumClientTester extends SerumClient {
     // otherwise will get an error: Provided seeds do not result in a valid address
     // see my question in Serum's dev-questions chat
     const [vaultSignerPk, vaultSignerNonce] = await getVaultOwnerAndNonce(
-      this.marketKp.publicKey,
+      prepKps[0].publicKey,
       SERUM_PROG_ID,
     );
 
     console.log('Generating token accounts');
-    this.baseVaultPk = await this.createTokenAcc(this.baseMint, vaultSignerPk as PublicKey);
-    this.quoteVaultPk = await this.createTokenAcc(this.quoteMint, vaultSignerPk as PublicKey);
+    // vaults
+    this.baseVaultPk = await this._createTokenAcc(this.baseMint, vaultSignerPk as PublicKey);
+    this.quoteVaultPk = await this._createTokenAcc(this.quoteMint, vaultSignerPk as PublicKey);
     // user 1
-    this.baseUserPk = await this.createTokenAcc(this.baseMint, this.testingPk);
-    this.quoteUserPk = await this.createTokenAcc(this.quoteMint, this.testingPk);
-    await this.fundTokenAcc(this.quoteMint, this.testingPk, this.quoteUserPk, 1000);
+    this.baseUserPk = await this._createTokenAcc(this.baseMint, this.testingPk);
+    this.quoteUserPk = await this._createTokenAcc(this.quoteMint, this.testingPk);
+    await this._fundTokenAcc(this.quoteMint, this.testingPk, this.quoteUserPk, 1000);
     // user 2
-    this.baseUser2Pk = await this.createTokenAcc(this.baseMint, this.testingPk);
-    this.quoteUser2Pk = await this.createTokenAcc(this.quoteMint, this.testingPk);
-    await this.fundTokenAcc(this.baseMint, this.testingPk, this.baseUser2Pk, 1000);
+    this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.testingPk);
+    this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.testingPk);
+    await this._fundTokenAcc(this.baseMint, this.testingPk, this.baseUser2Pk, 1000);
 
     console.log('Preparing InitMarket ix');
     const [ixM, signersM] = await this.prepInitMarketTx(
       this.marketKp.publicKey,
-      this.reqQKp.publicKey,
-      this.eventQKp.publicKey,
-      this.bidsKp.publicKey,
-      this.asksKp.publicKey,
+      prepKps[1].publicKey,
+      prepKps[2].publicKey,
+      prepKps[3].publicKey,
+      prepKps[4].publicKey,
       this.baseVaultPk,
       this.quoteVaultPk,
       this.baseMint.publicKey,
@@ -121,7 +99,7 @@ export class SerumClientTester extends SerumClient {
       new BN(100),
     );
 
-    await this.prepareAndSendTx(
+    await this._prepareAndSendTx(
       ixM,
       [this.testingKp, ...signersM],
     );
@@ -142,7 +120,7 @@ export class SerumClientTester extends SerumClient {
       this.testingPk,
       payerPk,
     );
-    await this.prepareAndSendTx(
+    await this._prepareAndSendTx(
       [...ixO],
       [this.testingKp, ...signersO],
     );
@@ -159,7 +137,7 @@ export class SerumClientTester extends SerumClient {
       this.baseUser2Pk as PublicKey,
       this.quoteUser2Pk as PublicKey,
     );
-    await this.prepareAndSendTx(
+    await this._prepareAndSendTx(
       [...ixS, ...ixS2],
       [this.testingKp, ...signersS, ...signersS2],
     );
@@ -174,7 +152,7 @@ export class SerumClientTester extends SerumClient {
       orderId,
     );
 
-    await this.prepareAndSendTx(
+    await this._prepareAndSendTx(
       ixC,
       [this.testingKp],
     );

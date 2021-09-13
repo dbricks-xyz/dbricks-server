@@ -6,10 +6,11 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
-import { DexInstructions, Market } from '@project-serum/serum';
+import { DexInstructions, Market, TokenInstructions } from '@project-serum/serum';
 import debug from 'debug';
 import { Order } from '@project-serum/serum/lib/market';
 import {
+  ixAndKp,
   ixAndSigners,
   orderType,
   side,
@@ -150,7 +151,7 @@ export class SerumClient extends SolClient {
     ];
   }
 
-  // --------------------------------------- helpers
+  // --------------------------------------- helpers (passive)
 
   async getPayerFromMarket(
     market: Market,
@@ -191,6 +192,60 @@ export class SerumClient extends SolClient {
     ];
   }
 
+  async loadSerumMarketFromName(
+    name: string,
+  ) {
+    log(`Market pk for market ${name} is ${getSerumMarket(name)}`);
+    return Market.load(this.connection, getSerumMarket(name), {}, SERUM_PROG_ID);
+  }
+
+  async loadSerumMarketFromPk(
+    marketPk: PublicKey,
+  ) {
+    return Market.load(this.connection, marketPk, {}, SERUM_PROG_ID);
+  }
+
+  async loadOrdersForOwner(
+    market: Market,
+    ownerPk: PublicKey,
+  ): Promise<Order[]> {
+    return market.loadOrdersForOwner(
+      this.connection,
+      ownerPk,
+    );
+  }
+
+  async calcBaseAndQuoteLotSizes(
+    lotSize: string,
+    tickSize: string,
+    baseMintPk: PublicKey,
+    quoteMintPk: PublicKey,
+  ): Promise<[BN, BN]> {
+    let baseLotSize;
+    let quoteLotSize;
+
+    const baseMintInfo = await this.deserializeTokenMint(baseMintPk);
+    const quoteMintInfo = await this.deserializeTokenMint(quoteMintPk);
+
+    if (baseMintInfo && parseFloat(lotSize) > 0) {
+      baseLotSize = Math.round(10 ** baseMintInfo.decimals * parseFloat(lotSize));
+      if (quoteMintInfo && parseFloat(tickSize) > 0) {
+        quoteLotSize = Math.round(
+          parseFloat(lotSize)
+          * 10 ** quoteMintInfo.decimals
+          * parseFloat(tickSize),
+        );
+      }
+    }
+    if (!baseLotSize || !quoteLotSize) {
+      throw new Error(`Failed to calculate base/quote lot sizes from lot size ${lotSize} and tick size ${tickSize}`);
+    }
+
+    return [new BN(baseLotSize), new BN(quoteLotSize)];
+  }
+
+  // --------------------------------------- helpers (active)
+
   async getOrCreateTokenAccByMint(
     connection: Connection,
     market: Market,
@@ -218,20 +273,7 @@ export class SerumClient extends SolClient {
     return [ixAndSigners, tokenAccPk];
   }
 
-  async loadSerumMarketFromName(
-    name: string,
-  ) {
-    log(`Market pk for market ${name} is ${getSerumMarket(name)}`);
-    return Market.load(this.connection, getSerumMarket(name), {}, SERUM_PROG_ID);
-  }
-
-  async loadSerumMarketFromPk(
-    marketPk: PublicKey,
-  ) {
-    return Market.load(this.connection, marketPk, {}, SERUM_PROG_ID);
-  }
-
-  async generateCreateStateAccIx(
+  async prepCreateStateAccIx(
     stateAccPk: PublicKey,
     space: number,
     ownerPk: PublicKey,
@@ -245,7 +287,85 @@ export class SerumClient extends SolClient {
     });
   }
 
-  async consumeEvents(market: Market, ownerKp: Keypair) {
+  async prepStateAccsForNewMarket(
+    ownerPk: PublicKey, // wallet owner
+  ) : Promise<ixAndKp> {
+    // do we just throw these away? seems to be the case in their Serum DEX UI
+    // https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L475
+    const marketKp = new Keypair();
+    const reqQKp = new Keypair();
+    const eventQKp = new Keypair();
+    const bidsKp = new Keypair();
+    const asksKp = new Keypair();
+
+    // length taken from here - https://github.com/project-serum/serum-dex/blob/master/dex/crank/src/lib.rs#L1286
+    const marketIx = await this.prepCreateStateAccIx(
+      marketKp.publicKey, 376 + 12, ownerPk,
+    );
+    const reqQIx = await this.prepCreateStateAccIx(
+      reqQKp.publicKey, 640 + 12, ownerPk,
+    );
+    const eventQIx = await this.prepCreateStateAccIx(
+      eventQKp.publicKey, 1048576 + 12, ownerPk,
+    );
+    const bidsIx = await this.prepCreateStateAccIx(
+      bidsKp.publicKey, 65536 + 12, ownerPk,
+    );
+    const asksIx = await this.prepCreateStateAccIx(
+      asksKp.publicKey, 65536 + 12, ownerPk,
+    );
+
+    return [
+      [marketIx, reqQIx, eventQIx, bidsIx, asksIx],
+      [marketKp, reqQKp, eventQKp, bidsKp, asksKp],
+    ];
+  }
+
+  async prepVaultAccs(
+    vaultSignerPk: PublicKey,
+    baseMint: PublicKey,
+    quoteMint: PublicKey,
+    ownerPk: PublicKey, // wallet owner
+  ): Promise<ixAndKp> {
+    const baseVaultKp = new Keypair();
+    const quoteVaultKp = new Keypair();
+
+    // as per https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L519
+    const ixs = [
+      SystemProgram.createAccount({
+        fromPubkey: ownerPk,
+        newAccountPubkey: baseVaultKp.publicKey,
+        lamports: await this.connection.getMinimumBalanceForRentExemption(165),
+        space: 165,
+        programId: TokenInstructions.TOKEN_PROGRAM_ID,
+      }),
+      SystemProgram.createAccount({
+        fromPubkey: ownerPk,
+        newAccountPubkey: quoteVaultKp.publicKey,
+        lamports: await this.connection.getMinimumBalanceForRentExemption(165),
+        space: 165,
+        programId: TokenInstructions.TOKEN_PROGRAM_ID,
+      }),
+      TokenInstructions.initializeAccount({
+        account: baseVaultKp.publicKey,
+        mint: baseMint,
+        owner: vaultSignerPk,
+      }),
+      TokenInstructions.initializeAccount({
+        account: quoteVaultKp.publicKey,
+        mint: quoteMint,
+        owner: vaultSignerPk,
+      }),
+    ];
+    return [
+      ixs,
+      [baseVaultKp, quoteVaultKp],
+    ];
+  }
+
+  // --------------------------------------- testing only
+
+  async _consumeEvents(market: Market, ownerKp: Keypair) {
     const openOrders = await market.findOpenOrdersAccountsForOwner(
       this.connection,
       ownerKp.publicKey,
@@ -253,21 +373,9 @@ export class SerumClient extends SolClient {
     const consumeEventsIx = market.makeConsumeEventsInstruction(
       openOrders.map((oo) => oo.publicKey), 100,
     );
-    await this.prepareAndSendTx(
+    await this._prepareAndSendTx(
       [consumeEventsIx],
       [ownerKp],
     );
   }
-
-  async loadOrdersForOwner(
-    market: Market,
-    ownerPk: PublicKey,
-  ): Promise<Order[]> {
-    return market.loadOrdersForOwner(
-      this.connection,
-      ownerPk,
-    );
-  }
 }
-
-export default new SerumClient();

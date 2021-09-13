@@ -12,7 +12,7 @@ const server: http.Server = http.createServer(app);
 const port = 3000;
 const routes: Array<CommonRoutesConfig> = [];
 // replacement for console-log that will be enabled by DEBUG env variable
-const debugLog: debug.IDebugger = debug('app');
+const log: debug.IDebugger = debug('app');
 
 app.use(e.json());
 app.use(cors());
@@ -40,7 +40,7 @@ app.get('/', (req: e.Request, res: e.Response) => {
 
 server.listen(port, () => {
   routes.forEach((route: CommonRoutesConfig) => {
-    debugLog(`Routes configured for ${route.getName()}`);
+    log(`Routes configured for ${route.getName()}`);
   });
   // the only time we want to use console-log
   console.log(runningMessage);

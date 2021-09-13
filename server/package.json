@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "start": "nodemon --watch './src/*.ts' --exec 'ts-node' src/app.ts",
+    "start": "nodemon --watch './src/**/*.ts' --exec 'ts-node' src/app.ts",
     "debug": "export DEBUG=* && npm run start",
     "test": "jest",
-    "play": "ts-node play/fakeFrontEnd.ts"
+    "play": "ts-node test/fakeFrontEnd.ts"
   },
   "dependencies": {
     "@blockworks-foundation/mango-client": "^3.0.13",

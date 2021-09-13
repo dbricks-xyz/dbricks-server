@@ -2,10 +2,10 @@ import axios from 'axios';
 import {
   deserializeIxs,
   deserializeSigners,
-} from '../src/common/util/common.serializers';
-import { loadKpSync } from '../src/common/util/common.util';
-import { TESTING_KP_PATH } from '../src/config/config';
-import SolClient from '../src/common/client/common.client';
+} from '../../src/common/util/common.serializers';
+import { loadKpSync } from '../../src/common/util/common.util';
+import { TESTING_KP_PATH } from '../../src/config/config';
+import SolClient from '../../src/common/client/common.client';
 
 const BASE = 'ATLAS';
 const QUOTE = 'USDC';
@@ -22,7 +22,7 @@ async function play() {
     orderType: 'ioc',
     ownerPk: ownerKp.publicKey.toBase58(),
   });
-  const r2 = axios.post('http://localhost:3000/serum/settle', {
+  const r2 = axios.post('http://localhost:3000/serum/markets/settle', {
     market: MARKET,
     ownerPk: ownerKp.publicKey.toBase58(),
   });
@@ -38,7 +38,7 @@ async function play() {
   settleSigners = deserializeSigners(settleSigners);
 
   // execute tx
-  await SolClient.prepareAndSendTx(
+  await SolClient._prepareAndSendTx(
     [
       ...placeOrderIx,
       ...settleIx,
