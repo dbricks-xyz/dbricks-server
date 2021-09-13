@@ -65,3 +65,5 @@ describe('Serum Order', () => {
     assert(postTradeBalance === preTradeBalance + 0.1);
   });
 });
+
+// todo this currently requires mainnet, should be devnet
