@@ -1,6 +1,5 @@
-import { PublicKey, Signer, TransactionInstruction } from '@solana/web3.js';
-
-export type ixAndSigners = [TransactionInstruction[], Signer[]];
+import { PublicKey } from '@solana/web3.js';
+import { ixsAndSigners } from '../dex/common.interfaces.dex.order';
 
 export interface ILenderDeposit {
   deposit: (
@@ -8,5 +7,5 @@ export interface ILenderDeposit {
     quantity: number,
     ownerPk: PublicKey,
     destinationPk?: PublicKey,
-  ) => Promise<ixAndSigners>;
+  ) => Promise<ixsAndSigners>;
 }

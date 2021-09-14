@@ -16,7 +16,7 @@ export class MangoRoutes extends CommonRoutesConfig {
         MangoController.deposit,
       );
 
-      this.app.route('/mango/withdraw')
+    this.app.route('/mango/withdraw')
       .post(
         MangoMiddleware.validateStuff,
         MangoController.withdraw,

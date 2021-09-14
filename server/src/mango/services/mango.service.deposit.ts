@@ -1,46 +1,47 @@
-import { PublicKey } from "@solana/web3.js";
-import debug from "debug";
+import { PublicKey } from '@solana/web3.js';
+import debug from 'debug';
+import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
 import {
   ILenderDeposit,
-  ixAndSigners,
-} from "../../common/interfaces/lender/common.interfaces.lender.deposit";
-import MangoClient from "../client/mango.client";
+} from '../../common/interfaces/lender/common.interfaces.lender.deposit';
+import MangoClient from '../client/mango.client';
 
-const log: debug.IDebugger = debug("app:mango-deposit-service");
+const log: debug.IDebugger = debug('app:mango-deposit-service');
 
 class MangoDepositService implements ILenderDeposit {
   async deposit(
     token: string,
     quantity: number,
     ownerPk: PublicKey,
-    destinationPk?: PublicKey
-  ): Promise<ixAndSigners> {
+    destinationPk?: PublicKey,
+  ): Promise<ixsAndSigners> {
     const mangoInformation = await MangoClient.loadAllAccounts(ownerPk, token);
     if (!mangoInformation) {
       return [[], []];
     }
-    const { userAccounts, tokenAccPk, rootBank, nodeBank, vault } =
-      mangoInformation;
+    const {
+      userAccounts, tokenAccPk, rootBank, nodeBank, vault,
+    } = mangoInformation;
 
     if (userAccounts.length === 0) {
-      return await MangoClient.prepInitMangoAccountAndDepositTx(
+      return MangoClient.prepInitMangoAccountAndDepositTx(
         ownerPk,
         rootBank,
         nodeBank,
         vault,
         tokenAccPk,
-        quantity
+        quantity,
       );
     }
 
     let mangoAccount;
     if (destinationPk) {
       mangoAccount = userAccounts.find(
-        (acc) => acc.publicKey.toBase58() === destinationPk.toBase58()
+        (acc) => acc.publicKey.toBase58() === destinationPk.toBase58(),
       );
       if (!mangoAccount) {
         log(
-          `${destinationPk.toBase58()} is not owned by ${ownerPk.toBase58()}`
+          `${destinationPk.toBase58()} is not owned by ${ownerPk.toBase58()}`,
         );
         return [[], []];
       }
@@ -55,7 +56,7 @@ class MangoDepositService implements ILenderDeposit {
       nodeBank,
       vault,
       tokenAccPk,
-      quantity
+      quantity,
     );
   }
 }
