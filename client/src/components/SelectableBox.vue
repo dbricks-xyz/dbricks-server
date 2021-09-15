@@ -10,21 +10,23 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent, computed } from 'vue';
+
+export default defineComponent({
   props: {
     disabled: Boolean,
     selected: Boolean,
     color: String,
   },
-  computed: {
-    style() {
-      return {
-        '--color': this.color ? this.color : 'ghostwhite',
-      };
-    },
+  setup(props) {
+    const style = computed(():{'--color': string} => ({ '--color': props.color ? props.color : 'ghostwhite' }));
+
+    return {
+      style,
+    };
   },
-};
+});
 </script>
 
 <style scoped>
