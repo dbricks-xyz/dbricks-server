@@ -1,19 +1,22 @@
 <template>
-  <div class="z-50 modal">
-    <div class="flex justify-end">
-      <div class="h-4 w-4 cursor-pointer text-white" @click="handleClick">x</div>
+  <div class="z-50 p-10 modal">
+    <div class="flex flex-auto justify-between">
+      <CloseButton color="black"/>
+      <h1>Add a brick</h1>
+      <CloseButton class="cursor-pointer" color="white" @click="handleClick"/>
     </div>
     <slot/>
   </div>
   <div class="z-40 fixed inset-0 opacity-75 bg-black" @click="handleClick"></div>
 </template>
 
-
 <script lang="ts">
-import {defineComponent} from "vue";
+import { defineComponent } from 'vue';
+import CloseButton from '@/components/CloseButton.vue';
 
 export default defineComponent({
-  emits: ["cancel-modal"],
+  components: { CloseButton },
+  emits: ['cancel-modal'],
   props: {
     title: String,
   },
@@ -23,11 +26,10 @@ export default defineComponent({
     };
     return {
       handleClick,
-    }
-  }
-})
+    };
+  },
+});
 </script>
-
 
 <style scoped>
 .modal {

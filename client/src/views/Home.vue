@@ -19,7 +19,7 @@
           class="highlight" :class="{collapse: stateCollapsed}"
           :style="{'z-index':brick.id}"
           :fill="brick.fill"
-          width="150" height="150" viewBox="0 0 452 428" fill="none" xmlns="http://www.w3.org/2000/svg">
+          width="150" height="150" viewBox="0 0 452 428" xmlns="http://www.w3.org/2000/svg">
           <path d="M450 134V298L226 425.5L2 298V134L60 100V96.5C60 80.7599 82.8335 68 111 68C113.03 68 115.032 68.0663 117 68.1952L175 35V30.5C175 14.7599 197.833 2 226 2C254.167 2 277 14.7599 277 30.5V35.5L334.5 68.2293C336.629 68.078 338.798 68 341 68C369.167 68 392 80.7599 392 96.5V100.785L450 134Z"/>
           <path d="M2 134L226 261.5M2 134V298L226 425.5M2 134L60 100M226 261.5V425.5M226 261.5L450 134M226 425.5L450 298V134M450 134L391.502 100.5M277 35.5L334.5 68.2293M277 160.5C277 176.24 254.167 189 226 189C197.833 189 175 176.24 175 160.5M277 160.5C277 144.76 254.167 132 226 132C197.833 132 175 144.76 175 160.5M277 160.5V195.5C277 211.24 254.167 224 226 224C197.833 224 175 211.24 175 195.5V160.5M162 96.5C162 112.24 139.167 125 111 125C82.8335 125 60 112.24 60 96.5M162 96.5C162 80.7599 139.167 68 111 68C82.8335 68 60 80.7599 60 96.5M162 96.5V131.5C162 147.24 139.167 160 111 160C82.8335 160 60 147.24 60 131.5V96.5M392 96.5C392 112.24 369.167 125 341 125C312.833 125 290 112.24 290 96.5M392 96.5C392 80.7599 369.167 68 341 68C312.833 68 290 80.7599 290 96.5M392 96.5V131.5C392 147.24 369.167 160 341 160C312.833 160 290 147.24 290 131.5V96.5M277 30.5C277 46.2401 254.167 59 226 59C197.833 59 175 46.2401 175 30.5M277 30.5C277 14.7599 254.167 2 226 2C197.833 2 175 14.7599 175 30.5M277 30.5V65.5C277 81.2401 254.167 94 226 94C197.833 94 175 81.2401 175 65.5V30.5M117 68.1952L175 35"/>
         </svg>
@@ -31,17 +31,29 @@
     </svg>
 
     <Modal v-if="stateModalActive" @cancel-modal="handleCancelModal">
-      <div class="flex flex-col items-center">
+      <div class="flex flex-row justify-between">
+        <SelectableBox
+          v-for="p in protocols" :key="p.id"
+          class="flex-1"
+          :color="p.color"
+          :selected="selectedProtocolId === p.id"
+          @click="selectedProtocolId = p.id"
+        >
+          <div class="flex flex-col items-center align-middle p-5">
+            <ProtocolLogo :protocol-id="p.id"/>
+            <p class="mt-3">{{p.name}}</p>
+          </div>
+        </SelectableBox>
+      </div>
+      <div class="flex flex-col items-center w-full">
         <p class="text-white">Choose the protocol (eg serum)</p>
         <p class="text-white">Choose the service (eg place order)</p>
         <p class="text-white">Configure it</p>
         <p class="text-white">Configure it</p>
         <p class="text-white">Configure it</p>
-        <p class="text-white">Configure it</p>
+        <p class="text-white">quote / balance is 012345</p>
         <p class="text-white">Hit add when happy</p>
-        <button class="m-4 p-4 w-40 text-xl text-center btn" @click="addBrick">
-          ADD
-        </button>
+        <Button size="med" @click="addBrick">ADD</Button>
       </div>
     </Modal>
   </div>
@@ -49,22 +61,62 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+import resolveConfig from 'tailwindcss/resolveConfig.js';
+import tailwindConfig from '../../tailwind.config.js';
 import Modal from '@/components/Modal.vue';
 import Button from '@/components/Button.vue';
 import SkewedButton from '@/components/SkewedButton.vue';
+import SelectableBox from '@/components/SelectableBox.vue';
+import ProtocolLogo from '@/components/ProtocolLogo.vue';
 
 interface IBrick {
   id: number,
   fill: string,
 }
 
+interface IProtocol {
+  id: number,
+  name: string,
+  color: string,
+  logo: string,
+}
+
 export default defineComponent({
-  components: { SkewedButton, Button, Modal },
+  components: {
+    ProtocolLogo,
+    SelectableBox,
+    SkewedButton,
+    Button,
+    Modal,
+  },
   setup() {
-    const bricks = ref<IBrick[]>([]);
-    const colorChoices = ['#FF0000', '#0EECDD', '#FFF339', '#3F00FF', '#F98505', '#F038A5'];
+    const fullConfig = resolveConfig(tailwindConfig);
     const stateCollapsed = ref(false);
     const stateModalActive = ref(false);
+
+    const bricks = ref<IBrick[]>([]);
+
+    const protocols = ref<IProtocol[]>([
+      {
+        id: 0,
+        name: 'Serum',
+        color: fullConfig.theme.colors.db.serum,
+        logo: '@/assets/protocols/serumlogo.svg',
+      },
+      {
+        id: 1,
+        name: 'Mango',
+        color: fullConfig.theme.colors.db.mango,
+        logo: '@/assets/protocols/mangologo.svg',
+      },
+      {
+        id: 2,
+        name: 'Saber',
+        color: fullConfig.theme.colors.db.saber,
+        logo: '@/assets/protocols/saberlogo.jpeg',
+      },
+    ]);
+    const selectedProtocolId = ref<number | undefined>(undefined);
 
     const openConfig = () => {
       stateModalActive.value = true;
@@ -73,10 +125,9 @@ export default defineComponent({
       stateModalActive.value = false;
       bricks.value.unshift({
         id: bricks.value.length,
-        fill: colorChoices[getRandomInt(6)],
+        fill: protocols.value.filter((p) => p.id === selectedProtocolId.value)[0].color,
       });
     };
-    const getRandomInt = (max: number) => Math.floor(Math.random() * max);
     const sendTx = () => {
       stateCollapsed.value = true;
     };
@@ -86,12 +137,12 @@ export default defineComponent({
 
     return {
       bricks,
-      colorChoices,
       stateCollapsed,
       stateModalActive,
+      protocols,
+      selectedProtocolId,
       openConfig,
       addBrick,
-      getRandomInt,
       sendTx,
       handleCancelModal,
     };

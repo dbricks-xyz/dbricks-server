@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <a class="cta" href="#">
+    <button class="cta">
     <span>
       <slot/>
     </span>
@@ -13,12 +13,20 @@
         </g>
       </svg>
     </span>
-    </a>
+    </button>
   </div>
 </template>
 
-<script>
-export default {}
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+  setup() {
+    return {
+
+    };
+  },
+});
 </script>
 
 <style scoped>
@@ -38,8 +46,8 @@ export default {}
   color: black;
   background: theme('colors.db.cyan');
   transition: 1s;
-  /*box-shadow: 6px 6px 10px black;*/
   transform: skewX(-15deg);
+  outline: none;
 }
 
 .cta:focus {

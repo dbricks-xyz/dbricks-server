@@ -25,7 +25,8 @@ module.exports = {
         "no-shadow": "off",
         "no-unused-vars": "off",
         "class-methods-use-this": "off",
-        "no-underscore-dangle": "off"
+        "no-underscore-dangle": "off",
+        "max-len": "off"
       }
     }
   ]

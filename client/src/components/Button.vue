@@ -1,23 +1,52 @@
 <template>
-  <button class="m-4 p-4 w-40 text-white text-xl text-center btn">
+  <button
+    class="text-center btn m-5"
+    :class="size"
+  >
     <slot/>
   </button>
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
-export default defineComponent( {
-  setup() {
-    return {
+import { defineComponent } from 'vue';
 
-    }
-  }
-})
+export default defineComponent({
+  props: {
+    size: String,
+  },
+  setup() {
+    return {};
+  },
+});
 </script>
 
 <style scoped>
 .btn {
-  background-color: #3F00FF;
+  background-color: theme('colors.db.cyan');
   font-family: 'superman', sans-serif;
+  outline: none;
+}
+
+.btn:hover {
+  transition: 0.5s;
+  box-shadow: 0 0 20px theme('colors.db.pink');
+}
+
+.large {
+  height: 60px;
+  padding: 10px 45px;
+  font-size: 30px;
+}
+
+.med {
+  height: 45px;
+  padding: 6px 30px;
+  font-size: 25px;
+}
+
+.small {
+  height: 35px;
+  padding: 4px 20px;
+  font-size: 20px;
 }
 </style>
