@@ -5,6 +5,7 @@ export interface ILenderWithdraw {
   withdraw: (
     token: string,
     quantity: number,
+    isborrow: boolean,
     ownerPk: PublicKey,
     sourcePk?: PublicKey,
   ) => Promise<ixsAndSigners>;

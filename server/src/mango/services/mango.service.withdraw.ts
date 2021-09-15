@@ -2,13 +2,13 @@ import { PublicKey } from '@solana/web3.js';
 import debug from 'debug';
 import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
 import { ILenderWithdraw } from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
-import MangoClient from '../client/mango.client';
+import { MangoClient } from '../client/mango.client';
 
 const log: debug.IDebugger = debug('app:mango-withdraw-service');
 
-class MangoWithdrawService implements ILenderWithdraw {
-  async withdraw(token: string, quantity: number, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixsAndSigners> {
-    const mangoInformation = await MangoClient.loadAllAccounts(ownerPk, token);
+class MangoWithdrawService extends MangoClient implements ILenderWithdraw {
+  async withdraw(token: string, quantity: number, isborrow: boolean, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixsAndSigners> {
+    const mangoInformation = await this.loadAllAccounts(ownerPk, token);
     if (!mangoInformation) {
       return [[], []];
     }
@@ -31,14 +31,14 @@ class MangoWithdrawService implements ILenderWithdraw {
       return [[], []];
     }
 
-    return MangoClient.prepWithdrawTx(
+    return this.prepWithdrawTx(
       mangoAccount,
       ownerPk,
       rootBank,
       nodeBank,
       vault,
       quantity,
-      false,
+      isborrow,
     );
   }
 }

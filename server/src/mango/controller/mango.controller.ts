@@ -19,9 +19,8 @@ class MangoController {
       deserializePk(req.body.ownerPk),
       req.body.destinationPk ? deserializePk(req.body.destinationPk) : undefined,
     );
-    const serializedSigners = serializeSigners(signers);
     log('Deposit instruction generated');
-    res.status(200).send([serializeIxs(ix), serializedSigners]);
+    res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
   }
 
   async withdraw(req: e.Request, res: e.Response) {
@@ -29,10 +28,24 @@ class MangoController {
     const [ix, signers] = await MangoWithdrawService.withdraw(
       req.body.token,
       req.body.quantity,
+      false,
       deserializePk(req.body.ownerPk),
       req.body.sourcePk ? deserializePk(req.body.sourcePk) : undefined,
     );
     log('Withdraw instruction generated');
+    res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
+  }
+
+  async borrow(req: e.Request, res: e.Response) {
+    log('Begin borrow');
+    const [ix, signers] = await MangoWithdrawService.withdraw(
+      req.body.token,
+      req.body.quantity,
+      true,
+      deserializePk(req.body.ownerPk),
+      req.body.sourcePk ? deserializePk(req.body.sourcePk) : undefined,
+    );
+    log('Borrow instruction generated');
     res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
   }
 }

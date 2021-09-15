@@ -22,6 +22,12 @@ export class MangoRoutes extends CommonRoutesConfig {
         MangoController.withdraw,
       );
 
+    this.app.route('/mango/borrow')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.borrow,
+      );
+
     return this.app;
   }
 }

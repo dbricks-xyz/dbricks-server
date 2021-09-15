@@ -194,19 +194,4 @@ export default class SolClient {
     }
     throw new Error(`Airdrop of ${lamports} failed`);
   }
-
-  async _confirmTransaction(txId: string) {
-    let retries = 30;
-    for (;;) {
-      await sleep(1000);
-      const resp = await this.connection.getTransaction(txId, { commitment: 'finalized' });
-      if (resp) {
-        return;
-      }
-      if (--retries <= 0) {
-        break;
-      }
-    }
-    throw new Error(`Could not confirm transaction: ${txId}`);
-  }
 }

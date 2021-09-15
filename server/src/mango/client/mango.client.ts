@@ -1,16 +1,23 @@
 import {
+  Cluster,
+  Config,
   createAccountInstruction,
+  getAllMarkets,
+  getMultipleAccounts,
   getTokenAccountsByOwnerWithWrappedSol,
   IDS,
   makeDepositInstruction,
   makeInitMangoAccountInstruction,
+  makeSettleFundsInstruction,
   makeWithdrawInstruction,
   MangoAccount,
   MangoAccountLayout,
   MangoClient as NativeMangoClient,
   MangoGroup,
+  QUOTE_INDEX,
   uiToNative,
 } from '@blockworks-foundation/mango-client';
+import { Market } from '@project-serum/serum';
 import {
   WRAPPED_SOL_MINT,
   initializeAccount,
@@ -44,23 +51,37 @@ export class MangoClient extends SolClient {
 
   group!: MangoGroup;
 
+  groupName: string;
+
+  cluster: Cluster;
+
+  mangoGroupIds: any;
+
   constructor() {
     super();
     this.nativeClient = new NativeMangoClient(this.connection, MANGO_PROG_ID);
+    if (process.env.NETWORK === 'mainnet') {
+      this.groupName = 'mainnet.1';
+      this.cluster = 'mainnet';
+    } else {
+      this.groupName = 'devnet.2';
+      this.cluster = 'devnet';
+    }
+
+    this.mangoGroupIds = IDS.groups.find(
+      (group) => group.name === this.groupName,
+    );
+    if (!this.mangoGroupIds) {
+      log('Error initializing Mango client');
+      return;
+    }
+
     log('Initialized Mango client');
   }
 
   async loadGroup() {
-    const MANGO_GROUP_NAME = process.env.NETWORK === 'mainnet' ? 'mainnet.1' : 'devnet.2';
-    const mangoGroupIds = IDS.groups.find(
-      (group) => group.name === MANGO_GROUP_NAME,
-    );
-    if (!mangoGroupIds) {
-      log('Failed to connect to Mango');
-      return;
-    }
     const mangoGroup = await this.nativeClient.getMangoGroup(
-      new PublicKey(mangoGroupIds.publicKey),
+      new PublicKey(this.mangoGroupIds.publicKey),
     );
     await mangoGroup.loadRootBanks(this.connection);
     await Promise.all(
@@ -74,7 +95,7 @@ export class MangoClient extends SolClient {
       await this.loadGroup();
     }
     try {
-      return await this.nativeClient.getMangoAccountsForOwner(
+      return this.nativeClient.getMangoAccountsForOwner(
         this.group,
         ownerPk,
         true,
@@ -93,9 +114,7 @@ export class MangoClient extends SolClient {
       await this.loadGroup();
     }
     const tokenAccounts = await getTokenAccountsByOwnerWithWrappedSol(this.connection, ownerPk);
-    console.log(tokenAccounts.map((o) => o.mint.toBase58()));
     const mintAddress = getMint(token);
-    console.log(mintAddress.toBase58());
     const tokenAccount = tokenAccounts.find(
       (acc) => acc.mint.toBase58() === mintAddress.toBase58(),
     );
@@ -123,6 +142,46 @@ export class MangoClient extends SolClient {
       vault,
     };
   }
+
+  // async loadSpotMarkets() {
+  //   const mangoGroupConfig = Config.ids().getGroup(
+  //     this.cluster,
+  //     this.groupName,
+  //   );
+  //   if (!mangoGroupConfig) {
+  //     log('Error loading Mango Group Configuration');
+  //     return [];
+  //   }
+  //   const allMarketConfigs = getAllMarkets(mangoGroupConfig);
+  //   const allMarketPks = allMarketConfigs.map((m) => m.publicKey);
+
+  //   let allMarketAccountInfos: { accountInfo: { data: any; }; }[];
+  //   try {
+  //     const resp = await Promise.all([
+  //       getMultipleAccounts(this.connection, allMarketPks),
+  //       this.group.loadCache(this.connection),
+  //       this.group.loadRootBanks(this.connection),
+  //     ]);
+  //     allMarketAccountInfos = resp[0];
+  //   } catch {
+  //     log('Failed to load markets');
+  //     return [];
+  //   }
+
+  //   const spotMarkets = allMarketConfigs.filter((config) => config.kind == 'spot').map((config, i) => {
+  //     const decoded = Market.getLayout(MANGO_PROG_ID).decode(
+  //       allMarketAccountInfos[i].accountInfo.data,
+  //     );
+  //     return new Market(
+  //       decoded,
+  //       config.baseDecimals,
+  //       config.quoteDecimals,
+  //       undefined,
+  //       mangoGroupConfig.serumProgramId,
+  //     );
+  //   });
+  //   return spotMarkets;
+  // }
 
   async prepDepositTx(
     mangoAccount: MangoAccount,
@@ -394,6 +453,75 @@ export class MangoClient extends SolClient {
 
     return [transactionIx, additionalSigners];
   }
+
+  // async prepSettleSpotTx(
+  //   mangoGroup: MangoGroup,
+  //   mangoAccount: MangoAccount,
+  //   spotMarkets: Market[],
+  //   ownerPk: PublicKey,
+  // ): Promise<ixsAndSigners> {
+  //   const transactionIx = [];
+
+  //   for (let i = 0; i < spotMarkets.length; i += 1) {
+  //     const openOrdersAccount = mangoAccount.spotOpenOrdersAccounts[i];
+  //     if (openOrdersAccount === undefined) {
+  //       continue;
+  //     } else if (
+  //       openOrdersAccount.quoteTokenFree.toNumber()
+  //         + openOrdersAccount['referrerRebatesAccrued'].toNumber()
+  //         === 0 &&
+  //       openOrdersAccount.baseTokenFree.toNumber() === 0
+  //     ) {
+  //       continue;
+  //     }
+
+  //     const spotMarket = spotMarkets[i];
+  //     const dexSigner = await PublicKey.createProgramAddress(
+  //       [
+  //         spotMarket.publicKey.toBuffer(),
+  //         spotMarket['_decoded'].vaultSignerNonce.toArrayLike(Buffer, 'le', 8),
+  //       ],
+  //       spotMarket.programId,
+  //     );
+
+  //     if (!mangoGroup.rootBankAccounts.length) {
+  //       await mangoGroup.loadRootBanks(this.connection);
+  //     }
+  //     const baseRootBank = mangoGroup.rootBankAccounts[i];
+  //     const quoteRootBank = mangoGroup.rootBankAccounts[QUOTE_INDEX];
+  //     const baseNodeBank = baseRootBank?.nodeBankAccounts[0];
+  //     const quoteNodeBank = quoteRootBank?.nodeBankAccounts[0];
+
+  //     if (!baseNodeBank || !quoteNodeBank) {
+  //       throw new Error('Invalid or missing node banks');
+  //     }
+
+  //     const instruction = makeSettleFundsInstruction(
+  //       MANGO_PROG_ID,
+  //       mangoGroup.publicKey,
+  //       mangoGroup.mangoCache,
+  //       ownerPk,
+  //       mangoAccount.publicKey,
+  //       spotMarket.programId,
+  //       spotMarket.publicKey,
+  //       mangoAccount.spotOpenOrders[i],
+  //       mangoGroup.signerKey,
+  //       spotMarket['_decoded'].baseVault,
+  //       spotMarket['_decoded'].quoteVault,
+  //       mangoGroup.tokens[i].rootBank,
+  //       baseNodeBank.publicKey,
+  //       mangoGroup.tokens[QUOTE_INDEX].rootBank,
+  //       quoteNodeBank.publicKey,
+  //       baseNodeBank.vault,
+  //       quoteNodeBank.vault,
+  //       dexSigner,
+  //     );
+
+  //     transactionIx.push(instruction);
+  //   }
+
+  //   return [transactionIx, []];
+  // }
 }
 
 export default new MangoClient();
