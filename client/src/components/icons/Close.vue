@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <a href="#">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
       width="50px" height="50px" viewBox="0 0 50 50" enable-background="new 0 0 50 50" xml:space="preserve">
 
@@ -8,7 +8,7 @@
       <line id="path3" fill="none" :stroke="color" stroke-width="3" stroke-miterlimit="10" x1="41.5" y1="41.5" x2="8.5" y2="8.5"/>
     </g>
     </svg>
-  </div>
+  </a>
 </template>
 
 <script lang="ts">
@@ -26,9 +26,14 @@ export default defineComponent({
 
 <style scoped>
 svg {
-  height: 25px;
-  width: 25px;
+  height: 24px;
+  width: 24px;
   @apply m-5;
+  transition: all .2s ease-in-out;
+}
+
+svg:hover {
+  filter: drop-shadow(0px 0px 5px ghostwhite);
 }
 
 body {

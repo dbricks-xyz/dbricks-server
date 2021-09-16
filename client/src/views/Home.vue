@@ -21,7 +21,7 @@
         >
           <div class="space-filler"></div>
           <svg
-            class="dbrick mx-10"
+            class="dbrick mx-20"
             :class="{highlight: configuredBricks.indexOf(brick.id) === -1}"
             :style="{'z-index':brick.id}"
             :fill="brick.fill"
@@ -30,9 +30,9 @@
             <path d="M2 134L226 261.5M2 134V298L226 425.5M2 134L60 100M226 261.5V425.5M226 261.5L450 134M226 425.5L450 298V134M450 134L391.502 100.5M277 35.5L334.5 68.2293M277 160.5C277 176.24 254.167 189 226 189C197.833 189 175 176.24 175 160.5M277 160.5C277 144.76 254.167 132 226 132C197.833 132 175 144.76 175 160.5M277 160.5V195.5C277 211.24 254.167 224 226 224C197.833 224 175 211.24 175 195.5V160.5M162 96.5C162 112.24 139.167 125 111 125C82.8335 125 60 112.24 60 96.5M162 96.5C162 80.7599 139.167 68 111 68C82.8335 68 60 80.7599 60 96.5M162 96.5V131.5C162 147.24 139.167 160 111 160C82.8335 160 60 147.24 60 131.5V96.5M392 96.5C392 112.24 369.167 125 341 125C312.833 125 290 112.24 290 96.5M392 96.5C392 80.7599 369.167 68 341 68C312.833 68 290 80.7599 290 96.5M392 96.5V131.5C392 147.24 369.167 160 341 160C312.833 160 290 147.24 290 131.5V96.5M277 30.5C277 46.2401 254.167 59 226 59C197.833 59 175 46.2401 175 30.5M277 30.5C277 14.7599 254.167 2 226 2C197.833 2 175 14.7599 175 30.5M277 30.5V65.5C277 81.2401 254.167 94 226 94C197.833 94 175 81.2401 175 65.5V30.5M117 68.1952L175 35"/>
           </svg>
           <BrickConfig
-            :brick-id="brick.id"
-            :brick-type="brick.type"
-            @edit-me="handleEditMe">
+            :brick="brick"
+            @start-edit="handleStartEdit"
+            @end-edit="handleEndEdit">
           </BrickConfig>
         </div>
       </transition-group>
@@ -52,10 +52,13 @@ import { defineComponent, ref } from 'vue';
 import SkewedButton from '@/components/SkewedButton.vue';
 import AddBrick from '@/views/AddBrick.vue';
 import BrickConfig from '@/components/BrickConfig.vue';
+import { getProtocol } from '@/common/protocols';
 
 interface IBrick {
   id: number,
   fill: string,
+  protocolId: number,
+  actionId: number,
 }
 
 export default defineComponent({
@@ -84,15 +87,21 @@ export default defineComponent({
       stateModalActive.value = false;
       bricks.value.unshift({
         id: bricks.value.length,
-        fill: newBrick.fill,
+        fill: getProtocol(newBrick.protocolId).color,
+        protocolId: newBrick.protocolId,
+        actionId: newBrick.actionId,
       });
     };
-    const handleEditMe = (brick) => {
+    const handleStartEdit = (brick) => {
+      const i = configuredBricks.value.indexOf(brick.brickId);
+      if (i >= 0) {
+        configuredBricks.value.splice(i, 1);
+      }
+    };
+    const handleEndEdit = (brick) => {
       const i = configuredBricks.value.indexOf(brick.brickId);
       if (i === -1) {
         configuredBricks.value.push(brick.brickId);
-      } else {
-        configuredBricks.value.splice(i, 1);
       }
     };
 
@@ -105,7 +114,8 @@ export default defineComponent({
       sendTx,
       handleCancelModal,
       handleNewBrick,
-      handleEditMe,
+      handleStartEdit,
+      handleEndEdit,
     };
   },
 });

@@ -1,9 +1,9 @@
 <template>
   <div class="z-50 p-10 modal">
     <div class="flex flex-auto justify-between">
-      <CloseButton color="black"/>
+      <Close color="black"/>
       <h1>Add a brick</h1>
-      <CloseButton class="cursor-pointer" color="white" @click="handleClick"/>
+      <Close class="cursor-pointer" color="white" @click="handleClick"/>
     </div>
     <slot/>
   </div>
@@ -12,10 +12,10 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import CloseButton from '@/components/CloseButton.vue';
+import Close from '@/components/icons/Close.vue';
 
 export default defineComponent({
-  components: { CloseButton },
+  components: { Close },
   emits: ['cancel-modal'],
   props: {
     title: String,

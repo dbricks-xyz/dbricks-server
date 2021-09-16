@@ -45,7 +45,7 @@ p {
 }
 
 a {
-  @apply m-3 text-db-pink;
+  @apply text-db-pink;
 }
 
 </style>
