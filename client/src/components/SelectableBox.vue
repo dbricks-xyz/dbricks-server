@@ -41,7 +41,7 @@ export default defineComponent({
 }
 
 .selected {
-  box-shadow: inset 0px 0px 30px var(--color);
+  box-shadow: inset 0px 0px 20px var(--color);
 }
 
 .disabled {
