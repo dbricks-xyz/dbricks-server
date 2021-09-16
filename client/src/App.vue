@@ -11,12 +11,17 @@
 <style>
 @font-face {
   font-family: "superman";
-  src: local("superman"), url('assets/superman.otf') format("truetype");
+  src: local("superman"), url('common/assets/superman.otf') format("truetype");
 }
 
 @font-face {
   font-family: "roboto";
-  src: local("roboto"), url('assets/roboto.ttf') format("truetype");
+  src: local("roboto"), url('common/assets/roboto.ttf') format("truetype");
+}
+
+* {
+  font-family: 'roboto', monospace;
+  color: white;
 }
 
 body {
@@ -39,13 +44,16 @@ h3 {
   font-family: 'superman', sans-serif;
 }
 
-p {
-  @apply m-3 text-white;
-  font-family: 'roboto', monospace;
+p, input, label {
+  @apply m-1;
 }
 
 a {
   @apply text-db-pink;
+}
+
+input {
+  @apply bg-black border border-solid border-gray-500 p-1;
 }
 
 </style>

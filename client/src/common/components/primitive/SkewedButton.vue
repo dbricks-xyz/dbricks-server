@@ -1,9 +1,9 @@
 <template>
   <div class="wrapper">
     <button class="cta">
-    <span>
-      <slot/>
-    </span>
+      <span>
+        <p class="text">{{ text }}</p>
+      </span>
       <span>
       <svg viewBox="0 0 66 43" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <g id="arrow" stroke="none" stroke-width="1" fill-rule="evenodd">
@@ -21,15 +21,23 @@
 import { defineComponent } from 'vue';
 
 export default defineComponent({
+  props: {
+    text: String,
+  },
   setup() {
-    return {
-
-    };
+    return {};
   },
 });
 </script>
 
 <style scoped>
+.text {
+  font-family: 'superman', sans-serif !important;
+  font-size: 30px;
+  font-style: italic;
+  color: black !important;
+}
+
 .wrapper {
   display: flex;
   justify-content: center;
@@ -40,10 +48,6 @@ export default defineComponent({
   display: flex;
   padding: 10px 45px;
   text-decoration: none;
-  font-family: 'superman', sans-serif;
-  font-size: 30px;
-  font-style: italic;
-  color: black;
   background: theme('colors.db.cyan');
   transition: 1s;
   transform: skewX(-15deg);

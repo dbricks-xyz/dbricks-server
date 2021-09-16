@@ -28,17 +28,17 @@
     </SelectableBox>
 
     <div class="flex flex-col items-center w-full">
-      <Button size="med" @click="emitNewBrick">ADD</Button>
+      <Button class="mt-5" size="med" @click="emitNewBrick">ADD</Button>
     </div>
   </Modal>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import Modal from '@/components/Modal.vue';
-import Button from '@/components/Button.vue';
-import SelectableBox from '@/components/SelectableBox.vue';
-import ProtocolLogo from '@/components/ProtocolLogo.vue';
+import Modal from '@/common/components/primitive/Modal.vue';
+import Button from '@/common/components/primitive/Button.vue';
+import SelectableBox from '@/common/components/primitive/SelectableBox.vue';
+import ProtocolLogo from '@/common/components/ProtocolLogo.vue';
 import { listProtocols, getProtocol } from '@/common/protocols';
 
 export default defineComponent({

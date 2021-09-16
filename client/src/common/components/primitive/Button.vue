@@ -1,6 +1,6 @@
 <template>
   <button
-    class="text-center btn m-5"
+    class="text-center btn"
     :class="size"
   >
     <slot/>
@@ -25,6 +25,7 @@ export default defineComponent({
   background-color: theme('colors.db.cyan');
   font-family: 'superman', sans-serif;
   outline: none;
+  color: black !important;
 }
 
 .btn:hover {

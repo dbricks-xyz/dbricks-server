@@ -7,6 +7,7 @@ interface IAction {
   id: number,
   name: string,
   path: string,
+  method: string,
 }
 
 interface IProtocol {
@@ -24,10 +25,15 @@ const protocols: IProtocol[] = ([
     color: fullConfig.theme.colors.db.serum,
     logo: '@/assets/protocols/serumlogo.svg',
     actions: [
-      { id: 0, name: 'Initialize market', path: '/serum/markets' },
-      { id: 1, name: 'Place order', path: '/serum/orders' },
-      { id: 2, name: 'Cancel order', path: '/serum/orders/cancel' },
-      { id: 3, name: 'Settle funds', path: '/serum/markets/settle' },
+      {
+        id: 0, name: 'Place order', path: '/serum/orders', method: 'POST',
+      },
+      {
+        id: 1, name: 'Cancel order', path: '/serum/orders/cancel', method: 'POST',
+      },
+      {
+        id: 2, name: 'Initialize market', path: '/serum/markets', method: 'POST',
+      },
     ],
   },
   {
@@ -35,14 +41,22 @@ const protocols: IProtocol[] = ([
     name: 'Mango',
     color: fullConfig.theme.colors.db.mango,
     logo: '@/assets/protocols/mangologo.svg',
-    actions: [],
+    actions: [
+      {
+        id: 0, name: 'Initialize market', path: '/mango/markets', method: 'POST',
+      },
+    ],
   },
   {
     id: 2,
     name: 'Saber',
     color: fullConfig.theme.colors.db.saber,
     logo: '@/assets/protocols/saberlogo.jpeg',
-    actions: [],
+    actions: [
+      {
+        id: 0, name: 'Initialize market', path: '/saber/markets', method: 'POST',
+      },
+    ],
   },
 ]);
 
