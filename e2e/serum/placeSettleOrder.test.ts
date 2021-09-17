@@ -1,5 +1,5 @@
 // import request from 'supertest';
-// import { deserializeIxs, deserializeSigners } from '../../src/common/util/common.serializers';
+// import { deserializeIxs, deserializeSigners } from 'dbricks-lib';
 // import { assert, loadKpSync } from '../../src/common/util/common.util';
 // import { TESTING_KP_PATH } from '../../src/config/config';
 // import SerumClient from '../../src/serum/client/serum.client';

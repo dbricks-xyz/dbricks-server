@@ -801,6 +801,26 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
+"@solana/web3.js@^1.27.0":
+  version "1.27.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.27.0.tgz#e8db617455a03e6cfc087fa692cdb03e722b71aa"
+  integrity sha512-1vz503S39CgVwT3b8Y8HhDl4u7NpyoG/UtJKwlPZCYx+11q/qqcfpdbHXNSq2cu7FQma3MHa5wHILd8k1Vz2wQ==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@solana/buffer-layout" "^3.0.0"
+    bn.js "^5.0.0"
+    borsh "^0.4.0"
+    bs58 "^4.0.1"
+    buffer "6.0.1"
+    cross-fetch "^3.1.4"
+    crypto-hash "^1.2.2"
+    jayson "^3.4.4"
+    js-sha3 "^0.8.0"
+    rpc-websockets "^7.4.2"
+    secp256k1 "^4.0.2"
+    superstruct "^0.14.2"
+    tweetnacl "^1.0.0"
+
 "@szmarczak/http-timer@^1.1.2":
   version "1.1.2"
   resolved "https://registry.npmjs.org/@szmarczak/http-timer/-/http-timer-1.1.2.tgz"
@@ -1923,6 +1943,13 @@ cross-fetch@3.0.6:
   dependencies:
     node-fetch "2.6.1"
 
+cross-fetch@^3.1.4:
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/cross-fetch/-/cross-fetch-3.1.4.tgz#9723f3a3a247bf8b89039f3a380a9244e8fa2f39"
+  integrity sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==
+  dependencies:
+    node-fetch "2.6.1"
+
 cross-spawn@^7.0.2, cross-spawn@^7.0.3:
   version "7.0.3"
   resolved "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.3.tgz"
@@ -1967,6 +1994,16 @@ data-urls@^2.0.0:
     abab "^2.0.3"
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
+
+dbricks-lib@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/dbricks-lib/-/dbricks-lib-0.1.0.tgz#2b34beb9991c70ca03c2692ca4c42bd1e58aa469"
+  integrity sha512-lxeN7ybZr/0BGNeOgi0y6AxfgQu6b8PPOIQ57QaGg63O91ShFZIENsU7nAcyhf8oSrmc++uwMryJTC9SoHdsxQ==
+  dependencies:
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.27.0"
+    bn.js "^5.2.0"
+    borsh "^0.6.0"
 
 debug@2.6.9, debug@^2.2.0, debug@^2.6.9:
   version "2.6.9"

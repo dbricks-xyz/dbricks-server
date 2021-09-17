@@ -1,10 +1,6 @@
 import { Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import request from 'supertest';
 import app from '../../src/app';
-import {
-  deserializeIxs,
-  deserializeSigners,
-} from '../../src/common/util/common.serializers';
 import { assert } from '../../src/common/util/common.util';
 import MangoClientTester from '../../src/mango/client/mango.client.tester';
 

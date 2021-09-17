@@ -1,12 +1,12 @@
 import e from 'express';
 import debug from 'debug';
-import MangoDepositService from '../services/mango.service.deposit';
-import MangoWithdrawService from '../services/mango.service.withdraw';
 import {
   deserializePk,
   serializeIxs,
   serializeSigners,
-} from '../../common/util/common.serializers';
+} from 'dbricks-lib';
+import MangoDepositService from '../services/mango.service.deposit';
+import MangoWithdrawService from '../services/mango.service.withdraw';
 
 const log: debug.IDebugger = debug('app:mango-controller');
 

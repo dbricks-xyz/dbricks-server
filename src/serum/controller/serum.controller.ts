@@ -1,12 +1,12 @@
 import e from 'express';
 import debug from 'debug';
 import BN from 'bn.js';
-import SerumOrderService from '../services/serum.service.order';
 import {
   deserializePk,
   serializeIxs,
   serializeSigners,
-} from '../../common/util/common.serializers';
+} from 'dbricks-lib';
+import SerumOrderService from '../services/serum.service.order';
 import SerumMarketService from '../services/serum.service.market';
 
 const log: debug.IDebugger = debug('app:serum-controller');
