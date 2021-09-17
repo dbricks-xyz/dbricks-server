@@ -6,7 +6,6 @@ import MangoController from '../controller/mango.controller';
 export class MangoRoutes extends CommonRoutesConfig {
   constructor(app: e.Application) {
     super(app, 'MangoRoutes');
-    this.configureRoutes();
   }
 
   configureRoutes(): e.Application {

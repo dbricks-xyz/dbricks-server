@@ -316,10 +316,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@blockworks-foundation/mango-client@^3.0.13":
-  version "3.0.13"
-  resolved "https://registry.npmjs.org/@blockworks-foundation/mango-client/-/mango-client-3.0.13.tgz"
-  integrity sha512-7VqkOFuFKlUN2IHLC20H+mZznBDX5vb283MJqlIAFZjjYSC09Avo/Il11gZhtm0JOL51mmrlgSGTCzZHk1QCGQ==
+"@blockworks-foundation/mango-client@^3.0.18":
+  version "3.0.18"
+  resolved "https://registry.yarnpkg.com/@blockworks-foundation/mango-client/-/mango-client-3.0.18.tgz#f665406365610fc9bbe3fecdd191fec9bd36df88"
+  integrity sha512-tcKrkp8R8fIpVnrcUWFeQLKQK/bRHDntHOIVwo1R3MbwCWcPrnt2Y68Ev4LEpBzQ1B8WXcHqwOXc2hS2Wx/bnA==
   dependencies:
     "@project-serum/serum" "0.13.55"
     "@project-serum/sol-wallet-adapter" "^0.2.0"
@@ -329,7 +329,6 @@
     big.js "^6.1.1"
     bigint-buffer "^1.1.5"
     bn.js "^5.1.0"
-    borsh "https://github.com/defactojob/borsh-js#field-mapper"
     buffer-layout "^1.2.1"
     yargs "^17.0.1"
 
@@ -619,7 +618,7 @@
 
 "@project-serum/serum@0.13.55":
   version "0.13.55"
-  resolved "https://registry.npmjs.org/@project-serum/serum/-/serum-0.13.55.tgz"
+  resolved "https://registry.yarnpkg.com/@project-serum/serum/-/serum-0.13.55.tgz#2ac44fe7b07651274eb57ac54ea9325789df5dd7"
   integrity sha512-SPQ4NsuNbBJO3mLGnTYbjt47WCXoNIcW2C9xv0gNXyG62dxgONsAEEgErKv1gT34hWCMPsXFSpatnX6ppriq7w==
   dependencies:
     "@project-serum/anchor" "^0.11.1"
@@ -652,7 +651,7 @@
 
 "@project-serum/sol-wallet-adapter@^0.2.0":
   version "0.2.5"
-  resolved "https://registry.npmjs.org/@project-serum/sol-wallet-adapter/-/sol-wallet-adapter-0.2.5.tgz"
+  resolved "https://registry.yarnpkg.com/@project-serum/sol-wallet-adapter/-/sol-wallet-adapter-0.2.5.tgz#d949a8cc4d2f74e31e4f0205989703977689c76b"
   integrity sha512-Y0XHe+FXXJ7P8XZtx3luAlatO0ge2LdrZUCmqMSzJf+K+fko+qTYIBSUuWwO7y/O4brIXVReR1mEUvF6QKDF2w==
   dependencies:
     bs58 "^4.0.1"
@@ -764,7 +763,7 @@
 
 "@solana/web3.js@1.21.0":
   version "1.21.0"
-  resolved "https://registry.npmjs.org/@solana/web3.js/-/web3.js-1.21.0.tgz"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.21.0.tgz#4f98edea38d4cb3ae4d2ea49a050b0ec09508023"
   integrity sha512-x1NXlF92tEjxuTxS0u4n9JV17UKk0Dn2L+qSWGvKOb4iWhzApDj6wicJsrGdSbGdxnZ7eciQ/SNn3zB4ydUllA==
   dependencies:
     "@babel/runtime" "^7.12.5"
@@ -1455,7 +1454,7 @@ big.js@^6.1.1:
 
 bigint-buffer@^1.1.5:
   version "1.1.5"
-  resolved "https://registry.npmjs.org/bigint-buffer/-/bigint-buffer-1.1.5.tgz"
+  resolved "https://registry.yarnpkg.com/bigint-buffer/-/bigint-buffer-1.1.5.tgz#d038f31c8e4534c1f8d0015209bf34b4fa6dd442"
   integrity sha512-trfYco6AoZ+rKhKnxA0hgX0HAbVP/s808/EuDSe2JDzUnCp/xAsli35Orvk67UrTEcwuxZqYZDmfA2RXJgxVvA==
   dependencies:
     bindings "^1.3.0"
@@ -1467,7 +1466,7 @@ binary-extensions@^2.0.0:
 
 bindings@^1.3.0:
   version "1.5.0"
-  resolved "https://registry.npmjs.org/bindings/-/bindings-1.5.0.tgz"
+  resolved "https://registry.yarnpkg.com/bindings/-/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
   integrity sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==
   dependencies:
     file-uri-to-path "1.0.0"
@@ -1514,15 +1513,6 @@ borsh@^0.6.0:
   integrity sha512-sl5k89ViqsThXQpYa9XDtz1sBl3l1lI313cFUY1HKr+wvMILnb+58xpkqTNrYbelh99dY7K8usxoCusQmqix9Q==
   dependencies:
     bn.js "^5.2.0"
-    bs58 "^4.0.0"
-    text-encoding-utf-8 "^1.0.2"
-
-"borsh@https://github.com/defactojob/borsh-js#field-mapper":
-  version "0.3.1"
-  resolved "https://github.com/defactojob/borsh-js#33a0d24af281112c0a48efb3fa503f3212443de9"
-  dependencies:
-    "@types/bn.js" "^4.11.5"
-    bn.js "^5.0.0"
     bs58 "^4.0.0"
     text-encoding-utf-8 "^1.0.2"
 
@@ -2621,7 +2611,7 @@ file-entry-cache@^6.0.1:
 
 file-uri-to-path@1.0.0:
   version "1.0.0"
-  resolved "https://registry.npmjs.org/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz"
+  resolved "https://registry.yarnpkg.com/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz#553a7b8446ff6f684359c445f1e37a05dacc33dd"
   integrity sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==
 
 fill-range@^7.0.1:

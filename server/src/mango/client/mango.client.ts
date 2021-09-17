@@ -23,30 +23,37 @@ import {
   initializeAccount,
   closeAccount,
 } from '@project-serum/serum/lib/token-instructions';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
+  Signer,
   SystemProgram,
+  Transaction,
+  TransactionInstruction,
 } from '@solana/web3.js';
 import debug from 'debug';
 import SolClient from '../../common/client/common.client';
 import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
-import { MANGO_PROG_ID } from '../../config/config';
+import { MANGO_PROG_ID, NETWORK } from '../../config/config';
 import { getMint } from '../../config/config.util';
 
 const log: debug.IDebugger = debug('app:mango-client');
 
 export type MangoInformation = {
-  userAccounts: MangoAccount[];
+  userAccs: MangoAccount[];
   tokenAccPk: PublicKey;
   rootBank: PublicKey;
   nodeBank: PublicKey;
   vault: PublicKey;
 };
 
-export class MangoClient extends SolClient {
+export default class MangoClient extends SolClient {
   nativeClient: NativeMangoClient;
 
   group!: MangoGroup;
@@ -55,33 +62,28 @@ export class MangoClient extends SolClient {
 
   cluster: Cluster;
 
-  mangoGroupIds: any;
-
   constructor() {
     super();
     this.nativeClient = new NativeMangoClient(this.connection, MANGO_PROG_ID);
-    if (process.env.NETWORK === 'mainnet') {
+    if (NETWORK === 'mainnet') {
       this.groupName = 'mainnet.1';
       this.cluster = 'mainnet';
     } else {
       this.groupName = 'devnet.2';
       this.cluster = 'devnet';
     }
-
-    this.mangoGroupIds = IDS.groups.find(
-      (group) => group.name === this.groupName,
-    );
-    if (!this.mangoGroupIds) {
-      log('Error initializing Mango client');
-      return;
-    }
-
     log('Initialized Mango client');
   }
 
   async loadGroup() {
+    const groupPk = IDS.groups.find(
+      (group) => group.name === this.groupName,
+    )?.publicKey;
+    if (!groupPk) {
+      throw new Error('Error initializing Mango client');
+    }
     const mangoGroup = await this.nativeClient.getMangoGroup(
-      new PublicKey(this.mangoGroupIds.publicKey),
+      new PublicKey(groupPk),
     );
     await mangoGroup.loadRootBanks(this.connection);
     await Promise.all(
@@ -109,18 +111,20 @@ export class MangoClient extends SolClient {
   async loadAllAccounts(
     ownerPk: PublicKey,
     token: string,
-  ): Promise<MangoInformation | undefined> {
+  ): Promise<MangoInformation> {
     if (!this.group) {
       await this.loadGroup();
     }
-    const tokenAccounts = await getTokenAccountsByOwnerWithWrappedSol(this.connection, ownerPk);
+    const tokenAccs = await getTokenAccountsByOwnerWithWrappedSol(
+      this.connection,
+      ownerPk,
+    );
     const mintAddress = getMint(token);
-    const tokenAccount = tokenAccounts.find(
+    const tokenAccount = tokenAccs.find(
       (acc) => acc.mint.toBase58() === mintAddress.toBase58(),
     );
     if (!tokenAccount) {
-      log(`Error loading ${token} token account`);
-      return;
+      throw new Error(`Error loading ${token} token account`);
     }
 
     const accounts = await this.loadUserAccounts(ownerPk);
@@ -130,12 +134,11 @@ export class MangoClient extends SolClient {
     const vault = this.group.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].vault;
 
     if (!rootBank || !nodeBank || !vault) {
-      log('Error loading Mango vault accounts');
-      return;
+      throw new Error('Error loading Mango vault accounts');
     }
 
     return {
-      userAccounts: accounts,
+      userAccs: accounts,
       tokenAccPk: tokenAccount.publicKey,
       rootBank,
       nodeBank,
@@ -182,142 +185,115 @@ export class MangoClient extends SolClient {
   //   });
   //   return spotMarkets;
   // }
-
-  async prepDepositTx(
-    mangoAccount: MangoAccount,
+  async addWrappedSolCreateAccountIx(
+    transactionIxs: TransactionInstruction[],
+    additionalSigners: Signer[],
     ownerPk: PublicKey,
-    rootBank: PublicKey,
-    nodeBank: PublicKey,
-    vault: PublicKey,
-    tokenAcc: PublicKey,
-    quantity: number,
-  ): Promise<ixsAndSigners> {
-    const transactionIx = [];
-    const additionalSigners: Array<Keypair> = [];
-    const tokenIndex = this.group.getRootBankIndex(rootBank);
-    const tokenMint = this.group.tokens[tokenIndex].mint;
-
-    let wrappedSolAccount: Keypair | null = null;
-    if (
-      tokenMint.equals(WRAPPED_SOL_MINT)
-      && tokenAcc.toBase58() === ownerPk.toBase58()
-    ) {
-      wrappedSolAccount = new Keypair();
-      const lamports = Math.round(quantity * LAMPORTS_PER_SOL) + 1e7;
-      transactionIx.push(
-        SystemProgram.createAccount({
-          fromPubkey: ownerPk,
-          newAccountPubkey: wrappedSolAccount.publicKey,
-          lamports,
-          space: 165,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-      );
-
-      transactionIx.push(
-        initializeAccount({
-          account: wrappedSolAccount.publicKey,
-          mint: WRAPPED_SOL_MINT,
-          owner: ownerPk,
-        }),
-      );
-
-      additionalSigners.push(wrappedSolAccount);
-    }
-
-    const nativeQuantity = uiToNative(
-      quantity,
-      this.group.tokens[tokenIndex].decimals,
-    );
-
-    const instruction = makeDepositInstruction(
-      MANGO_PROG_ID,
-      this.group.publicKey,
-      ownerPk,
-      this.group.mangoCache,
-      mangoAccount.publicKey,
-      rootBank,
-      nodeBank,
-      vault,
-      wrappedSolAccount?.publicKey ?? tokenAcc,
-      nativeQuantity,
-    );
-
-    transactionIx.push(instruction);
-
-    if (wrappedSolAccount) {
-      transactionIx.push(
-        closeAccount({
-          source: wrappedSolAccount.publicKey,
-          destination: ownerPk,
-          owner: ownerPk,
-        }),
+    quantity?: number,
+  ): Promise<Keypair> {
+    const wrappedSolAccount = new Keypair();
+    let lamports: number;
+    if (quantity) {
+      // depositTxn
+      lamports = Math.round(quantity * LAMPORTS_PER_SOL) + 1e7;
+    } else {
+      // withdrawTxn
+      lamports = await this.connection.getMinimumBalanceForRentExemption(
+        165,
+        'singleGossip',
       );
     }
+    transactionIxs.push(
+      SystemProgram.createAccount({
+        fromPubkey: ownerPk,
+        newAccountPubkey: wrappedSolAccount.publicKey,
+        lamports,
+        space: 165,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+    );
 
-    return [transactionIx, additionalSigners];
+    transactionIxs.push(
+      initializeAccount({
+        account: wrappedSolAccount.publicKey,
+        mint: WRAPPED_SOL_MINT,
+        owner: ownerPk,
+      }),
+    );
+
+    additionalSigners.push(wrappedSolAccount);
+
+    return wrappedSolAccount;
   }
 
-  async prepInitMangoAccountAndDepositTx(
+  addWrappedSolCloseAccountIx(
+    transactionIxs: TransactionInstruction[],
+    ownerPk: PublicKey,
+    wrappedSolAccount: Keypair,
+  ) {
+    transactionIxs.push(
+      closeAccount({
+        source: wrappedSolAccount.publicKey,
+        destination: ownerPk,
+        owner: ownerPk,
+      }),
+    );
+  }
+
+  async prepDepositTx(
     ownerPk: PublicKey,
     rootBank: PublicKey,
     nodeBank: PublicKey,
     vault: PublicKey,
     tokenAcc: PublicKey,
     quantity: number,
+    mangoPk?: PublicKey,
   ): Promise<ixsAndSigners> {
-    const transactionIx = [];
-    const accountInstruction = await createAccountInstruction(
-      this.connection,
-      ownerPk,
-      MangoAccountLayout.span,
-      MANGO_PROG_ID,
-    );
-
-    const initMangoAccountInstruction = makeInitMangoAccountInstruction(
-      MANGO_PROG_ID,
-      this.group.publicKey,
-      accountInstruction.account.publicKey,
-      ownerPk,
-    );
-
-    transactionIx.push(accountInstruction.instruction);
-    transactionIx.push(initMangoAccountInstruction);
-
-    const accountInstructionKeypair = Keypair.fromSecretKey(
-      new Uint8Array(accountInstruction.account.secretKey),
-    );
-    const additionalSigners = [accountInstructionKeypair];
-
+    const transactionIxs: TransactionInstruction[] = [];
+    const additionalSigners: Signer[] = [];
     const tokenIndex = this.group.getRootBankIndex(rootBank);
     const tokenMint = this.group.tokens[tokenIndex].mint;
+
+    let destinationPk: PublicKey;
+    if (!mangoPk) { // Init Mango Account before deposit
+      const accountInstruction = await createAccountInstruction(
+        this.connection,
+        ownerPk,
+        MangoAccountLayout.span,
+        MANGO_PROG_ID,
+      );
+
+      destinationPk = accountInstruction.account.publicKey;
+
+      const initMangoAccountInstruction = makeInitMangoAccountInstruction(
+        MANGO_PROG_ID,
+        this.group.publicKey,
+        destinationPk,
+        ownerPk,
+      );
+
+      transactionIxs.push(accountInstruction.instruction);
+      transactionIxs.push(initMangoAccountInstruction);
+
+      const accountInstructionKeypair = Keypair.fromSecretKey(
+        new Uint8Array(accountInstruction.account.secretKey),
+      );
+      additionalSigners.push(accountInstructionKeypair);
+    } else {
+      destinationPk = mangoPk;
+    }
 
     let wrappedSolAccount: Keypair | null = null;
     if (
       tokenMint.equals(WRAPPED_SOL_MINT)
       && tokenAcc.toBase58() === ownerPk.toBase58()
     ) {
-      wrappedSolAccount = new Keypair();
-      const lamports = Math.round(quantity * LAMPORTS_PER_SOL) + 1e7;
-      transactionIx.push(
-        SystemProgram.createAccount({
-          fromPubkey: ownerPk,
-          newAccountPubkey: wrappedSolAccount.publicKey,
-          lamports,
-          space: 165,
-          programId: TOKEN_PROGRAM_ID,
-        }),
+      wrappedSolAccount = await this.addWrappedSolCreateAccountIx(
+        transactionIxs,
+        additionalSigners,
+        ownerPk,
+        quantity,
       );
-
-      transactionIx.push(
-        initializeAccount({
-          account: wrappedSolAccount.publicKey,
-          mint: WRAPPED_SOL_MINT,
-          owner: ownerPk,
-        }),
-      );
-
-      additionalSigners.push(wrappedSolAccount);
     }
 
     const nativeQuantity = uiToNative(
@@ -330,26 +306,25 @@ export class MangoClient extends SolClient {
       this.group.publicKey,
       ownerPk,
       this.group.mangoCache,
-      accountInstruction.account.publicKey,
+      destinationPk,
       rootBank,
       nodeBank,
       vault,
-      wrappedSolAccount?.publicKey ?? tokenAcc,
+      wrappedSolAccount ? wrappedSolAccount.publicKey : tokenAcc,
       nativeQuantity,
     );
 
-    transactionIx.push(instruction);
+    transactionIxs.push(instruction);
 
     if (wrappedSolAccount) {
-      transactionIx.push(
-        closeAccount({
-          source: wrappedSolAccount.publicKey,
-          destination: ownerPk,
-          owner: ownerPk,
-        }),
+      this.addWrappedSolCloseAccountIx(
+        transactionIxs,
+        ownerPk,
+        wrappedSolAccount,
       );
     }
-    return [transactionIx, additionalSigners];
+
+    return [transactionIxs, additionalSigners];
   }
 
   async prepWithdrawTx(
@@ -362,8 +337,8 @@ export class MangoClient extends SolClient {
     quantity: number,
     allowBorrow: boolean,
   ): Promise<ixsAndSigners> {
-    const transactionIx = [];
-    const additionalSigners: Keypair[] = [];
+    const transactionIxs: TransactionInstruction[] = [];
+    const additionalSigners: Signer[] = [];
     const tokenIndex = this.group.getRootBankIndex(rootBank);
     const tokenMint = this.group.tokens[tokenIndex].mint;
 
@@ -376,37 +351,19 @@ export class MangoClient extends SolClient {
 
     let wrappedSolAccount: Keypair | null = null;
     if (tokenMint.equals(WRAPPED_SOL_MINT)) {
-      wrappedSolAccount = new Keypair();
+      wrappedSolAccount = await this.addWrappedSolCreateAccountIx(
+        transactionIxs,
+        additionalSigners,
+        ownerPk,
+      );
       tokenAcc = wrappedSolAccount.publicKey;
-      const space = 165;
-      const lamports = await this.connection.getMinimumBalanceForRentExemption(
-        space,
-        'singleGossip',
-      );
-      transactionIx.push(
-        SystemProgram.createAccount({
-          fromPubkey: ownerPk,
-          newAccountPubkey: tokenAcc,
-          lamports,
-          space,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-      );
-      transactionIx.push(
-        initializeAccount({
-          account: tokenAcc,
-          mint: WRAPPED_SOL_MINT,
-          owner: ownerPk,
-        }),
-      );
-      additionalSigners.push(wrappedSolAccount);
     } else {
       const tokenAccExists = await this.connection.getAccountInfo(
         tokenAcc,
         'recent',
       );
       if (!tokenAccExists) {
-        transactionIx.push(
+        transactionIxs.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
@@ -439,19 +396,17 @@ export class MangoClient extends SolClient {
       nativeQuantity,
       allowBorrow,
     );
-    transactionIx.push(instruction);
+    transactionIxs.push(instruction);
 
     if (wrappedSolAccount) {
-      transactionIx.push(
-        closeAccount({
-          source: wrappedSolAccount.publicKey,
-          destination: ownerPk,
-          owner: ownerPk,
-        }),
+      this.addWrappedSolCloseAccountIx(
+        transactionIxs,
+        ownerPk,
+        wrappedSolAccount,
       );
     }
 
-    return [transactionIx, additionalSigners];
+    return [transactionIxs, additionalSigners];
   }
 
   // async prepSettleSpotTx(
@@ -460,7 +415,7 @@ export class MangoClient extends SolClient {
   //   spotMarkets: Market[],
   //   ownerPk: PublicKey,
   // ): Promise<ixsAndSigners> {
-  //   const transactionIx = [];
+  // const transactionIxs: TransactionInstruction[] = [];
 
   //   for (let i = 0; i < spotMarkets.length; i += 1) {
   //     const openOrdersAccount = mangoAccount.spotOpenOrdersAccounts[i];
@@ -517,11 +472,9 @@ export class MangoClient extends SolClient {
   //       dexSigner,
   //     );
 
-  //     transactionIx.push(instruction);
+  //     transactionIxs.push(instruction);
   //   }
 
-  //   return [transactionIx, []];
+  //   return [transactionIxs, []];
   // }
 }
-
-export default new MangoClient();

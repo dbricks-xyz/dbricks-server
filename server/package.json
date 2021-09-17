@@ -6,7 +6,7 @@
     "test:dev": "export TESTING_DEV=1 && jest ./e2e"
   },
   "dependencies": {
-    "@blockworks-foundation/mango-client": "^3.0.13",
+    "@blockworks-foundation/mango-client": "^3.0.18",
     "@project-serum/serum": "^0.13.58",
     "@project-serum/swap": "^0.1.0-alpha.32",
     "@saberhq/stableswap-sdk": "^0.16.0",

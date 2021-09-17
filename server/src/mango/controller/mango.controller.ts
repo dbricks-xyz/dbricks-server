@@ -12,33 +12,33 @@ const log: debug.IDebugger = debug('app:mango-controller');
 
 class MangoController {
   async deposit(req: e.Request, res: e.Response) {
-    log('Begin deposit');
-    const [ix, signers] = await MangoDepositService.deposit(
+    const mangoDepositService = new MangoDepositService();
+    const [ix, signers] = await mangoDepositService.deposit(
       req.body.token,
       req.body.quantity,
       deserializePk(req.body.ownerPk),
-      req.body.destinationPk ? deserializePk(req.body.destinationPk) : undefined,
+      deserializePk(req.body.destinationPk),
     );
     log('Deposit instruction generated');
     res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
   }
 
   async withdraw(req: e.Request, res: e.Response) {
-    log('Begin withdraw');
-    const [ix, signers] = await MangoWithdrawService.withdraw(
+    const mangoWithdrawService = new MangoWithdrawService();
+    const [ix, signers] = await mangoWithdrawService.withdraw(
       req.body.token,
       req.body.quantity,
       false,
       deserializePk(req.body.ownerPk),
-      req.body.sourcePk ? deserializePk(req.body.sourcePk) : undefined,
+      deserializePk(req.body.sourcePk),
     );
     log('Withdraw instruction generated');
     res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
   }
 
   async borrow(req: e.Request, res: e.Response) {
-    log('Begin borrow');
-    const [ix, signers] = await MangoWithdrawService.withdraw(
+    const mangoWithdrawService = new MangoWithdrawService();
+    const [ix, signers] = await mangoWithdrawService.withdraw(
       req.body.token,
       req.body.quantity,
       true,

@@ -14,7 +14,7 @@ const tokenName = 'SOL';
 describe('Mango init and deposit', () => {
   it('Can initialize a mangoAccount and deposit into it', async () => {
     const newAcc = await testMangoClient._newAccountWithLamports(
-      LAMPORTS_PER_SOL * 10,
+      LAMPORTS_PER_SOL * 5,
     );
     const newKp = Keypair.fromSecretKey(new Uint8Array(newAcc.secretKey));
     const tokenQuantity = 3;

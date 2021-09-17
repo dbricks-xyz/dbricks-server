@@ -21,7 +21,7 @@ export let CONNECTION_URL: string;
 /* eslint-enable */
 
 // todo adjust for local testing
-export const TESTING_KP_PATH = '/home/dboures/.config/solana/id.json';
+export const TESTING_KP_PATH = process.env.KP_PATH ?? '';
 
 if (NETWORK === 'mainnet') {
   SERUM_PROG_ID = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin');

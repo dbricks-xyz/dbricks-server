@@ -1,46 +1,35 @@
 import { PublicKey } from '@solana/web3.js';
-import debug from 'debug';
 import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
 import { ILenderWithdraw } from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
-import { MangoClient } from '../client/mango.client';
+import MangoClient from '../client/mango.client';
 
-const log: debug.IDebugger = debug('app:mango-withdraw-service');
-
-class MangoWithdrawService extends MangoClient implements ILenderWithdraw {
-  async withdraw(token: string, quantity: number, isborrow: boolean, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixsAndSigners> {
+export default class MangoWithdrawService extends MangoClient implements ILenderWithdraw {
+  async withdraw(token: string, quantity: number, isBorrow: boolean, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixsAndSigners> {
     const mangoInformation = await this.loadAllAccounts(ownerPk, token);
-    if (!mangoInformation) {
-      return [[], []];
-    }
     const {
-      userAccounts, rootBank, nodeBank, vault,
+      userAccs, rootBank, nodeBank, vault,
     } = mangoInformation;
 
-    let mangoAccount;
-    if (sourcePk) {
-      mangoAccount = userAccounts.find(
-        (acc) => acc.publicKey.toBase58() === sourcePk.toBase58(),
+    if (!sourcePk) {
+      throw new Error('Source account for withdrawal not specified');
+    }
+    const mangoAcc = userAccs.find(
+      (acc) => acc.publicKey.toBase58() === sourcePk.toBase58(),
+    );
+    if (!mangoAcc) {
+      throw new Error(
+        `${sourcePk.toBase58()} is not owned by ${ownerPk.toBase58()}`,
       );
-      if (!mangoAccount) {
-        log(
-          `${sourcePk.toBase58()} is not owned by ${ownerPk.toBase58()}`,
-        );
-        return [[], []];
-      }
-    } else {
-      return [[], []];
     }
 
     return this.prepWithdrawTx(
-      mangoAccount,
+      mangoAcc,
       ownerPk,
       rootBank,
       nodeBank,
       vault,
       quantity,
-      isborrow,
+      isBorrow,
     );
   }
 }
-
-export default new MangoWithdrawService();

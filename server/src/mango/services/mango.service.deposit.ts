@@ -1,30 +1,24 @@
 import { PublicKey } from '@solana/web3.js';
-import debug from 'debug';
 import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
 import {
   ILenderDeposit,
 } from '../../common/interfaces/lender/common.interfaces.lender.deposit';
 import MangoClient from '../client/mango.client';
 
-const log: debug.IDebugger = debug('app:mango-deposit-service');
-
-class MangoDepositService implements ILenderDeposit {
+export default class MangoDepositService extends MangoClient implements ILenderDeposit {
   async deposit(
     token: string,
     quantity: number,
     ownerPk: PublicKey,
     destinationPk?: PublicKey,
   ): Promise<ixsAndSigners> {
-    const mangoInformation = await MangoClient.loadAllAccounts(ownerPk, token);
-    if (!mangoInformation) {
-      return [[], []];
-    }
+    const mangoInformation = await this.loadAllAccounts(ownerPk, token);
     const {
-      userAccounts, tokenAccPk, rootBank, nodeBank, vault,
+      userAccs, tokenAccPk, rootBank, nodeBank, vault,
     } = mangoInformation;
 
-    if (userAccounts.length === 0) {
-      return MangoClient.prepInitMangoAccountAndDepositTx(
+    if (userAccs.length === 0) {
+      return this.prepDepositTx(
         ownerPk,
         rootBank,
         nodeBank,
@@ -34,31 +28,26 @@ class MangoDepositService implements ILenderDeposit {
       );
     }
 
-    let mangoAccount;
-    if (destinationPk) {
-      mangoAccount = userAccounts.find(
-        (acc) => acc.publicKey.toBase58() === destinationPk.toBase58(),
+    if (!destinationPk) {
+      throw new Error('Destination account for deposit not specified');
+    }
+    const mangoAcc = userAccs.find(
+      (acc) => acc.publicKey.toBase58() === destinationPk.toBase58(),
+    );
+    if (!mangoAcc) {
+      throw new Error(
+        `${destinationPk.toBase58()} is not owned by ${ownerPk.toBase58()}`,
       );
-      if (!mangoAccount) {
-        log(
-          `${destinationPk.toBase58()} is not owned by ${ownerPk.toBase58()}`,
-        );
-        return [[], []];
-      }
-    } else {
-      return [[], []];
     }
 
-    return MangoClient.prepDepositTx(
-      mangoAccount,
+    return this.prepDepositTx(
       ownerPk,
       rootBank,
       nodeBank,
       vault,
       tokenAccPk,
       quantity,
+      mangoAcc.publicKey,
     );
   }
 }
-
-export default new MangoDepositService();

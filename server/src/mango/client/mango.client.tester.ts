@@ -1,5 +1,5 @@
 import { getMint } from '../../config/config.util';
-import { MangoClient } from './mango.client';
+import MangoClient from './mango.client';
 
 export default class MangoClientTester extends MangoClient {
   constructor() {
