@@ -1,7 +1,7 @@
 import e from 'express';
 import CommonRoutesConfig from '../../common/routes/common.routes.config';
 import SerumMiddleware from '../middleware/serum.middleware';
-import SerumController from '../constroller/serum.controller';
+import SerumController from '../controller/serum.controller';
 
 export class SerumRoutes extends CommonRoutesConfig {
   constructor(app: e.Application) {

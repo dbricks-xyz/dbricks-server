@@ -50,6 +50,10 @@ export default class SolClient {
     return balance.value.uiAmount;
   }
 
+  async getBalance(publicKey: PublicKey) {
+    return this.connection.getBalance(publicKey);
+  }
+
   async getTokenAccsForOwner(
     ownerPk: PublicKey,
     mintPk?: PublicKey,
@@ -144,6 +148,7 @@ export default class SolClient {
     const tx = new Transaction().add(...ixs);
     const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
     log('Tx successful,', sig);
+    return sig;
   }
 
   async _createMint(ownerKp: Keypair): Promise<Token> {
@@ -180,7 +185,7 @@ export default class SolClient {
     await this.connection.requestAirdrop(account.publicKey, lamports);
     for (;;) {
       await sleep(500);
-      if (lamports == (await this.connection.getBalance(account.publicKey))) {
+      if (lamports == (await this.getBalance(account.publicKey))) {
         return account;
       }
       if (--retries <= 0) {

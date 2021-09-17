@@ -140,6 +140,11 @@
     "network": "mainnet"
   },
   {
+    "address": "So11111111111111111111111111111111111111112",
+    "name": "SOL",
+    "network": "devnet"
+  },
+  {
     "address": "GXMvfY2jpQctDqZ9RoU3oWPhufKiCcFEfchvYumtX7jd",
     "name": "TOMO",
     "network": "mainnet"

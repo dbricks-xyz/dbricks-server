@@ -7,7 +7,7 @@ export let NETWORK: string;
 if (process.env.TESTING_LOCAL) {
   NETWORK = 'localnet';
 } else if (process.env.TESTING_DEV) {
-  NETWORK = 'mainnet'; //todo change to devnet
+  NETWORK = 'devnet';
 } else {
   NETWORK = process.env.NETWORK as string;
 }
@@ -21,17 +21,17 @@ export let CONNECTION_URL: string;
 /* eslint-enable */
 
 // todo adjust for local testing
-export const TESTING_KP_PATH = '/Users/ilmoi/.config/solana/id.json';
+export const TESTING_KP_PATH = process.env.KP_PATH ?? '';
 
 if (NETWORK === 'mainnet') {
   SERUM_PROG_ID = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin');
   SABER_PROG_ID = new PublicKey('SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ');
-  MANGO_PROG_ID = new PublicKey('5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH');
+  MANGO_PROG_ID = new PublicKey('mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68');
   CONNECTION_URL = 'https://api.mainnet-beta.solana.com';
 } else if (NETWORK === 'devnet') {
   SERUM_PROG_ID = new PublicKey('DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY');
   SABER_PROG_ID = new PublicKey('Crt7UoUR6QgrFrN7j8rmSQpUTNWNSitSwWvsWGf1qZ5t');
-  MANGO_PROG_ID = new PublicKey('9XzhtAtDXxW2rjbeVFhTq4fnhD8dqzr154r5b2z6pxEp');
+  MANGO_PROG_ID = new PublicKey('4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA');
   CONNECTION_URL = 'https://api.devnet.solana.com';
 } else if (NETWORK === 'localnet') {
   // todo adjust for local testing:
