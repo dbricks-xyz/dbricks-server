@@ -157,7 +157,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-dbricks-lib/
+lib/
 lib64/
 parts/
 sdist/
