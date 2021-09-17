@@ -157,7 +157,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+dbricks-lib/
 lib64/
 parts/
 sdist/
@@ -374,4 +374,4 @@ Temporary Items
 
 
 # ------------------------------------------------------------------------------
-.env
+**/.env
