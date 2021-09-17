@@ -1,7 +1,7 @@
-import MangoClient from './mango.client';
+import MangoClient from '../../src/mango/client/mango.client';
 import {PublicKey} from "@solana/web3.js";
 
-export default class MangoClientTester extends MangoClient {
+export default class MangoTester extends MangoClient {
   constructor() {
     super();
   }

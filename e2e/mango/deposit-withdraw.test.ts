@@ -5,11 +5,11 @@ import {
   deserializeSigners,
 } from 'dbricks-lib';
 import app from '../../src/app';
-import { assert, loadKpSync } from '../../src/common/util/common.util';
+import { loadKpSync } from '../../src/common/util/common.util';
 import { TESTING_KP_PATH } from '../../src/config/config';
-import MangoClientTester from '../../src/mango/client/mango.client.tester';
+import MangoTester from './mango.tester';
 
-const testMangoClient = new MangoClientTester();
+const testMangoClient = new MangoTester();
 const ownerKp = loadKpSync(TESTING_KP_PATH);
 const mintPk = new PublicKey('So11111111111111111111111111111111111111112');
 
@@ -44,7 +44,7 @@ describe('Mango deposit and withdraw', () => {
     );
 
     const finalAmount = await testMangoClient.getBalance(ownerKp.publicKey);
-    assert(finalAmount === beginningAmount - (tokenQuantity * LAMPORTS_PER_SOL) - 10000);// Txn fee
+    expect(finalAmount === beginningAmount - (tokenQuantity * LAMPORTS_PER_SOL) - 10000);// Txn fee
   });
 
   it('Can withdraw from an existing mangoAccount', async () => {
@@ -77,6 +77,6 @@ describe('Mango deposit and withdraw', () => {
     );
 
     const finalAmount = await testMangoClient.getBalance(ownerKp.publicKey);
-    assert(finalAmount === beginningAmount + (tokenQuantity * LAMPORTS_PER_SOL) - 10000);// Txn fee
+    expect(finalAmount === beginningAmount + (tokenQuantity * LAMPORTS_PER_SOL) - 10000);// Txn fee
   });
 });

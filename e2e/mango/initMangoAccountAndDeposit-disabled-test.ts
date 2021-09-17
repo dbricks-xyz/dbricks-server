@@ -1,11 +1,10 @@
 import {Keypair, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
 import request from 'supertest';
 import app from '../../src/app';
-import { assert } from '../../src/common/util/common.util';
-import MangoClientTester from '../../src/mango/client/mango.client.tester';
+import MangoTester from './mango.tester';
 import {deserializeIxs, deserializeSigners} from "dbricks-lib";
 
-const testMangoClient = new MangoClientTester();
+const testMangoClient = new MangoTester();
 const mintPk = new PublicKey('So11111111111111111111111111111111111111112');
 
 describe('Mango init and deposit', () => {
@@ -46,7 +45,7 @@ describe('Mango init and deposit', () => {
       )
       .toFixed();
 
-    assert(userAccounts.length > 0);
-    assert(tokenAmount > 2.9999999); // Txn fee
+    expect(userAccounts.length > 0);
+    expect(tokenAmount > 2.9999999); // Txn fee
   });
 });

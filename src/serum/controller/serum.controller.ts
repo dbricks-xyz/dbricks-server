@@ -28,14 +28,13 @@ class SerumController {
   }
 
   async cancelOrder(req: e.Request, res: e.Response) {
-    const orderId = new BN(req.body.orderId);
     const serumOrderService = new SerumOrderService();
     const [ixs, signers] = await serumOrderService.cancel(
       deserializePk(req.body.marketPk),
-      new BN(orderId), //comes as string
+      new BN(req.body.orderId, 16), //comes as string, hex
       deserializePk(req.body.ownerPk),
     );
-    log(`Order ${orderId} successfully cancelled`);
+    log(`Order ${req.body.orderId} successfully cancelled`);
     res.status(200).send([serializeIxs(ixs), serializeSigners(signers)]);
   }
 

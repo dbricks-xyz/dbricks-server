@@ -22,6 +22,8 @@ export default class SerumOrderService extends SerumClient implements IDEXOrder 
       side,
       ownerPk,
     );
+    console.log('payer will be', payerPk.toBase58());
+
     const [ixPlace, signersPlace] = await this.prepPlaceOrderTx(
       market,
       side,

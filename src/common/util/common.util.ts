@@ -9,10 +9,3 @@ export function loadKpSync(path: string): Keypair {
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-export function assert(condition: boolean, message?: string) {
-  if (!condition) {
-    console.log(`${Error().stack}:main.ts`);
-    throw message || 'Assertion failed';
-  }
-}

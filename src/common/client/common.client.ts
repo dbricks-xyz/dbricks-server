@@ -147,7 +147,7 @@ export default class SolClient {
   async _prepareAndSendTx(ixs: TransactionInstruction[], signers: Signer[]) {
     const tx = new Transaction().add(...ixs);
     const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
-    log('Tx successful,', sig);
+    console.log('Tx successful,', sig);
     return sig;
   }
 
@@ -193,5 +193,21 @@ export default class SolClient {
       }
     }
     throw new Error(`Airdrop of ${lamports} failed`);
+  }
+
+  async _transferLamports(
+    fromKp: Keypair,
+    toPk: PublicKey,
+    lamports: number
+  ) {
+    const transferIx = SystemProgram.transfer({
+      fromPubkey: fromKp.publicKey,
+      toPubkey: toPk,
+      lamports,
+    })
+    await this._prepareAndSendTx(
+      [transferIx],
+      [fromKp]
+    )
   }
 }
