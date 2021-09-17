@@ -9,17 +9,16 @@ import SerumClient from '../client/serum.client';
 
 export default class SerumOrderService extends SerumClient implements IDEXOrder {
   async place(
-    marketName: string,
+    marketPk: PublicKey,
     side: side,
     price: number,
     size: number,
     orderType: orderType,
     ownerPk: PublicKey,
   ): Promise<ixsAndSigners> {
-    const market = await this.loadSerumMarketFromName(marketName);
-    const [[ixPayer, signersPayer], payerPk] = await this.getPayerFromMarket(
+    const market = await this.loadSerumMarket(marketPk);
+    const [[ixPayer, signersPayer], payerPk] = await this.getPayerForMarket(
       market,
-      marketName,
       side,
       ownerPk,
     );
@@ -39,11 +38,11 @@ export default class SerumOrderService extends SerumClient implements IDEXOrder 
   }
 
   async cancel(
-    marketName: string,
+    marketPk: PublicKey,
     orderId: BN,
     ownerPk: PublicKey,
   ): Promise<ixsAndSigners> {
-    const market = await this.loadSerumMarketFromName(marketName);
+    const market = await this.loadSerumMarket(marketPk);
     return this.prepCancelOrderTx(
       market,
       ownerPk,

@@ -3,7 +3,7 @@ import { ixsAndSigners } from '../dex/common.interfaces.dex.order';
 
 export interface ILenderWithdraw {
   withdraw: (
-    token: string,
+    mintPk: PublicKey,
     quantity: number,
     isBorrow: boolean,
     ownerPk: PublicKey,

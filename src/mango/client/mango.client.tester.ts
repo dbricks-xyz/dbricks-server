@@ -1,5 +1,5 @@
-import { getMint } from '../../config/config.util';
 import MangoClient from './mango.client';
+import {PublicKey} from "@solana/web3.js";
 
 export default class MangoClientTester extends MangoClient {
   constructor() {
@@ -10,8 +10,7 @@ export default class MangoClientTester extends MangoClient {
     return this.group.loadCache(this.connection);
   }
 
-  getTokenIndex(token: string) {
-    const mintAddress = getMint(token);
-    return this.group.getTokenIndex(mintAddress);
+  getTokenIndex(mintPk: PublicKey) {
+    return this.group.getTokenIndex(mintPk);
   }
 }

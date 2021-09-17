@@ -16,10 +16,10 @@ class SerumController {
   async placeOrder(req: e.Request, res: e.Response) {
     const serumOrderService = new SerumOrderService();
     const [ixs, signers] = await serumOrderService.place(
-      req.body.marketName,
+      deserializePk(req.body.marketPk),
       req.body.side,
-      req.body.price,
-      req.body.size,
+      parseFloat(req.body.price), //comes as string
+      parseFloat(req.body.size), //comes as string
       req.body.orderType,
       deserializePk(req.body.ownerPk),
     );
@@ -31,8 +31,8 @@ class SerumController {
     const orderId = new BN(req.body.orderId);
     const serumOrderService = new SerumOrderService();
     const [ixs, signers] = await serumOrderService.cancel(
-      req.body.marketName,
-      orderId,
+      deserializePk(req.body.marketPk),
+      new BN(orderId), //comes as string
       deserializePk(req.body.ownerPk),
     );
     log(`Order ${orderId} successfully cancelled`);
@@ -46,8 +46,8 @@ class SerumController {
     const [ixs, signers] = await serumMarketService.init(
       deserializePk(req.body.baseMintPk),
       deserializePk(req.body.quoteMintPk),
-      req.body.lotSize,
-      req.body.tickSize,
+      parseFloat(req.body.lotSize), //comes as string
+      parseFloat(req.body.tickSize), //comes as string
       deserializePk(req.body.ownerPk),
     );
     log(`Market for ${req.body.baseMintPk}/${req.body.quoteMintPk} successfully initialized`);
@@ -57,7 +57,7 @@ class SerumController {
   async settleMarket(req: e.Request, res: e.Response) {
     const serumMarketService = new SerumMarketService();
     const [ixs, signers] = await serumMarketService.settle(
-      req.body.marketName,
+      deserializePk(req.body.marketPk),
       deserializePk(req.body.ownerPk),
     );
     log('Settle instruction/signers generated');

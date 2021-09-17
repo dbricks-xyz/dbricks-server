@@ -1,47 +1,11 @@
-import {
-  Cluster,
-  Config,
-  createAccountInstruction,
-  getAllMarkets,
-  getMultipleAccounts,
-  getTokenAccountsByOwnerWithWrappedSol,
-  IDS,
-  makeDepositInstruction,
-  makeInitMangoAccountInstruction,
-  makeSettleFundsInstruction,
-  makeWithdrawInstruction,
-  MangoAccount,
-  MangoAccountLayout,
-  MangoClient as NativeMangoClient,
-  MangoGroup,
-  QUOTE_INDEX,
-  uiToNative,
-} from '@blockworks-foundation/mango-client';
-import { Market } from '@project-serum/serum';
-import {
-  WRAPPED_SOL_MINT,
-  initializeAccount,
-  closeAccount,
-} from '@project-serum/serum/lib/token-instructions';
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  Token,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import {
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Signer,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import {Cluster, createAccountInstruction, getTokenAccountsByOwnerWithWrappedSol, IDS, makeDepositInstruction, makeInitMangoAccountInstruction, makeWithdrawInstruction, MangoAccount, MangoAccountLayout, MangoClient as NativeMangoClient, MangoGroup, uiToNative,} from '@blockworks-foundation/mango-client';
+import {closeAccount, initializeAccount, WRAPPED_SOL_MINT,} from '@project-serum/serum/lib/token-instructions';
+import {ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID,} from '@solana/spl-token';
+import {Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, TransactionInstruction,} from '@solana/web3.js';
 import debug from 'debug';
 import SolClient from '../../common/client/common.client';
-import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
-import { MANGO_PROG_ID, NETWORK } from '../../config/config';
-import { getMint } from '../../config/config.util';
+import {ixsAndSigners} from '../../common/interfaces/dex/common.interfaces.dex.order';
+import {MANGO_PROG_ID, NETWORK} from '../../config/config';
 
 const log: debug.IDebugger = debug('app:mango-client');
 
@@ -110,7 +74,7 @@ export default class MangoClient extends SolClient {
 
   async loadAllAccounts(
     ownerPk: PublicKey,
-    token: string,
+    mintPk: PublicKey,
   ): Promise<MangoInformation> {
     if (!this.group) {
       await this.loadGroup();
@@ -119,12 +83,11 @@ export default class MangoClient extends SolClient {
       this.connection,
       ownerPk,
     );
-    const mintAddress = getMint(token);
     const tokenAccount = tokenAccs.find(
-      (acc) => acc.mint.toBase58() === mintAddress.toBase58(),
+      (acc) => acc.mint.toBase58() === mintPk.toBase58(),
     );
     if (!tokenAccount) {
-      throw new Error(`Error loading ${token} token account`);
+      throw new Error(`Error loading ${mintPk} token account`);
     }
 
     const accounts = await this.loadUserAccounts(ownerPk);

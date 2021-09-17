@@ -7,12 +7,12 @@ import MangoClient from '../client/mango.client';
 
 export default class MangoDepositService extends MangoClient implements ILenderDeposit {
   async deposit(
-    token: string,
+    mintPk: PublicKey,
     quantity: number,
     ownerPk: PublicKey,
     destinationPk?: PublicKey,
   ): Promise<ixsAndSigners> {
-    const mangoInformation = await this.loadAllAccounts(ownerPk, token);
+    const mangoInformation = await this.loadAllAccounts(ownerPk, mintPk);
     const {
       userAccs, tokenAccPk, rootBank, nodeBank, vault,
     } = mangoInformation;

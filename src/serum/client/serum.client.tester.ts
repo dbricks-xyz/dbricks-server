@@ -105,7 +105,7 @@ export default class SerumClientTester extends SerumClient {
     );
     console.log('Successfully initialized a new Serum market');
 
-    this.market = await this.loadSerumMarketFromPk(
+    this.market = await this.loadSerumMarket(
       this.marketKp.publicKey,
     );
   }

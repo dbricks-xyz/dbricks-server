@@ -1,11 +1,12 @@
-import { Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import {Keypair, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
 import request from 'supertest';
 import app from '../../src/app';
 import { assert } from '../../src/common/util/common.util';
 import MangoClientTester from '../../src/mango/client/mango.client.tester';
+import {deserializeIxs, deserializeSigners} from "dbricks-lib";
 
 const testMangoClient = new MangoClientTester();
-const tokenName = 'SOL';
+const mintPk = new PublicKey('So11111111111111111111111111111111111111112');
 
 describe('Mango init and deposit', () => {
   it('Can initialize a mangoAccount and deposit into it', async () => {
@@ -18,7 +19,7 @@ describe('Mango init and deposit', () => {
     const depositTx = await request(app)
       .post('/mango/deposit')
       .send({
-        token: tokenName,
+        mintPk: mintPk.toBase58(),
         quantity: tokenQuantity,
         ownerPk: newKp.publicKey.toBase58(),
       })
@@ -36,7 +37,7 @@ describe('Mango init and deposit', () => {
       newKp.publicKey,
     );
     const cache = await testMangoClient.getCache();
-    const tokenIndex = testMangoClient.getTokenIndex(tokenName);
+    const tokenIndex = testMangoClient.getTokenIndex(mintPk);
     const tokenAmount = +userAccounts[0]
       .getUiDeposit(
         cache.rootBankCache[tokenIndex],

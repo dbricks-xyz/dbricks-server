@@ -14,8 +14,8 @@ class MangoController {
   async deposit(req: e.Request, res: e.Response) {
     const mangoDepositService = new MangoDepositService();
     const [ix, signers] = await mangoDepositService.deposit(
-      req.body.token,
-      req.body.quantity,
+      deserializePk(req.body.mintPk),
+      req.body.quantity, //todo let's pass this in as a string and deserialize into BN - ask me to explain
       deserializePk(req.body.ownerPk),
       deserializePk(req.body.destinationPk),
     );
@@ -26,8 +26,8 @@ class MangoController {
   async withdraw(req: e.Request, res: e.Response) {
     const mangoWithdrawService = new MangoWithdrawService();
     const [ix, signers] = await mangoWithdrawService.withdraw(
-      req.body.token,
-      req.body.quantity,
+      deserializePk(req.body.mintPk),
+      req.body.quantity, //todo let's pass this in as a string and deserialize into BN - ask me to explain
       false,
       deserializePk(req.body.ownerPk),
       deserializePk(req.body.sourcePk),
@@ -39,7 +39,7 @@ class MangoController {
   async borrow(req: e.Request, res: e.Response) {
     const mangoWithdrawService = new MangoWithdrawService();
     const [ix, signers] = await mangoWithdrawService.withdraw(
-      req.body.token,
+      deserializePk(req.body.mintPk),
       req.body.quantity,
       true,
       deserializePk(req.body.ownerPk),
