@@ -18,7 +18,7 @@ export type serializedIx = {
 }
 
 export type serializedSigner = {
-  secretKey: Uint8Array,
+  secretKey: number[],
 }
 
 export function serializePk(pk: PublicKey): string {
@@ -69,7 +69,7 @@ export function serializeSigners(signers: Signer[]): serializedSigner[] {
   const serializedSigners: serializedSigner[] = [];
   signers.forEach((s) => {
     serializedSigners.push({
-      secretKey: s.secretKey,
+      secretKey: Array.from(s.secretKey),
     });
   });
   return serializedSigners;
@@ -78,7 +78,7 @@ export function serializeSigners(signers: Signer[]): serializedSigner[] {
 export function deserializeSigners(signers: serializedSigner[]): Signer[] {
   const deserializedSigners: Signer[] = [];
   signers.forEach((s) => {
-    deserializedSigners.push(Keypair.fromSeed(s.secretKey));
+    deserializedSigners.push(Keypair.fromSecretKey(new Uint8Array(s.secretKey)));
   });
   return deserializedSigners;
 }
