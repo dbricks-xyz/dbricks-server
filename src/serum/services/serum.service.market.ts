@@ -77,4 +77,9 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
       [...ownerBaseIxsAndSigners[1], ...ownerQuoteIxsAndSigners[1], ...signersSettle],
     ];
   }
+
+  async getBaseQuote(marketPk: string): Promise<[string, string]> {
+    return this.getBaseQuoteFromMarket(marketPk);
+  }
+
 }

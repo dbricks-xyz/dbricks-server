@@ -48,6 +48,13 @@ class SerumController {
     log('Settle instruction/signers generated');
     res.status(200).send([serializeIxs(ixs), serializeSigners(signers)]);
   }
+
+  async getBaseQuote(req: e.Request, res: e.Response) {
+    const serumMarketService = new SerumMarketService();
+    const [base, quote] = await serumMarketService.getBaseQuote(req.body.marketPk);
+    log('Base/quote names generated');
+    res.status(200).send([base, quote]);
+  }
 }
 
 export default new SerumController();

@@ -79,6 +79,7 @@ export default class SerumTester extends SolClient {
 
     //the 1st keypair returned is always the marketKp
     this.marketKp = initMarketSigners[0];
+    console.log('New market Pk is', this.marketKp.publicKey.toBase58());
 
     return [initMarketIx, initMarketSigners]
   }

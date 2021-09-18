@@ -16,6 +16,7 @@ import {
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
 import SolClient from '../../common/client/common.client';
 import { SERUM_PROG_ID } from '../../config/config';
+import {tryGetSerumMarketName} from "../../common/util/common.util";
 
 const log: debug.IDebugger = debug('app:serum-client');
 
@@ -147,6 +148,26 @@ export default class SerumClient extends SolClient {
       [...settleFundsTx.transaction.instructions],
       [...settleFundsTx.signers],
     ];
+  }
+
+  async getBaseQuoteFromMarket(marketPk: string): Promise<[string, string]> {
+    const marketName = tryGetSerumMarketName(marketPk);
+    console.log('naaame', marketName)
+    if (marketName) {
+      return marketName.split('/') as [string, string];
+    }
+    try {
+      const market = await this.loadSerumMarket(new PublicKey(marketPk));
+      return [
+        market.baseMintAddress.toBase58()
+          .substring(0, 5),
+        market.quoteMintAddress.toBase58()
+          .substring(0, 5),
+      ];
+    } catch (e) {
+      //todo need better err handling
+      return ['X', 'Y'];
+    }
   }
 
   // --------------------------------------- helpers (passive)
