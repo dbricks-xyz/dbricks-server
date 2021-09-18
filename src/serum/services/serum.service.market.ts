@@ -1,43 +1,38 @@
-import { PublicKey } from '@solana/web3.js';
+import {PublicKey} from '@solana/web3.js';
 import BN from 'bn.js';
-import { getVaultOwnerAndNonce } from '@project-serum/swap/lib/utils';
-import { IDEXMarket } from '../../common/interfaces/dex/common.interfaces.dex.market';
-import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
+import {getVaultOwnerAndNonce} from '@project-serum/swap/lib/utils';
+import {
+  IDEXMarket,
+  IDEXMarketInitParsed,
+  IDEXMarketSettleParsed
+} from '../../common/interfaces/dex/common.interfaces.dex.market';
+import {ixsAndSigners} from '../../common/interfaces/dex/common.interfaces.dex.order';
 import SerumClient from '../client/serum.client';
-import { SERUM_PROG_ID } from '../../config/config';
+import {SERUM_PROG_ID} from '../../config/config';
 
 export default class SerumMarketService extends SerumClient implements IDEXMarket {
-  async init(
-    baseMintPk: PublicKey,
-    quoteMintPk: PublicKey,
-    lotSize: number,
-    tickSize: number,
-    ownerPk: PublicKey,
-  ): Promise<ixsAndSigners> {
+  async init(params: IDEXMarketInitParsed): Promise<ixsAndSigners> {
     // taken from here - https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L499
     const feeRateBps = new BN(0);
     const quoteDustThreshold = new BN(100);
 
-    const [prepIxs, prepKps] = await this.prepStateAccsForNewMarket(ownerPk);
-
+    const [prepIxs, prepKps] = await this.prepStateAccsForNewMarket(params.ownerPk);
     const [vaultOwnerPk, vaultNonce] = await getVaultOwnerAndNonce(
       prepKps[0].publicKey,
       SERUM_PROG_ID,
     );
     const [vaultIxs, vaultSigners] = await this.prepVaultAccs(
       vaultOwnerPk as PublicKey,
-      baseMintPk,
-      quoteMintPk,
-      ownerPk,
+      params.baseMintPk,
+      params.quoteMintPk,
+      params.ownerPk,
     );
-
     const [baseLotSize, quoteLotSize] = await this.calcBaseAndQuoteLotSizes(
-      lotSize,
-      tickSize,
-      baseMintPk,
-      quoteMintPk,
+      params.lotSize,
+      params.tickSize,
+      params.baseMintPk,
+      params.quoteMintPk,
     );
-
     const [ixInitMarket, signersInitMarket] = await this.prepInitMarketTx(
       prepKps[0].publicKey,
       prepKps[1].publicKey,
@@ -46,8 +41,8 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
       prepKps[4].publicKey,
       vaultSigners[0].publicKey,
       vaultSigners[1].publicKey,
-      baseMintPk,
-      quoteMintPk,
+      params.baseMintPk,
+      params.quoteMintPk,
       baseLotSize,
       quoteLotSize,
       feeRateBps,
@@ -62,18 +57,18 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
     ];
   }
 
-  async settle(marketPk: PublicKey, ownerPk: PublicKey): Promise<ixsAndSigners> {
-    const market = await this.loadSerumMarket(marketPk);
+  async settle(params: IDEXMarketSettleParsed): Promise<ixsAndSigners> {
+    const market = await this.loadSerumMarket(params.marketPk);
     const [
       [ownerBaseIxsAndSigners, ownerBasePk],
       [ownerQuoteIxsAndSigners, ownerQuotePk],
     ] = await this.getBaseAndQuoteAccsFromMarket(
       market,
-      ownerPk,
+      params.ownerPk,
     );
     const [ixSettle, signersSettle] = await this.prepSettleFundsTx(
       market,
-      ownerPk,
+      params.ownerPk,
       ownerBasePk,
       ownerQuotePk,
     );
