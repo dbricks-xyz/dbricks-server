@@ -3,7 +3,7 @@ import { ixsAndSigners } from '../dex/common.interfaces.dex.order';
 
 export interface ILenderDeposit {
   deposit: (
-    token: string,
+    mintPk: PublicKey,
     quantity: number,
     ownerPk: PublicKey,
     destinationPk?: PublicKey,

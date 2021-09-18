@@ -10,8 +10,8 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
   async init(
     baseMintPk: PublicKey,
     quoteMintPk: PublicKey,
-    lotSize: string,
-    tickSize: string,
+    lotSize: number,
+    tickSize: number,
     ownerPk: PublicKey,
   ): Promise<ixsAndSigners> {
     // taken from here - https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L499
@@ -62,14 +62,13 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
     ];
   }
 
-  async settle(marketName: string, ownerPk: PublicKey): Promise<ixsAndSigners> {
-    const market = await this.loadSerumMarketFromName(marketName);
+  async settle(marketPk: PublicKey, ownerPk: PublicKey): Promise<ixsAndSigners> {
+    const market = await this.loadSerumMarket(marketPk);
     const [
       [ownerBaseIxsAndSigners, ownerBasePk],
       [ownerQuoteIxsAndSigners, ownerQuotePk],
     ] = await this.getBaseAndQuoteAccsFromMarket(
       market,
-      marketName,
       ownerPk,
     );
     const [ixSettle, signersSettle] = await this.prepSettleFundsTx(

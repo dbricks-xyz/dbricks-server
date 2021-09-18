@@ -2,8 +2,8 @@
   "scripts": {
     "start": "nodemon --watch './src/**/*.ts' --exec 'ts-node' src/server.ts",
     "debug": "export DEBUG=* && npm run start",
-    "test:local": "export TESTING_LOCAL=1 && jest ./src",
-    "test:dev": "export TESTING_DEV=1 && jest ./e2e"
+    "test:local": "export TESTING_LOCAL=1 && jest",
+    "test:dev": "export TESTING_DEV=1 && jest"
   },
   "dependencies": {
     "@blockworks-foundation/mango-client": "^3.0.18",

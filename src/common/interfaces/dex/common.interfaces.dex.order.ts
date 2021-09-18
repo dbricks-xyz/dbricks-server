@@ -9,7 +9,7 @@ export type ixsAndSigners = [TransactionInstruction[], Signer[]];
 
 export interface IDEXOrder {
   place: (
-    market: string,
+    marketPk: PublicKey,
     side: side,
     price: number,
     size: number,
@@ -17,7 +17,7 @@ export interface IDEXOrder {
     ownerPk: PublicKey,
   ) => Promise<ixsAndSigners>;
   cancel: (
-    marketName: string,
+    marketPk: PublicKey,
     orderId: BN,
     ownerPk: PublicKey,
   ) => Promise<ixsAndSigners>

@@ -5,12 +5,12 @@ export interface IDEXMarket {
   init: (
     baseMintPk: PublicKey,
     quoteMintPk: PublicKey,
-    lotSize: string,
-    tickSize: string,
+    lotSize: number,
+    tickSize: number,
     ownerPk: PublicKey,
     ) => Promise<ixsAndSigners>
   settle: (
-    market: string,
+    marketPk: PublicKey,
     ownerPk: PublicKey
   ) => Promise<ixsAndSigners>;
 }

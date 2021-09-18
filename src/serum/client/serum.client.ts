@@ -16,7 +16,6 @@ import {
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
 import SolClient from '../../common/client/common.client';
 import { SERUM_PROG_ID } from '../../config/config';
-import { getMint, getSerumMarket } from '../../config/config.util';
 
 const log: debug.IDebugger = debug('app:serum-client');
 
@@ -152,38 +151,31 @@ export default class SerumClient extends SolClient {
 
   // --------------------------------------- helpers (passive)
 
-  async getPayerFromMarket(
+  async getPayerForMarket(
     market: Market,
-    marketName: string,
     side: side,
     ownerPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey]> {
-    let tokenIxsAndSigners;
-    let payerPk;
-    const [base, quote] = marketName.split('/');
     if (side === 'buy') {
-      [tokenIxsAndSigners, payerPk] = await this.getOrCreateTokenAccByMint(
-        this.connection, market, ownerPk, quote,
+      return this.getOrCreateTokenAccByMint(
+        this.connection, market, ownerPk, market.quoteMintAddress,
       );
     } else {
-      [tokenIxsAndSigners, payerPk] = await this.getOrCreateTokenAccByMint(
-        this.connection, market, ownerPk, base,
+      return this.getOrCreateTokenAccByMint(
+        this.connection, market, ownerPk, market.baseMintAddress,
       );
     }
-    return [tokenIxsAndSigners, payerPk];
   }
 
   async getBaseAndQuoteAccsFromMarket(
     market: Market,
-    marketName: string,
     ownerPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey][]> {
-    const [base, quote] = marketName.split('/');
     const [ownerBaseIxsAndSigners, ownerBasePk] = await this.getOrCreateTokenAccByMint(
-      this.connection, market, ownerPk, base,
+      this.connection, market, ownerPk, market.baseMintAddress,
     );
     const [ownerQuoteIxsAndSigners, ownerQuotePk] = await this.getOrCreateTokenAccByMint(
-      this.connection, market, ownerPk, quote,
+      this.connection, market, ownerPk, market.quoteMintAddress,
     );
     return [
       [ownerBaseIxsAndSigners, ownerBasePk],
@@ -191,16 +183,9 @@ export default class SerumClient extends SolClient {
     ];
   }
 
-  async loadSerumMarketFromName(
-    name: string,
-  ) {
-    log(`Market pk for market ${name} is ${getSerumMarket(name)}`);
-    return Market.load(this.connection, getSerumMarket(name), {}, SERUM_PROG_ID);
-  }
-
-  async loadSerumMarketFromPk(
+  async loadSerumMarket(
     marketPk: PublicKey,
-  ) {
+  ): Promise<Market> {
     return Market.load(this.connection, marketPk, {}, SERUM_PROG_ID);
   }
 
@@ -215,8 +200,8 @@ export default class SerumClient extends SolClient {
   }
 
   async calcBaseAndQuoteLotSizes(
-    lotSize: string,
-    tickSize: string,
+    lotSize: number,
+    tickSize: number,
     baseMintPk: PublicKey,
     quoteMintPk: PublicKey,
   ): Promise<[BN, BN]> {
@@ -226,14 +211,10 @@ export default class SerumClient extends SolClient {
     const baseMintInfo = await this.deserializeTokenMint(baseMintPk);
     const quoteMintInfo = await this.deserializeTokenMint(quoteMintPk);
 
-    if (baseMintInfo && parseFloat(lotSize) > 0) {
-      baseLotSize = Math.round(10 ** baseMintInfo.decimals * parseFloat(lotSize));
-      if (quoteMintInfo && parseFloat(tickSize) > 0) {
-        quoteLotSize = Math.round(
-          parseFloat(lotSize)
-          * 10 ** quoteMintInfo.decimals
-          * parseFloat(tickSize),
-        );
+    if (baseMintInfo && lotSize > 0) {
+      baseLotSize = Math.round(10 ** baseMintInfo.decimals * lotSize);
+      if (quoteMintInfo && tickSize > 0) {
+        quoteLotSize = Math.round(lotSize * 10 ** quoteMintInfo.decimals * tickSize);
       }
     }
     if (!baseLotSize || !quoteLotSize) {
@@ -249,25 +230,24 @@ export default class SerumClient extends SolClient {
     connection: Connection,
     market: Market,
     ownerPk: PublicKey,
-    mintName: string,
+    mintPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey]> {
     let ixsAndSigners: ixsAndSigners = [[], []];
     let tokenAccPk: PublicKey;
-    if (mintName === 'SOL') {
+    if (mintPk.toBase58() === 'So11111111111111111111111111111111111111112') {
       return [ixsAndSigners, ownerPk];
     }
-    const mintPk = getMint(mintName);
     const tokenAccounts = await market.getTokenAccountsByOwnerForMint(
       connection, ownerPk, mintPk,
     );
 
     if (tokenAccounts.length === 0) {
-      log(`Creating token account for mint ${mintName}, ${mintPk.toBase58()}`);
+      log(`Creating token account for mint ${mintPk.toBase58()}`);
       [ixsAndSigners, tokenAccPk] = await this.prepCreateTokenAccTx(ownerPk, mintPk);
     } else {
       tokenAccPk = tokenAccounts[0].pubkey;
     }
-    log(`User's account for mint ${mintName} (${mintPk.toBase58()}) is ${tokenAccPk.toBase58()}`);
+    log(`User's account for mint ${mintPk.toBase58()} is ${tokenAccPk.toBase58()}`);
 
     return [ixsAndSigners, tokenAccPk];
   }
