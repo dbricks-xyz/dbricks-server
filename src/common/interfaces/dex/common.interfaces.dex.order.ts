@@ -3,17 +3,17 @@ import BN from 'bn.js';
 import {ixsAndSigners, orderType, side} from "dbricks-lib";
 
 export interface IDEXOrder {
-  place: (params: IDEXOrderPlaceParsed) => Promise<ixsAndSigners[]>;
-  cancel: (params: IDEXOrderCancelParsed) => Promise<ixsAndSigners[]>
+  place: (params: IDEXOrderPlaceParamsParsed) => Promise<ixsAndSigners[]>;
+  cancel: (params: IDEXOrderCancelParamsParsed) => Promise<ixsAndSigners[]>
 }
 
-export interface IDEXOrderCancelParsed {
+export interface IDEXOrderCancelParamsParsed {
   marketPk: PublicKey,
   orderId: BN,
   ownerPk: PublicKey,
 }
 
-export interface IDEXOrderPlaceParsed {
+export interface IDEXOrderPlaceParamsParsed {
   marketPk: PublicKey,
   side: side,
   price: number,

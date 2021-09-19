@@ -1,23 +1,23 @@
 import e from "express";
 import {
   deserializePk,
-  IDEXMarketInit,
-  IDEXMarketSettle,
-  IDEXOrderCancel,
-  IDEXOrderPlace
+  IDEXMarketInitParams,
+  IDEXMarketSettleParams,
+  IDEXOrderCancelParams,
+  IDEXOrderPlaceParams
 } from "dbricks-lib";
 import BN from "bn.js";
 import {
-  IDEXOrderCancelParsed,
-  IDEXOrderPlaceParsed
+  IDEXOrderCancelParamsParsed,
+  IDEXOrderPlaceParamsParsed
 } from "../../common/interfaces/dex/common.interfaces.dex.order";
 import {
-  IDEXMarketInitParsed,
-  IDEXMarketSettleParsed
+  IDEXMarketInitParamsParsed,
+  IDEXMarketSettleParamsParsed
 } from "../../common/interfaces/dex/common.interfaces.dex.market";
 
-export function deserializeCancelOrder(req: e.Request): IDEXOrderCancelParsed {
-  const body: IDEXOrderCancel = req.body;
+export function deserializeCancelOrder(req: e.Request): IDEXOrderCancelParamsParsed {
+  const body: IDEXOrderCancelParams = req.body;
   return {
     marketPk: deserializePk(body.marketPk),
     orderId: new BN(body.orderId, 16), //comes as string, hex
@@ -25,8 +25,8 @@ export function deserializeCancelOrder(req: e.Request): IDEXOrderCancelParsed {
   }
 }
 
-export function deserializePlaceOrder(req: e.Request): IDEXOrderPlaceParsed {
-  const body: IDEXOrderPlace = req.body;
+export function deserializePlaceOrder(req: e.Request): IDEXOrderPlaceParamsParsed {
+  const body: IDEXOrderPlaceParams = req.body;
   return {
     marketPk: deserializePk(body.marketPk),
     side: body.side,
@@ -38,8 +38,8 @@ export function deserializePlaceOrder(req: e.Request): IDEXOrderPlaceParsed {
   }
 }
 
-export function deserializeInitMarket(req: e.Request): IDEXMarketInitParsed {
-  const body: IDEXMarketInit = req.body;
+export function deserializeInitMarket(req: e.Request): IDEXMarketInitParamsParsed {
+  const body: IDEXMarketInitParams = req.body;
   return {
     baseMintPk: deserializePk(body.baseMintPk),
     quoteMintPk: deserializePk(body.quoteMintPk),
@@ -50,8 +50,8 @@ export function deserializeInitMarket(req: e.Request): IDEXMarketInitParsed {
   }
 }
 
-export function deserializeSettleMarket(req: e.Request): IDEXMarketSettleParsed {
-  const body: IDEXMarketSettle = req.body;
+export function deserializeSettleMarket(req: e.Request): IDEXMarketSettleParamsParsed {
+  const body: IDEXMarketSettleParams = req.body;
   return {
     marketPk: deserializePk(body.marketPk),
     ownerPk: deserializePk(body.ownerPk),

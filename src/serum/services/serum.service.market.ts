@@ -3,8 +3,8 @@ import BN from 'bn.js';
 import {getVaultOwnerAndNonce} from '@project-serum/swap/lib/utils';
 import {
   IDEXMarket,
-  IDEXMarketInitParsed,
-  IDEXMarketSettleParsed
+  IDEXMarketInitParamsParsed,
+  IDEXMarketSettleParamsParsed
 } from '../../common/interfaces/dex/common.interfaces.dex.market';
 import {ixsAndSigners} from 'dbricks-lib';
 import SerumClient from '../client/serum.client';
@@ -12,7 +12,7 @@ import {SERUM_PROG_ID} from '../../config/config';
 import {mergeIxsAndSigners} from "../../common/util/common.util";
 
 export default class SerumMarketService extends SerumClient implements IDEXMarket {
-  async init(params: IDEXMarketInitParsed): Promise<ixsAndSigners[]> {
+  async init(params: IDEXMarketInitParamsParsed): Promise<ixsAndSigners[]> {
     // taken from here - https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L499
     const feeRateBps = new BN(0);
     const quoteDustThreshold = new BN(100);
@@ -56,7 +56,7 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
     return [tx1, tx2];
   }
 
-  async settle(params: IDEXMarketSettleParsed): Promise<ixsAndSigners[]> {
+  async settle(params: IDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPk);
     const [
       [ownerBaseIxsAndSigners, ownerBasePk],

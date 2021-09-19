@@ -2,11 +2,11 @@ import {PublicKey} from '@solana/web3.js';
 import {ixsAndSigners} from "dbricks-lib";
 
 export interface IDEXMarket {
-  init: (params: IDEXMarketInitParsed) => Promise<ixsAndSigners[]>
-  settle: (params: IDEXMarketSettleParsed) => Promise<ixsAndSigners[]>;
+  init: (params: IDEXMarketInitParamsParsed) => Promise<ixsAndSigners[]>
+  settle: (params: IDEXMarketSettleParamsParsed) => Promise<ixsAndSigners[]>;
 }
 
-export interface IDEXMarketInitParsed {
+export interface IDEXMarketInitParamsParsed {
   baseMintPk: PublicKey,
   quoteMintPk: PublicKey,
   lotSize: number,
@@ -14,7 +14,7 @@ export interface IDEXMarketInitParsed {
   ownerPk: PublicKey,
 }
 
-export interface IDEXMarketSettleParsed {
+export interface IDEXMarketSettleParamsParsed {
   marketPk: PublicKey,
   ownerPk: PublicKey
 }
