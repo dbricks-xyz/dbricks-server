@@ -2,7 +2,7 @@ import e from 'express';
 import debug from 'debug';
 import {
   deserializePk,
-  serializeIxs,
+  serializeIxs, serializeIxsAndSigners,
   serializeSigners,
 } from 'dbricks-lib';
 import MangoDepositService from '../services/mango.service.deposit';
@@ -13,19 +13,19 @@ const log: debug.IDebugger = debug('app:mango-controller');
 class MangoController {
   async deposit(req: e.Request, res: e.Response) {
     const mangoDepositService = new MangoDepositService();
-    const [ix, signers] = await mangoDepositService.deposit(
+    const ixsAndSigners = await mangoDepositService.deposit(
       deserializePk(req.body.mintPk),
       req.body.quantity, //todo let's pass this in as a string and deserialize into BN - ask me to explain
       deserializePk(req.body.ownerPk),
       deserializePk(req.body.destinationPk),
     );
     log('Deposit instruction generated');
-    res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
   }
 
   async withdraw(req: e.Request, res: e.Response) {
     const mangoWithdrawService = new MangoWithdrawService();
-    const [ix, signers] = await mangoWithdrawService.withdraw(
+    const ixsAndSigners = await mangoWithdrawService.withdraw(
       deserializePk(req.body.mintPk),
       req.body.quantity, //todo let's pass this in as a string and deserialize into BN - ask me to explain
       false,
@@ -33,12 +33,12 @@ class MangoController {
       deserializePk(req.body.sourcePk),
     );
     log('Withdraw instruction generated');
-    res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
   }
 
   async borrow(req: e.Request, res: e.Response) {
     const mangoWithdrawService = new MangoWithdrawService();
-    const [ix, signers] = await mangoWithdrawService.withdraw(
+    const ixsAndSigners = await mangoWithdrawService.withdraw(
       deserializePk(req.body.mintPk),
       req.body.quantity,
       true,
@@ -46,7 +46,7 @@ class MangoController {
       req.body.sourcePk ? deserializePk(req.body.sourcePk) : undefined,
     );
     log('Borrow instruction generated');
-    res.status(200).send([serializeIxs(ix), serializeSigners(signers)]);
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
   }
 }
 

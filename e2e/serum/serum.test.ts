@@ -15,7 +15,6 @@ describe('Serum', () => {
 
     // place + settle order from user 1
     await placeOrder(tester, 'buy', amount, tester.user1Kp);
-    //todo currently a bug so can't send in 1 tx
     const [settleIx, settleSigners] = await tester.requestSettleIx(
       tester.user1Pk.toBase58(),
     );
@@ -69,7 +68,6 @@ describe('Serum', () => {
     );
 
     //settle funds back to user
-    //todo currently a bug so can't send in 1 tx
     const [settleIx, settleSigners] = await tester.requestSettleIx(
       tester.user1Pk.toBase58(),
     );

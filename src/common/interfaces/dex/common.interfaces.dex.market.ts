@@ -1,9 +1,9 @@
 import {PublicKey} from '@solana/web3.js';
-import {ixsAndSigners} from './common.interfaces.dex.order';
+import {ixsAndSigners} from "dbricks-lib";
 
 export interface IDEXMarket {
-  init: (params: IDEXMarketInitParsed) => Promise<ixsAndSigners>
-  settle: (params: IDEXMarketSettleParsed) => Promise<ixsAndSigners>;
+  init: (params: IDEXMarketInitParsed) => Promise<ixsAndSigners[]>
+  settle: (params: IDEXMarketSettleParsed) => Promise<ixsAndSigners[]>;
 }
 
 export interface IDEXMarketInitParsed {

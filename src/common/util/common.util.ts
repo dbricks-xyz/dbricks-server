@@ -1,7 +1,8 @@
-import { Keypair } from '@solana/web3.js';
+import {Keypair} from '@solana/web3.js';
 import fs from 'fs';
-import { PublicKey } from '@solana/web3.js';
+import {PublicKey} from '@solana/web3.js';
 import {NETWORK, SERUM_PROG_ID} from "../../config/config";
+import {ixsAndSigners} from "dbricks-lib";
 
 export function loadKpSync(path: string): Keypair {
   const secretKey = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -51,4 +52,19 @@ export function tryGetSerumMarketName(marketPk: string): string | undefined {
     }
   })[0];
   return foundMarket ? foundMarket.name : undefined
+}
+
+export function mergeIxsAndSigners(x: ixsAndSigners, y: ixsAndSigners): ixsAndSigners {
+  const result = x;
+  y.ixs.forEach(yix => {
+    if (result.ixs.indexOf(yix) === -1) {
+      result.ixs.push(yix)
+    }
+  });
+  y.signers.forEach(ysigner => {
+    if (result.signers.indexOf(ysigner) === -1) {
+      result.signers.push(ysigner)
+    }
+  });
+  return result;
 }

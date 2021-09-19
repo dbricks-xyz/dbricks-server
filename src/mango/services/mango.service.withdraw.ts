@@ -1,10 +1,16 @@
 import {PublicKey} from '@solana/web3.js';
-import {ixsAndSigners} from '../../common/interfaces/dex/common.interfaces.dex.order';
+import {ixsAndSigners} from 'dbricks-lib';
 import {ILenderWithdraw} from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
 import MangoClient from '../client/mango.client';
 
 export default class MangoWithdrawService extends MangoClient implements ILenderWithdraw {
-  async withdraw(mintPk: PublicKey, quantity: number, isBorrow: boolean, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixsAndSigners> {
+  async withdraw(
+    mintPk: PublicKey,
+    quantity: number,
+    isBorrow: boolean,
+    ownerPk: PublicKey,
+    sourcePk?: PublicKey
+  ): Promise<ixsAndSigners[]> {
     const mangoInformation = await this.loadAllAccounts(ownerPk, mintPk);
     const {
       userAccs, rootBank, nodeBank, vault,
@@ -22,7 +28,7 @@ export default class MangoWithdrawService extends MangoClient implements ILender
       );
     }
 
-    return this.prepWithdrawTx(
+    const tx = await this.prepWithdrawTx(
       mangoAcc,
       ownerPk,
       rootBank,
@@ -31,5 +37,6 @@ export default class MangoWithdrawService extends MangoClient implements ILender
       quantity,
       isBorrow,
     );
+    return [tx];
   }
 }

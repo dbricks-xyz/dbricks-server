@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { ixsAndSigners } from '../dex/common.interfaces.dex.order';
+import {ixsAndSigners} from "dbricks-lib";
 
 export interface ILenderWithdraw {
   withdraw: (
@@ -8,5 +8,5 @@ export interface ILenderWithdraw {
     isBorrow: boolean,
     ownerPk: PublicKey,
     sourcePk?: PublicKey,
-  ) => Promise<ixsAndSigners>;
+  ) => Promise<ixsAndSigners[]>;
 }

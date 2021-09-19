@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { ixsAndSigners } from '../dex/common.interfaces.dex.order';
+import {ixsAndSigners} from "dbricks-lib";
 
 export interface ILenderDeposit {
   deposit: (
@@ -7,5 +7,5 @@ export interface ILenderDeposit {
     quantity: number,
     ownerPk: PublicKey,
     destinationPk?: PublicKey,
-  ) => Promise<ixsAndSigners>;
+  ) => Promise<ixsAndSigners[]>;
 }

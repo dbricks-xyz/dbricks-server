@@ -4,7 +4,7 @@ import {ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID,} from '@solana/spl
 import {Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, TransactionInstruction,} from '@solana/web3.js';
 import debug from 'debug';
 import SolClient from '../../common/client/common.client';
-import {ixsAndSigners} from '../../common/interfaces/dex/common.interfaces.dex.order';
+import {ixsAndSigners} from 'dbricks-lib';
 import {MANGO_PROG_ID, NETWORK} from '../../config/config';
 
 const log: debug.IDebugger = debug('app:mango-client');
@@ -287,7 +287,7 @@ export default class MangoClient extends SolClient {
       );
     }
 
-    return [transactionIxs, additionalSigners];
+    return {ixs: transactionIxs, signers: additionalSigners};
   }
 
   async prepWithdrawTx(
@@ -369,7 +369,7 @@ export default class MangoClient extends SolClient {
       );
     }
 
-    return [transactionIxs, additionalSigners];
+    return {ixs: transactionIxs, signers: additionalSigners};
   }
 
   // async prepSettleSpotTx(

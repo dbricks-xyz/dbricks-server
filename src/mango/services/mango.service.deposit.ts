@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
+import { ixsAndSigners } from 'dbricks-lib';
 import {
   ILenderDeposit,
 } from '../../common/interfaces/lender/common.interfaces.lender.deposit';
@@ -11,14 +11,14 @@ export default class MangoDepositService extends MangoClient implements ILenderD
     quantity: number,
     ownerPk: PublicKey,
     destinationPk?: PublicKey,
-  ): Promise<ixsAndSigners> {
+  ): Promise<ixsAndSigners[]> {
     const mangoInformation = await this.loadAllAccounts(ownerPk, mintPk);
     const {
       userAccs, tokenAccPk, rootBank, nodeBank, vault,
     } = mangoInformation;
 
     if (userAccs.length === 0) {
-      return this.prepDepositTx(
+      const tx = await this.prepDepositTx(
         ownerPk,
         rootBank,
         nodeBank,
@@ -26,6 +26,7 @@ export default class MangoDepositService extends MangoClient implements ILenderD
         tokenAccPk,
         quantity,
       );
+      return [tx];
     }
 
     if (!destinationPk) {
@@ -40,7 +41,7 @@ export default class MangoDepositService extends MangoClient implements ILenderD
       );
     }
 
-    return this.prepDepositTx(
+    const tx = await this.prepDepositTx(
       ownerPk,
       rootBank,
       nodeBank,
@@ -49,5 +50,6 @@ export default class MangoDepositService extends MangoClient implements ILenderD
       quantity,
       mangoAcc.publicKey,
     );
+    return [tx];
   }
 }

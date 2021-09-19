@@ -6,16 +6,16 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
-import { DexInstructions, Market, TokenInstructions } from '@project-serum/serum';
+import {DexInstructions, Market, TokenInstructions} from '@project-serum/serum';
 import debug from 'debug';
-import { Order } from '@project-serum/serum/lib/market';
+import {Order} from '@project-serum/serum/lib/market';
 import {
   ixsAndSigners,
   orderType,
   side,
-} from '../../common/interfaces/dex/common.interfaces.dex.order';
+} from 'dbricks-lib';
 import SolClient from '../../common/client/common.client';
-import { SERUM_PROG_ID } from '../../config/config';
+import {SERUM_PROG_ID} from '../../config/config';
 import {tryGetSerumMarketName} from "../../common/util/common.util";
 
 const log: debug.IDebugger = debug('app:serum-client');
@@ -66,10 +66,10 @@ export default class SerumClient extends SolClient {
       // authority = undefined,
       // pruneAuthority = undefined,
     });
-    return [
-      [initMarketIx],
-      [],
-    ];
+    return {
+      ixs: [initMarketIx],
+      signers: [],
+    };
   }
 
   async prepPlaceOrderTx(
@@ -90,10 +90,10 @@ export default class SerumClient extends SolClient {
       orderType,
       feeDiscountPubkey: null, // needed to enable devnet/localnet
     });
-    return [
-      [...placeOrderTx.transaction.instructions],
-      [...placeOrderTx.signers],
-    ];
+    return {
+      ixs: [...placeOrderTx.transaction.instructions],
+      signers: [...placeOrderTx.signers],
+    }
   }
 
   async prepCancelOrderTx(
@@ -106,7 +106,7 @@ export default class SerumClient extends SolClient {
       ownerPk,
     );
     if (orders.length === 0) {
-      return [[], []];
+      return {ixs: [], signers: []};
     }
     const [order] = orders.filter((o: Order) => {
       if (o.orderId.eq(orderId)) {
@@ -118,10 +118,10 @@ export default class SerumClient extends SolClient {
       ownerPk,
       order,
     );
-    return [
-      [...cancelOrderTx.instructions],
-      [],
-    ];
+    return {
+      ixs: [...cancelOrderTx.instructions],
+      signers: [],
+    }
   }
 
   async prepSettleFundsTx(
@@ -130,13 +130,13 @@ export default class SerumClient extends SolClient {
     ownerBasePk: PublicKey,
     ownerQuotePk: PublicKey,
   ): Promise<ixsAndSigners> {
-  // todo currently this will fail if this is the first ever trade for this user in this market
-  // this means the 1st trade won't settle and we have to run this twice to actually settle it
+    // currently this will fail if this is the first ever trade for this user in this market
+    // this means the 1st trade won't settle and we have to run this twice to actually settle it
     const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
       this.connection, ownerPk,
     );
     if (openOrdersAccounts.length === 0) {
-      return [[], []];
+      return {ixs: [], signers: []};
     }
     const settleFundsTx = await market.makeSettleFundsTransaction(
       this.connection,
@@ -144,10 +144,10 @@ export default class SerumClient extends SolClient {
       ownerBasePk,
       ownerQuotePk,
     );
-    return [
-      [...settleFundsTx.transaction.instructions],
-      [...settleFundsTx.signers],
-    ];
+    return {
+      ixs: [...settleFundsTx.transaction.instructions],
+      signers: [...settleFundsTx.signers],
+    }
   }
 
   async getBaseQuoteFromMarket(marketPk: string): Promise<[string, string]> {
@@ -253,7 +253,7 @@ export default class SerumClient extends SolClient {
     ownerPk: PublicKey,
     mintPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey]> {
-    let ixsAndSigners: ixsAndSigners = [[], []];
+    let ixsAndSigners: ixsAndSigners = {ixs: [], signers: []};
     let tokenAccPk: PublicKey;
     if (mintPk.toBase58() === 'So11111111111111111111111111111111111111112') {
       return [ixsAndSigners, ownerPk];
@@ -289,7 +289,7 @@ export default class SerumClient extends SolClient {
 
   async prepStateAccsForNewMarket(
     ownerPk: PublicKey, // wallet owner
-  ) : Promise<ixsAndSigners> {
+  ): Promise<ixsAndSigners> {
     // do we just throw these away? seems to be the case in their Serum DEX UI
     // https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L475
     const marketKp = new Keypair();
@@ -315,10 +315,10 @@ export default class SerumClient extends SolClient {
       asksKp.publicKey, 65536 + 12, ownerPk,
     );
 
-    return [
-      [marketIx, reqQIx, eventQIx, bidsIx, asksIx],
-      [marketKp, reqQKp, eventQKp, bidsKp, asksKp],
-    ];
+    return {
+      ixs: [marketIx, reqQIx, eventQIx, bidsIx, asksIx],
+      signers: [marketKp, reqQKp, eventQKp, bidsKp, asksKp],
+    }
   }
 
   async prepVaultAccs(
@@ -357,10 +357,10 @@ export default class SerumClient extends SolClient {
         owner: vaultOwnerPk,
       }),
     ];
-    return [
+    return {
       ixs,
-      [baseVaultKp, quoteVaultKp],
-    ];
+      signers: [baseVaultKp, quoteVaultKp],
+    }
   }
 
   // --------------------------------------- testing only
