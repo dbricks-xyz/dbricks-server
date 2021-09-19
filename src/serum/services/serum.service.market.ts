@@ -50,9 +50,9 @@ export default class SerumMarketService extends SerumClient implements IDEXMarke
       vaultNonce as BN,
       quoteDustThreshold,
     );
-
     const tx1 = prepIxsAndSigners;
     const tx2 = mergeIxsAndSigners(vaultIxsAndSigners, initIxsAndSigners);
+    console.log('New market address will be:', tx1.signers[0].publicKey.toBase58());
     return [tx1, tx2];
   }
 

@@ -9,7 +9,7 @@ export interface IDEXOrder {
 
 export interface IDEXOrderCancelParamsParsed {
   marketPk: PublicKey,
-  orderId: BN,
+  orderId?: BN,
   ownerPk: PublicKey,
 }
 

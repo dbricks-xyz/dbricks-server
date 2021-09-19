@@ -1,6 +1,7 @@
 import SerumTester from "./serum.tester";
-import {Keypair} from "@solana/web3.js";
+import {Keypair, PublicKey} from "@solana/web3.js";
 import {side} from "dbricks-lib";
+import SerumClient from "../../src/serum/client/serum.client";
 
 //todo obv need to test more than just the happy path
 describe('Serum', () => {
@@ -10,21 +11,12 @@ describe('Serum', () => {
     await tester.prepAccs();
     await tester.prepMarket();
 
-    // place order from user 2
-    await placeOrder(tester, 'sell', amount, tester.user2Kp);
-
-    // place + settle order from user 1
+    // 1st user places an order
     await placeOrder(tester, 'buy', amount, tester.user1Kp);
-    const settleTx = (await tester.requestSettleIx(tester.user1Pk.toBase58()))[0];
-    settleTx.signers.unshift(tester.user1Kp);
-    await tester._prepareAndSendTx(settleTx);
 
-    // verify went through
-    let userTokenAccount = await tester.getTokenAccsForOwner(
-      tester.user1Kp.publicKey,
-      tester.baseMint.publicKey,
-    );
-    expect(userTokenAccount[0].amount === parseFloat(amount));
+    // 2nd user places an order
+    await placeOrder(tester, 'sell', amount, tester.user2Kp);
+    await settleAndVerify(tester, tester.baseMint.publicKey, parseFloat(amount));
   });
 });
 
@@ -35,13 +27,14 @@ describe('Serum', () => {
     await tester.prepAccs();
     await tester.prepMarket();
 
-    // place order
+    //place order
     await placeOrder(tester, 'buy', amount, tester.user1Kp);
-    let userTokenAccount = await tester.getTokenAccsForOwner(
-      tester.user1Kp.publicKey,
-      tester.quoteMint.publicKey,
-    );
-    expect(userTokenAccount[0].amount === 10000 - parseFloat(amount));
+    await settleAndVerify(tester, tester.quoteMint.publicKey, 10000 - parseFloat(amount));
+
+    const srm = new SerumClient();
+    const market = await srm.loadSerumMarket(tester.marketKp.publicKey);
+    const oo = await srm.loadOrdersForOwner(market, tester.user1Kp.publicKey)
+    console.log(oo);
 
     //cancel order
     const cancelTx = (await tester.requestCancelOrderIx(
@@ -50,20 +43,38 @@ describe('Serum', () => {
     ))[0];
     cancelTx.signers.unshift(tester.user1Kp);
     await tester._prepareAndSendTx(cancelTx);
+    await settleAndVerify(tester, tester.quoteMint.publicKey, 10000);
 
-    //settle funds back to user
-    const settleTx = (await tester.requestSettleIx(tester.user1Pk.toBase58()))[0];
-    settleTx.signers.unshift(tester.user1Kp);
-    await tester._prepareAndSendTx(settleTx);
+    //place 2 more orders
+    await placeOrder(tester, 'buy', amount, tester.user1Kp);
+    await placeOrder(tester, 'buy', amount, tester.user1Kp);
+    await settleAndVerify(tester, tester.quoteMint.publicKey, 10000 - 2 * parseFloat(amount));
 
-    // verify went through
-    userTokenAccount = await tester.getTokenAccsForOwner(
-      tester.user1Kp.publicKey,
-      tester.quoteMint.publicKey,
-    );
-    expect(userTokenAccount[0].amount === 10000);
+    //cancel all at once
+    const cancelAllTx = (await tester.requestCancelOrderIx(
+      '',
+      tester.user1Pk.toBase58(),
+    ))[0];
+    cancelAllTx.signers.unshift(tester.user1Kp);
+    await tester._prepareAndSendTx(cancelAllTx);
+    await settleAndVerify(tester, tester.quoteMint.publicKey, 10000);
+
   });
 });
+
+async function settleAndVerify(tester: SerumTester, mint: PublicKey, expectedAmount: number) {
+  // settle
+  const settleTx = (await tester.requestSettleIx(tester.user1Pk.toBase58()))[0];
+  settleTx.signers.unshift(tester.user1Kp);
+  await tester._prepareAndSendTx(settleTx);
+
+  // verify went through
+  const userTokenAccount = await tester.getTokenAccsForOwner(
+    tester.user1Kp.publicKey,
+    mint,
+  );
+  expect(userTokenAccount[0].amount === expectedAmount);
+}
 
 async function placeOrder(tester: SerumTester, side: side, amount: string, user: Keypair) {
   const tx = (await tester.requestPlaceOrderIx(

@@ -28,13 +28,21 @@ export default class SerumOrderService extends SerumClient implements IDEXOrder 
     return [tx];
   }
 
-  async cancel(params:IDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
+  async cancel(params: IDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPk);
-    const ixAndSigners = await this.prepCancelOrderTx(
-      market,
-      params.ownerPk,
-      params.orderId,
-    );
+    let ixAndSigners: ixsAndSigners;
+    if (!params.orderId) {
+      ixAndSigners = await this.prepCancelAllOrdersTx(
+        market,
+        params.ownerPk,
+      );
+    } else {
+      ixAndSigners = await this.prepCancelOrderTx(
+        market,
+        params.ownerPk,
+        params.orderId,
+      );
+    }
     return [ixAndSigners]
   }
 }

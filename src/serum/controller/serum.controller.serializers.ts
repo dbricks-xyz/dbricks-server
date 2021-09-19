@@ -20,7 +20,7 @@ export function deserializeCancelOrder(req: e.Request): IDEXOrderCancelParamsPar
   const body: IDEXOrderCancelParams = req.body;
   return {
     marketPk: deserializePk(body.marketPk),
-    orderId: new BN(body.orderId, 16), //comes as string, hex
+    orderId: body.orderId ? new BN(body.orderId, 16) : undefined, //comes as string, hex
     ownerPk: deserializePk(body.ownerPk),
   }
 }

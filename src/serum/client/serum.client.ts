@@ -124,6 +124,33 @@ export default class SerumClient extends SolClient {
     }
   }
 
+  async prepCancelAllOrdersTx(
+    market: Market,
+    ownerPk: PublicKey,
+  ): Promise<ixsAndSigners> {
+    const orders = await market.loadOrdersForOwner(
+      this.connection,
+      ownerPk,
+    );
+    if (orders.length === 0) {
+      return {ixs: [], signers: []};
+    }
+    const ixs: TransactionInstruction[] = [];
+    orders.forEach(async (o) => {
+      const cancelOrderTx = await market.makeCancelOrderTransaction(
+        this.connection,
+        ownerPk,
+        o,
+      );
+      ixs.push(...cancelOrderTx.instructions)
+    })
+
+    return {
+      ixs,
+      signers: [],
+    }
+  }
+
   async prepSettleFundsTx(
     market: Market,
     ownerPk: PublicKey,
