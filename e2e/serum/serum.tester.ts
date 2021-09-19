@@ -5,13 +5,13 @@ import {TESTING_KP_PATH} from '../../src/config/config';
 import request from 'supertest';
 import app from "../../src/app";
 import {
-  deserializeIxs,
-  deserializeSigners,
-  IDEXMarketInit,
-  IDEXMarketSettle, IDEXOrderCancel,
-  IDEXOrderPlace
+  deserializeIxsAndSigners,
+  IDEXMarketInitParams,
+  IDEXMarketSettleParams,
+  IDEXOrderCancelParams,
+  IDEXOrderPlaceParams,
+  side,
 } from "dbricks-lib";
-import {side,} from '../../src/common/interfaces/dex/common.interfaces.dex.order';
 import SolClient from "../../src/common/client/common.client";
 
 export default class SerumTester extends SolClient {
@@ -46,7 +46,7 @@ export default class SerumTester extends SolClient {
     return this.user2Kp.publicKey;
   }
 
-  async prepareAccs() {
+  async prepAccs() {
     // token mints
     this.baseMint = await this._createMint(this.user1Kp);
     this.quoteMint = await this._createMint(this.user1Kp);
@@ -65,23 +65,21 @@ export default class SerumTester extends SolClient {
   }
 
   async requestInitMarketIx() {
-    const initMarketTx = await request(app).post('/serum/markets/').send({
+    const res = await request(app).post('/serum/markets/').send({
       baseMintPk: this.baseMint.publicKey.toBase58(),
       quoteMintPk: this.quoteMint.publicKey.toBase58(),
       lotSize: '1',
       tickSize: '1',
       ownerPk: this.user1Pk.toBase58(),
-    } as IDEXMarketInit)
+    } as IDEXMarketInitParams)
 
-    let [initMarketIx, initMarketSigners] = initMarketTx.body;
-    initMarketIx = deserializeIxs(initMarketIx);
-    initMarketSigners = deserializeSigners(initMarketSigners);
+    const ixsAndSigners = deserializeIxsAndSigners(res.body);
 
     //the 1st keypair returned is always the marketKp
-    this.marketKp = initMarketSigners[0];
+    this.marketKp = ixsAndSigners[0].signers[0] as Keypair;
     console.log('New market Pk is', this.marketKp.publicKey.toBase58());
 
-    return [initMarketIx, initMarketSigners]
+    return ixsAndSigners
   }
 
   async requestPlaceOrderIx(
@@ -91,45 +89,41 @@ export default class SerumTester extends SolClient {
     orderType: string,
     ownerPk: string,
   ) {
-    const placeOrderTx = await request(app).post('/serum/orders').send({
+    const res = await request(app).post('/serum/orders').send({
       marketPk: this.marketKp.publicKey.toBase58(),
       side,
       price,
       size,
       orderType,
       ownerPk,
-    } as IDEXOrderPlace).expect(200);
-
-    let [placeOrderIx, placeOrderSigners] = placeOrderTx.body;
-    placeOrderIx = deserializeIxs(placeOrderIx);
-    placeOrderSigners = deserializeSigners(placeOrderSigners);
-    return [placeOrderIx, placeOrderSigners]
+    } as IDEXOrderPlaceParams).expect(200);
+    return deserializeIxsAndSigners(res.body);
   }
 
   async requestSettleIx(
     ownerPk: string,
   ) {
-    const settleTx = await request(app).post('/serum/markets/settle').send({
+    const res = await request(app).post('/serum/markets/settle').send({
       marketPk: this.marketKp.publicKey.toBase58(),
       ownerPk,
-    } as IDEXMarketSettle).expect(200);
-
-    let [settleIx, settleSigners] = settleTx.body;
-    settleIx = deserializeIxs(settleIx);
-    settleSigners = deserializeSigners(settleSigners);
-    return [settleIx, settleSigners]
+    } as IDEXMarketSettleParams).expect(200);
+    return deserializeIxsAndSigners(res.body);
   }
 
   async requestCancelOrderIx(orderId: string, ownerPk: string) {
-    const cancelOrderTx = await request(app).post('/serum/orders/cancel').send({
+    const res = await request(app).post('/serum/orders/cancel').send({
       marketPk: this.marketKp.publicKey.toBase58(),
       orderId,
       ownerPk,
-    } as IDEXOrderCancel ).expect(200);
+    } as IDEXOrderCancelParams).expect(200);
+    return deserializeIxsAndSigners(res.body);
+  }
 
-    let [cancelOrderIx, cancelOrderSigners] = cancelOrderTx.body;
-    cancelOrderIx = deserializeIxs(cancelOrderIx);
-    cancelOrderSigners = deserializeSigners(cancelOrderSigners);
-    return [cancelOrderIx, cancelOrderSigners]
+  async prepMarket() {
+    const [tx1, tx2] = await this.requestInitMarketIx();
+    tx1.signers.unshift(this.user1Kp);
+    tx2.signers.unshift(this.user1Kp);
+    await this._prepareAndSendTx(tx1);
+    await this._prepareAndSendTx(tx2);
   }
 }

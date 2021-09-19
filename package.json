@@ -3,6 +3,7 @@
     "start": "nodemon --watch './src/**/*.ts' --exec 'ts-node' src/server.ts",
     "debug": "export DEBUG=* && npm run start",
     "test:local": "export TESTING_LOCAL=1 && jest",
+    "test:ilja": "export TESTING_LOCAL=1 && jest ./e2e/serum",
     "test:dev": "export TESTING_DEV=1 && jest",
     "update": "yarn upgrade dbricks-lib --latest --check-files"
   },

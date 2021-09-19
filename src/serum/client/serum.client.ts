@@ -373,9 +373,9 @@ export default class SerumClient extends SolClient {
     const consumeEventsIx = market.makeConsumeEventsInstruction(
       openOrders.map((oo) => oo.publicKey), 100,
     );
-    await this._prepareAndSendTx(
-      [consumeEventsIx],
-      [ownerKp],
-    );
+    await this._prepareAndSendTx({
+      ixs: [consumeEventsIx],
+      signers: [ownerKp],
+    });
   }
 }

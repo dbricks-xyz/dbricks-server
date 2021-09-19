@@ -144,9 +144,9 @@ export default class SolClient {
 
   // --------------------------------------- testing only
 
-  async _prepareAndSendTx(ixs: TransactionInstruction[], signers: Signer[]) {
-    const tx = new Transaction().add(...ixs);
-    const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
+  async _prepareAndSendTx(ixsAndSigners: ixsAndSigners) {
+    const tx = new Transaction().add(...ixsAndSigners.ixs);
+    const sig = await sendAndConfirmTransaction(this.connection, tx, ixsAndSigners.signers);
     console.log('Tx successful,', sig);
     return sig;
   }
@@ -205,9 +205,9 @@ export default class SolClient {
       toPubkey: toPk,
       lamports,
     })
-    await this._prepareAndSendTx(
-      [transferIx],
-      [fromKp]
-    )
+    await this._prepareAndSendTx({
+      ixs: [transferIx],
+      signers: [fromKp]
+    })
   }
 }
