@@ -1,24 +1,23 @@
-import {
-  Keypair, PublicKey, Signer, TransactionInstruction,
-} from '@solana/web3.js';
+import {PublicKey,} from '@solana/web3.js';
 import BN from 'bn.js';
-
-export type side = 'buy' | 'sell';
-export type orderType = 'limit' | 'ioc' | 'postOnly' | undefined;
-export type ixsAndSigners = [TransactionInstruction[], Signer[]];
+import {ixsAndSigners, orderType, side} from "dbricks-lib";
 
 export interface IDEXOrder {
-  place: (
-    marketPk: PublicKey,
-    side: side,
-    price: number,
-    size: number,
-    orderType: orderType,
-    ownerPk: PublicKey,
-  ) => Promise<ixsAndSigners>;
-  cancel: (
-    marketPk: PublicKey,
-    orderId: BN,
-    ownerPk: PublicKey,
-  ) => Promise<ixsAndSigners>
+  place: (params: IDEXOrderPlaceParamsParsed) => Promise<ixsAndSigners[]>;
+  cancel: (params: IDEXOrderCancelParamsParsed) => Promise<ixsAndSigners[]>
+}
+
+export interface IDEXOrderCancelParamsParsed {
+  marketPk: PublicKey,
+  orderId?: BN,
+  ownerPk: PublicKey,
+}
+
+export interface IDEXOrderPlaceParamsParsed {
+  marketPk: PublicKey,
+  side: side,
+  price: number,
+  size: number,
+  orderType: orderType,
+  ownerPk: PublicKey,
 }

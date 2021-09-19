@@ -38,6 +38,12 @@ export class SerumRoutes extends CommonRoutesConfig {
         SerumController.settleMarket,
       );
 
+    this.app.route('/serum/markets/basequote')
+      .post(
+        SerumMiddleware.validateStuff,
+        SerumController.getBaseQuote
+      )
+
     return this.app;
   }
 }

@@ -13,9 +13,9 @@ import debug from 'debug';
 import {
   AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { CONNECTION_URL, TESTING_KP_PATH } from '../../config/config';
-import { ixsAndSigners } from '../interfaces/dex/common.interfaces.dex.order';
-import { loadKpSync, sleep } from '../util/common.util';
+import {CONNECTION_URL, TESTING_KP_PATH} from '../../config/config';
+import {loadKpSync, sleep} from '../util/common.util';
+import {ixsAndSigners} from "dbricks-lib";
 
 const log: debug.IDebugger = debug('app:sol-client');
 
@@ -62,12 +62,12 @@ export default class SolClient {
     if (mintPk) {
       payerAccs = await this.connection.getParsedTokenAccountsByOwner(
         ownerPk,
-        { programId: TOKEN_PROGRAM_ID, mint: mintPk },
+        {programId: TOKEN_PROGRAM_ID, mint: mintPk},
       );
     } else {
       payerAccs = await this.connection.getParsedTokenAccountsByOwner(
         ownerPk,
-        { programId: TOKEN_PROGRAM_ID },
+        {programId: TOKEN_PROGRAM_ID},
       );
     }
     return payerAccs.value.map((a) => ({
@@ -139,14 +139,14 @@ export default class SolClient {
         ownerPk,
       ),
     );
-    return [[transaction.instructions, [newAccount]], newAccount.publicKey];
+    return [{ixs: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
   }
 
   // --------------------------------------- testing only
 
-  async _prepareAndSendTx(ixs: TransactionInstruction[], signers: Signer[]) {
-    const tx = new Transaction().add(...ixs);
-    const sig = await sendAndConfirmTransaction(this.connection, tx, signers);
+  async _prepareAndSendTx(ixsAndSigners: ixsAndSigners) {
+    const tx = new Transaction().add(...ixsAndSigners.ixs);
+    const sig = await sendAndConfirmTransaction(this.connection, tx, ixsAndSigners.signers);
     console.log('Tx successful,', sig);
     return sig;
   }
@@ -174,8 +174,8 @@ export default class SolClient {
   }
 
   /**
- * WARNING: Doesn't work on localnet - only devnet
- */
+   * WARNING: Doesn't work on localnet - only devnet
+   */
   async _newAccountWithLamports(
     lamports: number = 1000000,
   ): Promise<Account> {
@@ -183,7 +183,7 @@ export default class SolClient {
 
     let retries = 30;
     await this.connection.requestAirdrop(account.publicKey, lamports);
-    for (;;) {
+    for (; ;) {
       await sleep(500);
       if (lamports == (await this.getBalance(account.publicKey))) {
         return account;
@@ -205,9 +205,9 @@ export default class SolClient {
       toPubkey: toPk,
       lamports,
     })
-    await this._prepareAndSendTx(
-      [transferIx],
-      [fromKp]
-    )
+    await this._prepareAndSendTx({
+      ixs: [transferIx],
+      signers: [fromKp]
+    })
   }
 }

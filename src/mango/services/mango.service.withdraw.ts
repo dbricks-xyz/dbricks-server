@@ -1,35 +1,38 @@
-import {PublicKey} from '@solana/web3.js';
-import {ixsAndSigners} from '../../common/interfaces/dex/common.interfaces.dex.order';
-import {ILenderWithdraw} from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
+import {ixsAndSigners} from 'dbricks-lib';
+import {
+  ILenderWithdraw,
+  ILenderWithdrawParamsParsed
+} from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
 import MangoClient from '../client/mango.client';
 
 export default class MangoWithdrawService extends MangoClient implements ILenderWithdraw {
-  async withdraw(mintPk: PublicKey, quantity: number, isBorrow: boolean, ownerPk: PublicKey, sourcePk?: PublicKey): Promise<ixsAndSigners> {
-    const mangoInformation = await this.loadAllAccounts(ownerPk, mintPk);
+  async withdraw(params: ILenderWithdrawParamsParsed): Promise<ixsAndSigners[]> {
+    const mangoInformation = await this.loadAllAccounts(params.ownerPk, params.mintPk);
     const {
       userAccs, rootBank, nodeBank, vault,
     } = mangoInformation;
 
-    if (!sourcePk) {
+    if (!params.sourcePk) {
       throw new Error('Source account for withdrawal not specified');
     }
     const mangoAcc = userAccs.find(
-      (acc) => acc.publicKey.toBase58() === sourcePk.toBase58(),
+      (acc) => acc.publicKey.toBase58() === params.sourcePk!.toBase58(),
     );
     if (!mangoAcc) {
       throw new Error(
-        `${sourcePk.toBase58()} is not owned by ${ownerPk.toBase58()}`,
+        `${params.sourcePk.toBase58()} is not owned by ${params.ownerPk.toBase58()}`,
       );
     }
 
-    return this.prepWithdrawTx(
+    const tx = await this.prepWithdrawTx(
       mangoAcc,
-      ownerPk,
+      params.ownerPk,
       rootBank,
       nodeBank,
       vault,
-      quantity,
-      isBorrow,
+      params.quantity,
+      params.isBorrow,
     );
+    return [tx];
   }
 }

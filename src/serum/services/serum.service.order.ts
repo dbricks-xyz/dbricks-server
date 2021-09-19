@@ -1,54 +1,48 @@
-import { PublicKey, Signer, TransactionInstruction } from '@solana/web3.js';
-import BN from 'bn.js';
 import {
-  IDEXOrder, ixsAndSigners,
-  orderType,
-  side,
+  IDEXOrder,
+  IDEXOrderCancelParamsParsed,
+  IDEXOrderPlaceParamsParsed,
 } from '../../common/interfaces/dex/common.interfaces.dex.order';
 import SerumClient from '../client/serum.client';
+import {mergeIxsAndSigners} from "../../common/util/common.util";
+import {ixsAndSigners} from "dbricks-lib";
 
 export default class SerumOrderService extends SerumClient implements IDEXOrder {
-  async place(
-    marketPk: PublicKey,
-    side: side,
-    price: number,
-    size: number,
-    orderType: orderType,
-    ownerPk: PublicKey,
-  ): Promise<ixsAndSigners> {
-    const market = await this.loadSerumMarket(marketPk);
-    const [[ixPayer, signersPayer], payerPk] = await this.getPayerForMarket(
+  async place(params: IDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
+    const market = await this.loadSerumMarket(params.marketPk);
+    const [payerIxsAndSigners, payerPk] = await this.getPayerForMarket(
       market,
-      side,
-      ownerPk,
+      params.side,
+      params.ownerPk,
     );
-    console.log('payer will be', payerPk.toBase58());
-
-    const [ixPlace, signersPlace] = await this.prepPlaceOrderTx(
+    const placeIxsAndSigners = await this.prepPlaceOrderTx(
       market,
-      side,
-      price,
-      size,
-      orderType,
-      ownerPk,
+      params.side,
+      params.price,
+      params.size,
+      params.orderType,
+      params.ownerPk,
       payerPk,
     );
-    return [
-      [...ixPayer, ...ixPlace],
-      [...signersPayer, ...signersPlace],
-    ];
+    const tx = mergeIxsAndSigners(payerIxsAndSigners, placeIxsAndSigners);
+    return [tx];
   }
 
-  async cancel(
-    marketPk: PublicKey,
-    orderId: BN,
-    ownerPk: PublicKey,
-  ): Promise<ixsAndSigners> {
-    const market = await this.loadSerumMarket(marketPk);
-    return this.prepCancelOrderTx(
-      market,
-      ownerPk,
-      orderId,
-    );
+  async cancel(params: IDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
+    const market = await this.loadSerumMarket(params.marketPk);
+    let ixAndSigners: ixsAndSigners;
+    if (!params.orderId) {
+      ixAndSigners = await this.prepCancelAllOrdersTx(
+        market,
+        params.ownerPk,
+      );
+    } else {
+      ixAndSigners = await this.prepCancelOrderTx(
+        market,
+        params.ownerPk,
+        params.orderId,
+      );
+    }
+    return [ixAndSigners]
   }
 }
