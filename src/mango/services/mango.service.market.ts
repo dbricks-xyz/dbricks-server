@@ -1,28 +1,40 @@
-// import { PublicKey } from '@solana/web3.js';
-// import debug from 'debug';
-// import { IDEXMarket } from '../../common/interfaces/dex/common.interfaces.dex.market';
-// import { ixsAndSigners } from '../../common/interfaces/dex/common.interfaces.dex.order';
-// import { MangoClient } from '../client/mango.client';
+import { ixsAndSigners } from 'dbricks-lib';
+import { QUOTE_INDEX } from '@blockworks-foundation/mango-client';
+import { IMangoDEXMarket, IMangoDEXMarketSettleParamsParsed } from '../interfaces/dex/mango.interfaces.dex.market';
+import MangoClient from '../client/mango.client';
+import { SERUM_PROG_ID } from '../../config/config';
 
-// const log: debug.IDebugger = debug('app:mango-market-service');
-// // implements IDEXMarket but not init?
-// export default class MangoMarketService extends MangoClient {
-//   async settle(ownerPk: PublicKey, mangoPk: PublicKey): Promise<ixsAndSigners> {
-//     const userAccounts = await this.loadUserAccounts(ownerPk);
-//     const userAccount = userAccounts.find((acc) => acc.publicKey.toBase58() === mangoPk.toBase58());
-//     if (!userAccount) {
-//       log(
-//         `Could not find ${mangoPk.toBase58()} in mangoAccounts owned by ${ownerPk.toBase58()}`,
-//       );
-//       return [[], []];
-//     }
-//     const markets = await this.loadSpotMarkets();
+export default class MangoMarketService extends MangoClient implements IMangoDEXMarket {
+  async settleSpot(params: IMangoDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
+    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const markets = await this.loadSpotMarkets();
 
-//     return this.prepSettleSpotTx(
-//       this.group,
-//       userAccount,
-//       markets,
-//       ownerPk,
-//     );
-//   }
-// }
+    const tx = await this.prepSettleSpotTx(
+      mangoAcc,
+      markets,
+      params.ownerPk,
+    );
+    return [tx];
+  }
+
+  async settlePerp(params: IMangoDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
+    await this.loadGroup();
+    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const perpMarket = await this.loadPerpMarket(params.marketPk);
+    const marketIndex = this.group.getPerpMarketIndex(perpMarket.publicKey);
+    const mangoCache = await this.group.loadCache(this.connection);
+    const quoteRootBank = this.group.rootBankAccounts[QUOTE_INDEX];
+    if (!quoteRootBank) {
+      throw new Error('Error finding rootBankAccount for mangoGroup');
+    }
+
+    const tx = await this.prepSettlePerpTx(
+      mangoCache,
+      mangoAcc,
+      perpMarket,
+      quoteRootBank,
+      mangoCache.priceCache[marketIndex].price,
+    );
+    return [tx];
+  }
+}

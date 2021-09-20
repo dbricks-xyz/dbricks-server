@@ -1,26 +1,60 @@
-import {ILenderDepositParamsParsed} from "../../common/interfaces/lender/common.interfaces.lender.deposit";
 import e from 'express';
-import {deserializePk, ILenderDepositParams, ILenderWithdrawParams} from "dbricks-lib";
-import {ILenderWithdrawParamsParsed} from "../../common/interfaces/lender/common.interfaces.lender.withdraw";
+import BN from 'bn.js';
+import { deserializePk } from 'dbricks-lib';
+import { IMangoLenderDepositParams, IMangoLenderDepositParamsParsed } from '../interfaces/lender/mango.interfaces.lender.deposit';
+import { IMangoLenderWithdrawParams, IMangoLenderWithdrawParamsParsed } from '../interfaces/lender/mango.interfaces.lender.withdraw';
+import { IMangoDEXOrderPlaceParamsParsed, IMangoDEXOrderCancelParamsParsed, IMangoDEXOrderPlaceParams, IMangoDEXOrderCancelParams } from '../interfaces/dex/mango.interfaces.dex.order';
+import { IMangoDEXMarketSettleParams, IMangoDEXMarketSettleParamsParsed } from '../interfaces/dex/mango.interfaces.dex.market';
 
-export function deserializeDeposit(req: e.Request): ILenderDepositParamsParsed {
-  const body: ILenderDepositParams = req.body;
+export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsParsed {
+  const body: IMangoLenderDepositParams = req.body;
   return {
-      mintPk: deserializePk(body.mintPk),
-      quantity: parseFloat(body.quantity), //todo might need a different deserializer
-      ownerPk: deserializePk(body.ownerPk),
-      destinationPk: body.destinationPk ? deserializePk(body.destinationPk): undefined
-  }
+    mintPk: deserializePk(body.mintPk),
+    quantity: parseFloat(body.quantity),
+    ownerPk: deserializePk(body.ownerPk),
+    mangoAccPk: body.mangoAccPk ? deserializePk(body.mangoAccPk) : undefined,
+  };
 }
 
-export function deserializeWithdraw(req: e.Request): ILenderWithdrawParamsParsed {
-  const body: ILenderWithdrawParams = req.body;
+export function deserializeWithdraw(req: e.Request): IMangoLenderWithdrawParamsParsed {
+  const body: IMangoLenderWithdrawParams = req.body;
   return {
-      mintPk: deserializePk(body.mintPk),
-      quantity: parseFloat(body.quantity), //todo might need a different deserializer
-      isBorrow: body.isBorrow,
-      ownerPk: deserializePk(body.ownerPk),
-      sourcePk: body.sourcePk ? deserializePk(body.sourcePk): undefined
-  }
+    mintPk: deserializePk(body.mintPk),
+    quantity: parseFloat(body.quantity),
+    isBorrow: body.isBorrow,
+    ownerPk: deserializePk(body.ownerPk),
+    mangoAccPk: deserializePk(body.mangoAccPk),
+  };
 }
 
+export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParsed {
+  const body: IMangoDEXOrderPlaceParams = req.body;
+  return {
+    marketPk: deserializePk(body.marketPk),
+    side: body.side,
+    price: parseFloat(body.price),
+    size: parseFloat(body.size),
+    orderType: body.orderType,
+    ownerPk: deserializePk(body.ownerPk),
+    mangoAccPk: deserializePk(body.mangoAccPk),
+  };
+}
+
+export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsParsed {
+  const body: IMangoDEXOrderCancelParams = req.body;
+  return {
+    marketPk: deserializePk(body.marketPk),
+    orderId: new BN(body.orderId, 16), // comes as string, hex,
+    ownerPk: deserializePk(body.ownerPk),
+    mangoAccPk: deserializePk(body.mangoAccPk),
+  };
+}
+
+export function deserializeSettle(req: e.Request): IMangoDEXMarketSettleParamsParsed {
+  const body: IMangoDEXMarketSettleParams = req.body;
+  return {
+    marketPk: deserializePk(body.marketPk),
+    ownerPk: deserializePk(body.ownerPk),
+    mangoAccPk: deserializePk(body.mangoAccPk),
+  };
+}

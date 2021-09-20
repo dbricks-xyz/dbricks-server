@@ -1,28 +1,16 @@
-import {ixsAndSigners} from 'dbricks-lib';
+import { ixsAndSigners } from 'dbricks-lib';
 import {
-  ILenderWithdraw,
-  ILenderWithdrawParamsParsed
-} from '../../common/interfaces/lender/common.interfaces.lender.withdraw';
+  IMangoLenderWithdraw,
+  IMangoLenderWithdrawParamsParsed,
+} from '../interfaces/lender/mango.interfaces.lender.withdraw';
 import MangoClient from '../client/mango.client';
+import { SERUM_PROG_ID } from '../../config/config';
 
-export default class MangoWithdrawService extends MangoClient implements ILenderWithdraw {
-  async withdraw(params: ILenderWithdrawParamsParsed): Promise<ixsAndSigners[]> {
-    const mangoInformation = await this.loadAllAccounts(params.ownerPk, params.mintPk);
-    const {
-      userAccs, rootBank, nodeBank, vault,
-    } = mangoInformation;
-
-    if (!params.sourcePk) {
-      throw new Error('Source account for withdrawal not specified');
-    }
-    const mangoAcc = userAccs.find(
-      (acc) => acc.publicKey.toBase58() === params.sourcePk!.toBase58(),
-    );
-    if (!mangoAcc) {
-      throw new Error(
-        `${params.sourcePk.toBase58()} is not owned by ${params.ownerPk.toBase58()}`,
-      );
-    }
+export default class MangoWithdrawService extends MangoClient implements IMangoLenderWithdraw {
+  async withdraw(params: IMangoLenderWithdrawParamsParsed): Promise<ixsAndSigners[]> {
+    const bankVaultInfo = await this.loadBankVaultInformation(params.mintPk);
+    const { rootBank, nodeBank, vault } = bankVaultInfo;
+    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
 
     const tx = await this.prepWithdrawTx(
       mangoAcc,

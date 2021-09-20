@@ -1,47 +1,36 @@
-import {ixsAndSigners} from 'dbricks-lib';
+import { ixsAndSigners } from 'dbricks-lib';
 import {
-  ILenderDeposit,
-  ILenderDepositParamsParsed,
-} from '../../common/interfaces/lender/common.interfaces.lender.deposit';
+  IMangoLenderDeposit,
+  IMangoLenderDepositParamsParsed,
+} from '../interfaces/lender/mango.interfaces.lender.deposit';
 import MangoClient from '../client/mango.client';
+import { SERUM_PROG_ID } from '../../config/config';
 
-export default class MangoDepositService extends MangoClient implements ILenderDeposit {
-  async deposit(params: ILenderDepositParamsParsed): Promise<ixsAndSigners[]> {
-    const mangoInformation = await this.loadAllAccounts(params.ownerPk, params.mintPk);
-    const {
-      userAccs, tokenAccPk, rootBank, nodeBank, vault,
-    } = mangoInformation;
+export default class MangoDepositService extends MangoClient implements IMangoLenderDeposit {
+  async deposit(params: IMangoLenderDepositParamsParsed): Promise<ixsAndSigners[]> {
+    const bankVaultInfo = await this.loadBankVaultInformation(params.mintPk);
+    const tokenAcc = await this.loadTokenAccount(params.ownerPk, params.mintPk);
+    const { rootBank, nodeBank, vault } = bankVaultInfo;
 
-    if (userAccs.length === 0) {
+    if (!params.mangoAccPk) {
       const tx = await this.prepDepositTx(
         params.ownerPk,
         rootBank,
         nodeBank,
         vault,
-        tokenAccPk,
+        tokenAcc.publicKey,
         params.quantity,
       );
       return [tx];
     }
-
-    if (!params.destinationPk) {
-      throw new Error('Destination account for deposit not specified');
-    }
-    const mangoAcc = userAccs.find(
-      (acc) => acc.publicKey.toBase58() === params.destinationPk!.toBase58(),
-    );
-    if (!mangoAcc) {
-      throw new Error(
-        `${params.destinationPk.toBase58()} is not owned by ${params.ownerPk.toBase58()}`,
-      );
-    }
+    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
 
     const tx = await this.prepDepositTx(
       params.ownerPk,
       rootBank,
       nodeBank,
       vault,
-      tokenAccPk,
+      tokenAcc.publicKey,
       params.quantity,
       mangoAcc.publicKey,
     );
