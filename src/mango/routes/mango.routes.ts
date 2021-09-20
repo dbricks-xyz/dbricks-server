@@ -21,12 +21,41 @@ export class MangoRoutes extends CommonRoutesConfig {
         MangoController.withdraw,
       );
 
-    // todo should be same route as above
-    // this.app.route('/mango/borrow')
-    //   .post(
-    //     MangoMiddleware.validateStuff,
-    //     MangoController.borrow,
-    //   );
+    this.app.route('/mango/spot/settle')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.settleSpot,
+      );
+
+    this.app.route('/mango/spot/place')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.placeSpotOrder,
+      );
+
+    this.app.route('/mango/spot/cancel')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.cancelSpotOrder,
+      );
+
+    this.app.route('/mango/perp/place')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.placePerpOrder,
+      );
+
+    this.app.route('/mango/perp/cancel')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.cancelPerpOrder,
+      );
+
+    this.app.route('/mango/perp/settle')
+      .post(
+        MangoMiddleware.validateStuff,
+        MangoController.settlePerp,
+      );
 
     return this.app;
   }

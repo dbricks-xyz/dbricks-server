@@ -1,13 +1,11 @@
 import e from 'express';
 import debug from 'debug';
-import {
-  deserializePk,
-  serializeIxs, serializeIxsAndSigners,
-  serializeSigners,
-} from 'dbricks-lib';
+import {serializeIxsAndSigners,} from 'dbricks-lib';
+import {deserializeCancel, deserializeDeposit, deserializePlace, deserializeSettle, deserializeWithdraw} from './mango.controller.serializers';
 import MangoDepositService from '../services/mango.service.deposit';
 import MangoWithdrawService from '../services/mango.service.withdraw';
-import {deserializeDeposit, deserializeWithdraw} from "./mango.controller.serializers";
+import MangoMarketService from '../services/mango.service.market';
+import MangoOrderService from '../services/mango.service.order';
 
 const log: debug.IDebugger = debug('app:mango-controller');
 
@@ -28,20 +26,53 @@ class MangoController {
     res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
   }
 
-  // todo hm this doesn't look like a good idea to me -
-  //  you should have a single route if it's the same call, and FE will decide isBorrow = false or true
-  // async borrow(req: e.Request, res: e.Response) {
-  //   const mangoWithdrawService = new MangoWithdrawService();
-  //   const ixsAndSigners = await mangoWithdrawService.withdraw(
-  //     deserializePk(req.body.mintPk),
-  //     req.body.quantity,
-  //     true,
-  //     deserializePk(req.body.ownerPk),
-  //     req.body.sourcePk ? deserializePk(req.body.sourcePk) : undefined,
-  //   );
-  //   log('Borrow instruction generated');
-  //   res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
-  // }
+  async settleSpot(req: e.Request, res: e.Response) {
+    const params = deserializeSettle(req);
+    const mangoMarketService = new MangoMarketService();
+    const ixsAndSigners = await mangoMarketService.settleSpot(params);
+    log('Settle spot orders instruction generated');
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+  }
+
+  async placeSpotOrder(req: e.Request, res: e.Response) {
+    const params = deserializePlace(req);
+    const mangoOrderService = new MangoOrderService();
+    const ixsAndSigners = await mangoOrderService.placeSpot(params);
+    log('Place spot order instruction generated');
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+  }
+
+  async cancelSpotOrder(req: e.Request, res: e.Response) {
+    const params = deserializeCancel(req);
+    const mangoOrderService = new MangoOrderService();
+    const ixsAndSigners = await mangoOrderService.cancelSpot(params);
+    log('Cancel spot order instruction generated');
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+  }
+
+  async placePerpOrder(req: e.Request, res: e.Response) {
+    const params = deserializePlace(req);
+    const mangoOrderService = new MangoOrderService();
+    const ixsAndSigners = await mangoOrderService.placePerp(params);
+    log('Place perp order instruction generated');
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+  }
+
+  async cancelPerpOrder(req: e.Request, res: e.Response) {
+    const params = deserializeCancel(req);
+    const mangoOrderService = new MangoOrderService();
+    const ixsAndSigners = await mangoOrderService.cancelPerp(params);
+    log('Cancel perp order instruction generated');
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+  }
+
+  async settlePerp(req: e.Request, res: e.Response) {
+    const params = deserializeSettle(req);
+    const mangoMarketService = new MangoMarketService();
+    const ixsAndSigners = await mangoMarketService.settlePerp(params);
+    log('Settle perp PnL instruction generated');
+    res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+  }
 }
 
 export default new MangoController();
