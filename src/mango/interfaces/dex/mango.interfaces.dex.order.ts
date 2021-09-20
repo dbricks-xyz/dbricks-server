@@ -9,28 +9,11 @@ export interface IMangoDEXOrder {
   cancelPerp: (params: IMangoDEXOrderCancelParamsParsed) => Promise<ixsAndSigners[]>;
 }
 
-export interface IMangoDEXOrderCancelParams {
-  marketPk: string,
-  orderId: string,
-  ownerPk: string,
-  mangoAccPk: string,
-}
-
 export interface IMangoDEXOrderCancelParamsParsed {
   marketPk: PublicKey,
   orderId: BN,
   ownerPk: PublicKey,
   mangoAccPk: PublicKey,
-}
-
-export interface IMangoDEXOrderPlaceParams {
-  marketPk: string,
-  side: side,
-  price: string,
-  size: string,
-  orderType: orderType,
-  ownerPk: string,
-  mangoAccPk: string,
 }
 
 export interface IMangoDEXOrderPlaceParamsParsed {

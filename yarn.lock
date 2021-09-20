@@ -1995,10 +1995,10 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-dbricks-lib@^0.1.17:
-  version "0.1.17"
-  resolved "https://registry.yarnpkg.com/dbricks-lib/-/dbricks-lib-0.1.17.tgz#cb14075256201ace2b4a86335781b9ddc91092f2"
-  integrity sha512-mj796kU7KQu73fY+LMnPkb7Z7uQ5HJLMTahBynaPFTFBjbbQDBBmwwCVHW8tK1WEglxZNYy6Agy7w1YdmAKOkQ==
+dbricks-lib@^0.1.19:
+  version "0.1.19"
+  resolved "https://registry.yarnpkg.com/dbricks-lib/-/dbricks-lib-0.1.19.tgz#218b6b2c6b7748b8a9f08289916751d0caa10b51"
+  integrity sha512-uoqNFlSQqDZvkxoGkCM2wfj77PHpH9ot+jD3D0vznlAh05kyGMltnZsv0zejRvMZElSSjHISWh8boAJs/QJllA==
   dependencies:
     "@solana/spl-token" "^0.1.8"
     "@solana/web3.js" "^1.27.0"

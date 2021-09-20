@@ -6,12 +6,6 @@ export interface IMangoDEXMarket {
   settlePerp: (params: IMangoDEXMarketSettleParamsParsed) => Promise<ixsAndSigners[]>;
 }
 
-export interface IMangoDEXMarketSettleParams {
-  marketPk: string,
-  ownerPk: string,
-  mangoAccPk: string,
-}
-
 export interface IMangoDEXMarketSettleParamsParsed {
   marketPk: PublicKey,
   ownerPk: PublicKey,

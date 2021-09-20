@@ -1,14 +1,14 @@
 import {
-  IDEXOrder,
-  IDEXOrderCancelParamsParsed,
-  IDEXOrderPlaceParamsParsed,
-} from '../../common/interfaces/dex/common.interfaces.dex.order';
+  ISerumDEXOrder,
+  ISerumDEXOrderCancelParamsParsed,
+  ISerumDEXOrderPlaceParamsParsed,
+} from '../interfaces/dex/serum.interfaces.dex.order';
 import SerumClient from '../client/serum.client';
 import {mergeIxsAndSigners} from "../../common/util/common.util";
 import {ixsAndSigners} from "dbricks-lib";
 
-export default class SerumOrderService extends SerumClient implements IDEXOrder {
-  async place(params: IDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
+export default class SerumOrderService extends SerumClient implements ISerumDEXOrder {
+  async place(params: ISerumDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPk);
     const [payerIxsAndSigners, payerPk] = await this.getPayerForMarket(
       market,
@@ -28,21 +28,13 @@ export default class SerumOrderService extends SerumClient implements IDEXOrder 
     return [tx];
   }
 
-  async cancel(params: IDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
+  async cancel(params: ISerumDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPk);
-    let ixAndSigners: ixsAndSigners;
-    if (!params.orderId) {
-      ixAndSigners = await this.prepCancelAllOrdersTx(
-        market,
-        params.ownerPk,
-      );
-    } else {
-      ixAndSigners = await this.prepCancelOrderTx(
-        market,
-        params.ownerPk,
-        params.orderId,
-      );
-    }
+    const ixAndSigners = await this.prepCancelOrderTx(
+      market,
+      params.ownerPk,
+      params.orderId,
+    );
     return [ixAndSigners]
   }
 }

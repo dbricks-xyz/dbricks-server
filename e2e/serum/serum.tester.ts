@@ -6,10 +6,10 @@ import request from 'supertest';
 import app from "../../src/app";
 import {
   deserializeIxsAndSigners,
-  IDEXMarketInitParams,
-  IDEXMarketSettleParams,
-  IDEXOrderCancelParams,
-  IDEXOrderPlaceParams,
+  ISerumDEXMarketInitParams,
+  ISerumDEXMarketSettleParams,
+  ISerumDEXOrderCancelParams,
+  ISerumDEXOrderPlaceParams,
   side,
 } from "dbricks-lib";
 import SolClient from "../../src/common/client/common.client";
@@ -71,7 +71,7 @@ export default class SerumTester extends SolClient {
       lotSize: '1',
       tickSize: '1',
       ownerPk: this.user1Pk.toBase58(),
-    } as IDEXMarketInitParams)
+    } as ISerumDEXMarketInitParams)
 
     const ixsAndSigners = deserializeIxsAndSigners(res.body);
 
@@ -96,7 +96,7 @@ export default class SerumTester extends SolClient {
       size,
       orderType,
       ownerPk,
-    } as IDEXOrderPlaceParams).expect(200);
+    } as ISerumDEXOrderPlaceParams).expect(200);
     return deserializeIxsAndSigners(res.body);
   }
 
@@ -106,7 +106,7 @@ export default class SerumTester extends SolClient {
     const res = await request(app).post('/serum/markets/settle').send({
       marketPk: this.marketKp.publicKey.toBase58(),
       ownerPk,
-    } as IDEXMarketSettleParams).expect(200);
+    } as ISerumDEXMarketSettleParams).expect(200);
     return deserializeIxsAndSigners(res.body);
   }
 
@@ -115,7 +115,7 @@ export default class SerumTester extends SolClient {
       marketPk: this.marketKp.publicKey.toBase58(),
       orderId,
       ownerPk,
-    } as IDEXOrderCancelParams).expect(200);
+    } as ISerumDEXOrderCancelParams).expect(200);
     return deserializeIxsAndSigners(res.body);
   }
 
