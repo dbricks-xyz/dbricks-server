@@ -5,14 +5,6 @@ export interface IMangoLenderWithdraw {
   withdraw: (params: IMangoLenderWithdrawParamsParsed) => Promise<ixsAndSigners[]>;
 }
 
-export interface IMangoLenderWithdrawParams {
-  mintPk: string,
-  quantity: string,
-  isBorrow: boolean,
-  ownerPk: string,
-  mangoAccPk: string,
-}
-
 export interface IMangoLenderWithdrawParamsParsed {
   mintPk: PublicKey,
   quantity: number,
