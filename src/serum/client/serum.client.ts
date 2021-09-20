@@ -99,42 +99,42 @@ export default class SerumClient extends SolClient {
   async prepCancelOrderTx(
     market: Market,
     ownerPk: PublicKey,
-    orderId: BN,
+    orderId?: BN,
   ): Promise<ixsAndSigners> {
-    const orders = await market.loadOrdersForOwner(
-      this.connection,
-      ownerPk,
-    );
+    let orders;
+    //fail to load
+    try {
+      orders = await market.loadOrdersForOwner(
+        this.connection,
+        ownerPk,
+      );
+    } catch (e) {
+      log('failed to load open orders', e);
+      return {ixs: [], signers: []};
+    }
+    //none returned
     if (orders.length === 0) {
       return {ixs: [], signers: []};
     }
-    const [order] = orders.filter((o: Order) => {
-      if (o.orderId.eq(orderId)) {
-        return o;
+    //if specific order id passed
+    if (orderId) {
+      const [order] = orders.filter((o: Order) => {
+        if (o.orderId.eq(orderId)) {
+          return o;
+        }
+      });
+      const cancelOrderTx = await market.makeCancelOrderTransaction(
+        this.connection,
+        ownerPk,
+        order,
+      );
+      return {
+        ixs: [...cancelOrderTx.instructions],
+        signers: [],
       }
-    });
-    const cancelOrderTx = await market.makeCancelOrderTransaction(
-      this.connection,
-      ownerPk,
-      order,
-    );
-    return {
-      ixs: [...cancelOrderTx.instructions],
-      signers: [],
     }
-  }
-
-  async prepCancelAllOrdersTx(
-    market: Market,
-    ownerPk: PublicKey,
-  ): Promise<ixsAndSigners> {
-    const orders = await market.loadOrdersForOwner(
-      this.connection,
-      ownerPk,
-    );
-    if (orders.length === 0) {
-      return {ixs: [], signers: []};
-    }
+    //else just cancel all
+    //todo note this will fail if too many orders outstanding, need to split
     const ixs: TransactionInstruction[] = [];
     orders.forEach(async (o) => {
       const cancelOrderTx = await market.makeCancelOrderTransaction(
@@ -144,7 +144,6 @@ export default class SerumClient extends SolClient {
       );
       ixs.push(...cancelOrderTx.instructions)
     })
-
     return {
       ixs,
       signers: [],
