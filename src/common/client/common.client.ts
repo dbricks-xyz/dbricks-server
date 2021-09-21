@@ -1,19 +1,15 @@
 import {
   Account,
   Connection,
-  Keypair, ParsedAccountData,
+  Keypair,
   PublicKey,
   sendAndConfirmTransaction,
-  Signer,
   SystemProgram,
   Transaction,
-  TransactionInstruction,
 } from '@solana/web3.js';
 import debug from 'debug';
-import {
-  AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import {CONNECTION_URL, TESTING_KP_PATH} from '../../config/config';
+import {AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,} from '@solana/spl-token';
+import {COMMITTMENT, CONNECTION_URL, TESTING_KP_PATH} from '../../config/config';
 import {loadKpSync, sleep} from '../util/common.util';
 import {ixsAndSigners} from "dbricks-lib";
 
@@ -31,7 +27,7 @@ export default class SolClient {
   connection: Connection;
 
   constructor() {
-    this.connection = new Connection(CONNECTION_URL, 'processed');
+    this.connection = new Connection(CONNECTION_URL, COMMITTMENT);
     log('Initialized Sol Client');
   }
 

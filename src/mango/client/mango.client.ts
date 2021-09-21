@@ -12,7 +12,7 @@ import debug from 'debug';
 import { ixsAndSigners, side, orderType } from 'dbricks-lib';
 import BN from 'bn.js';
 import SolClient from '../../common/client/common.client';
-import {MANGO_PROG_ID, NETWORK, SERUM_PROG_ID} from '../../config/config';
+import {COMMITTMENT, MANGO_PROG_ID, NETWORK, SERUM_PROG_ID} from '../../config/config';
 
 const log: debug.IDebugger = debug('app:mango-client');
 
@@ -176,7 +176,7 @@ export default class MangoClient extends SolClient {
       spotMarketConfig.publicKey,
       {
         skipPreflight: true,
-        commitment: 'processed',
+        commitment: COMMITTMENT,
       },
       SERUM_PROG_ID,
     );
@@ -212,7 +212,7 @@ export default class MangoClient extends SolClient {
       // withdrawTxn
       lamports = await this.connection.getMinimumBalanceForRentExemption(
         165,
-        'processed',
+        COMMITTMENT,
       );
     }
     transactionIxs.push(
@@ -535,7 +535,7 @@ export default class MangoClient extends SolClient {
 
           const openOrdersLamports = await this.connection.getMinimumBalanceForRentExemption(
             openOrdersSpace,
-            'processed',
+            COMMITTMENT,
           );
 
           const accInstr = await createAccountInstruction(
