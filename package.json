@@ -5,7 +5,8 @@
     "test:local": "export TESTING_LOCAL=1 && jest",
     "test:ilja": "export TESTING_LOCAL=1 && jest ./e2e/serum",
     "test:dev": "export TESTING_DEV=1 && jest",
-    "update": "yarn upgrade dbricks-lib --latest --check-files"
+    "update": "yarn upgrade dbricks-lib --latest --check-files",
+    "linklib": "npm link ../dbricks-lib"
   },
   "dependencies": {
     "@blockworks-foundation/mango-client": "^3.0.18",
@@ -18,7 +19,7 @@
     "bn.js": "^5.2.0",
     "borsh": "^0.6.0",
     "cors": "^2.8.5",
-    "dbricks-lib": "^0.1.19",
+    "dbricks-lib": "^0.1.26",
     "debug": "^4.3.2",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
