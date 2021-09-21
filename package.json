@@ -11,7 +11,7 @@
     "@blockworks-foundation/mango-client": "^3.0.18",
     "@project-serum/serum": "^0.13.58",
     "@project-serum/swap": "^0.1.0-alpha.32",
-    "@saberhq/stableswap-sdk": "^0.16.0",
+    "@saberhq/stableswap-sdk": "^1.2.3",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.24.2",
     "axios": "^0.21.4",
