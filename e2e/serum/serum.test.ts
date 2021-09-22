@@ -12,9 +12,11 @@ describe('Serum', () => {
     await tester.prepMarket();
 
     // 1st user places an order
+    // only quote account exists, base account will have to be created by the BE
     await placeOrder(tester, 'buy', amount, tester.user1Kp);
 
     // 2nd user places an order
+    // both quote and base accounts exist
     await placeOrder(tester, 'sell', amount, tester.user2Kp);
     await settleAndVerify(tester, tester.baseMint.publicKey, parseFloat(amount));
   });

@@ -22,7 +22,6 @@ export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsPar
     mintPk: deserializePk(body.mintPk),
     quantity: parseFloat(body.quantity),
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: body.mangoAccPk ? deserializePk(body.mangoAccPk) : undefined,
   };
 }
 
@@ -33,7 +32,6 @@ export function deserializeWithdraw(req: e.Request): IMangoLenderWithdrawParamsP
     quantity: parseFloat(body.quantity),
     isBorrow: body.isBorrow,
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
   };
 }
 

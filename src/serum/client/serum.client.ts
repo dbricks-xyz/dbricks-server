@@ -205,11 +205,11 @@ export default class SerumClient extends SolClient {
   ): Promise<[ixsAndSigners, PublicKey]> {
     if (side === 'buy') {
       return this.getOrCreateTokenAccByMint(
-        this.connection, market, ownerPk, market.quoteMintAddress,
+        ownerPk, market.quoteMintAddress,
       );
     } else {
       return this.getOrCreateTokenAccByMint(
-        this.connection, market, ownerPk, market.baseMintAddress,
+        ownerPk, market.baseMintAddress,
       );
     }
   }
@@ -219,10 +219,10 @@ export default class SerumClient extends SolClient {
     ownerPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey][]> {
     const [ownerBaseIxsAndSigners, ownerBasePk] = await this.getOrCreateTokenAccByMint(
-      this.connection, market, ownerPk, market.baseMintAddress,
+      ownerPk, market.baseMintAddress,
     );
     const [ownerQuoteIxsAndSigners, ownerQuotePk] = await this.getOrCreateTokenAccByMint(
-      this.connection, market, ownerPk, market.quoteMintAddress,
+      ownerPk, market.quoteMintAddress,
     );
     return [
       [ownerBaseIxsAndSigners, ownerBasePk],
@@ -272,32 +272,6 @@ export default class SerumClient extends SolClient {
   }
 
   // --------------------------------------- helpers (active)
-
-  async getOrCreateTokenAccByMint(
-    connection: Connection,
-    market: Market,
-    ownerPk: PublicKey,
-    mintPk: PublicKey,
-  ): Promise<[ixsAndSigners, PublicKey]> {
-    let ixsAndSigners: ixsAndSigners = {ixs: [], signers: []};
-    let tokenAccPk: PublicKey;
-    if (mintPk.toBase58() === 'So11111111111111111111111111111111111111112') {
-      return [ixsAndSigners, ownerPk];
-    }
-    const tokenAccounts = await market.getTokenAccountsByOwnerForMint(
-      connection, ownerPk, mintPk,
-    );
-
-    if (tokenAccounts.length === 0) {
-      log(`Creating token account for mint ${mintPk.toBase58()}`);
-      [ixsAndSigners, tokenAccPk] = await this.prepCreateTokenAccTx(ownerPk, mintPk);
-    } else {
-      tokenAccPk = tokenAccounts[0].pubkey;
-    }
-    log(`User's account for mint ${mintPk.toBase58()} is ${tokenAccPk.toBase58()}`);
-
-    return [ixsAndSigners, tokenAccPk];
-  }
 
   async prepCreateStateAccIx(
     stateAccPk: PublicKey,

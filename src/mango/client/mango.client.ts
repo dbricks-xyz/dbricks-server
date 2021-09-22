@@ -2,14 +2,62 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable dot-notation */
-import {Cluster, createAccountInstruction, getTokenAccountsByOwnerWithWrappedSol, getAllMarkets, getMultipleAccounts, IDS, Config, PerpMarketLayout, makeDepositInstruction, makeInitMangoAccountInstruction, makeWithdrawInstruction, makeSettleFundsInstruction, makePlaceSpotOrderInstruction, makeInitSpotOpenOrdersInstruction, makeCancelSpotOrderInstruction, makePlacePerpOrderInstruction, QUOTE_INDEX, MangoAccount, MangoAccountLayout, MangoClient as NativeMangoClient, MangoGroup, uiToNative, ZERO_BN, zeroKey, nativeToUi, PerpMarket, PerpMarketConfig, PerpOrder, makeCancelPerpOrderInstruction, I80F48, makeSettleFeesInstruction, makeSettlePnlInstruction, MangoCache, RootBank, WalletAdapter, ZERO_I80F48} from '@blockworks-foundation/mango-client';
-import {closeAccount, initializeAccount, WRAPPED_SOL_MINT,} from '@project-serum/serum/lib/token-instructions';
+import {
+  Cluster,
+  createAccountInstruction,
+  getTokenAccountsByOwnerWithWrappedSol,
+  getAllMarkets,
+  getMultipleAccounts,
+  IDS,
+  Config,
+  PerpMarketLayout,
+  makeDepositInstruction,
+  makeInitMangoAccountInstruction,
+  makeWithdrawInstruction,
+  makeSettleFundsInstruction,
+  makePlaceSpotOrderInstruction,
+  makeInitSpotOpenOrdersInstruction,
+  makeCancelSpotOrderInstruction,
+  makePlacePerpOrderInstruction,
+  QUOTE_INDEX,
+  MangoAccount,
+  MangoAccountLayout,
+  MangoClient as NativeMangoClient,
+  MangoGroup,
+  uiToNative,
+  ZERO_BN,
+  zeroKey,
+  nativeToUi,
+  PerpMarket,
+  PerpMarketConfig,
+  PerpOrder,
+  makeCancelPerpOrderInstruction,
+  I80F48,
+  makeSettleFeesInstruction,
+  makeSettlePnlInstruction,
+  MangoCache,
+  RootBank,
+  WalletAdapter,
+  ZERO_I80F48
+} from '@blockworks-foundation/mango-client';
+import {
+  closeAccount,
+  initializeAccount,
+  WRAPPED_SOL_MINT,
+} from '@project-serum/serum/lib/token-instructions';
 import {getFeeRates, getFeeTier, Market, OpenOrders,} from '@project-serum/serum';
 import {Order,} from '@project-serum/serum/lib/market';
 import {ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID,} from '@solana/spl-token';
-import {Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, TransactionInstruction,} from '@solana/web3.js';
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  Signer,
+  SystemProgram,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import debug from 'debug';
-import { ixsAndSigners, side, orderType } from 'dbricks-lib';
+import {ixsAndSigners, side, orderType} from 'dbricks-lib';
 import BN from 'bn.js';
 import SolClient from '../../common/client/common.client';
 import {COMMITTMENT, MANGO_PROG_ID, NETWORK, SERUM_PROG_ID} from '../../config/config';
@@ -84,7 +132,7 @@ export default class MangoClient extends SolClient {
       await this.loadGroup();
     }
     const tokenIndex = this.group.getTokenIndex(mintPk);
-    const { rootBank } = this.group.tokens[tokenIndex];
+    const {rootBank} = this.group.tokens[tokenIndex];
     const nodeBank = this.group.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].publicKey;
     const vault = this.group.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].vault;
     if (!rootBank || !nodeBank || !vault) {
@@ -131,12 +179,12 @@ export default class MangoClient extends SolClient {
     } catch {
       throw new Error('Failed to load markets');
     }
-    return { allMarketConfigs, allMarketAccountInfos, mangoGroupConfig };
+    return {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig};
   }
 
   async loadSpotMarkets() {
     const allmarketInfo = await this.getAllMarketInfos();
-    const { allMarketConfigs, allMarketAccountInfos, mangoGroupConfig } = allmarketInfo;
+    const {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig} = allmarketInfo;
     const spotMarkets = allMarketConfigs.filter((config) => config.kind == 'spot').map((config, i) => {
       const decoded = Market.getLayout(MANGO_PROG_ID).decode(
         allMarketAccountInfos[i].accountInfo.data,
@@ -307,36 +355,19 @@ export default class MangoClient extends SolClient {
     quantity: number,
     mangoPk?: PublicKey,
   ): Promise<ixsAndSigners> {
-    const transactionIxs: TransactionInstruction[] = [];
-    const additionalSigners: Signer[] = [];
+    const ixsAndSigners: ixsAndSigners = {
+      ixs: [],
+      signers: [],
+    }
     const tokenIndex = this.group.getRootBankIndex(rootBank);
     const tokenMint = this.group.tokens[tokenIndex].mint;
 
     let destinationPk: PublicKey;
     if (!mangoPk) { // Init Mango Account before deposit
-      const accountInstruction = await createAccountInstruction(
-        this.connection,
-        ownerPk,
-        MangoAccountLayout.span,
-        MANGO_PROG_ID,
-      );
-
-      destinationPk = accountInstruction.account.publicKey;
-
-      const initMangoAccountInstruction = makeInitMangoAccountInstruction(
-        MANGO_PROG_ID,
-        this.group.publicKey,
-        destinationPk,
-        ownerPk,
-      );
-
-      transactionIxs.push(accountInstruction.instruction);
-      transactionIxs.push(initMangoAccountInstruction);
-
-      const accountInstructionKeypair = Keypair.fromSecretKey(
-        new Uint8Array(accountInstruction.account.secretKey),
-      );
-      additionalSigners.push(accountInstructionKeypair);
+      const [newAccIxsAndSigners, newAccPk] = await this.createMangoAcc(ownerPk);
+      ixsAndSigners.ixs.push(...newAccIxsAndSigners.ixs);
+      ixsAndSigners.signers.push(...newAccIxsAndSigners.signers)
+      destinationPk = newAccPk;
     } else {
       destinationPk = mangoPk;
     }
@@ -346,9 +377,10 @@ export default class MangoClient extends SolClient {
       tokenMint.equals(WRAPPED_SOL_MINT)
       && tokenAcc.toBase58() === ownerPk.toBase58()
     ) {
+      //todo antipattern here - you should not be modifying passed in args
       wrappedSolAccount = await this.addWrappedSolCreateAccountIx(
-        transactionIxs,
-        additionalSigners,
+        ixsAndSigners.ixs,
+        ixsAndSigners.signers,
         ownerPk,
         quantity,
       );
@@ -359,7 +391,7 @@ export default class MangoClient extends SolClient {
       this.group.tokens[tokenIndex].decimals,
     );
 
-    const instruction = makeDepositInstruction(
+    const depositIx = makeDepositInstruction(
       MANGO_PROG_ID,
       this.group.publicKey,
       ownerPk,
@@ -371,18 +403,16 @@ export default class MangoClient extends SolClient {
       wrappedSolAccount ? wrappedSolAccount.publicKey : tokenAcc,
       nativeQuantity,
     );
-
-    transactionIxs.push(instruction);
+    ixsAndSigners.ixs.push(depositIx);
 
     if (wrappedSolAccount) {
       this.addWrappedSolCloseAccountIx(
-        transactionIxs,
+        ixsAndSigners.ixs,
         ownerPk,
         wrappedSolAccount,
       );
     }
-
-    return {ixs: transactionIxs, signers: additionalSigners};
+    return ixsAndSigners;
   }
 
   async prepWithdrawTx(
@@ -569,7 +599,7 @@ export default class MangoClient extends SolClient {
         pubkey = mangoAccount.spotOpenOrders[i];
       }
 
-      openOrdersKeys.push({ pubkey, isWritable });
+      openOrdersKeys.push({pubkey, isWritable});
     }
 
     const dexSigner = await PublicKey.createProgramAddress(
@@ -659,8 +689,8 @@ export default class MangoClient extends SolClient {
         continue;
       } else if (
         openOrdersAccount.quoteTokenFree.toNumber()
-          + openOrdersAccount['referrerRebatesAccrued'].toNumber()
-          === 0
+        + openOrdersAccount['referrerRebatesAccrued'].toNumber()
+        === 0
         && openOrdersAccount.baseTokenFree.toNumber() === 0
       ) {
         continue;
@@ -818,7 +848,7 @@ export default class MangoClient extends SolClient {
       if (
         ((pnl.isPos() && account.pnl.isNeg())
           || (pnl.isNeg() && account.pnl.isPos()))
-          && transactionIxs.length < 10
+        && transactionIxs.length < 10
       ) {
         // Account pnl must have opposite signs
         const instr = makeSettlePnlInstruction(
@@ -846,5 +876,37 @@ export default class MangoClient extends SolClient {
     }
 
     return {ixs: transactionIxs, signers: []}
+  }
+
+  async createMangoAcc(
+    ownerPk: PublicKey,
+  ): Promise<[ixsAndSigners, PublicKey]> {
+    const newMangoAcc = await createAccountInstruction(
+      this.connection,
+      ownerPk,
+      MangoAccountLayout.span,
+      MANGO_PROG_ID,
+    );
+    const initMangoAccountIx = makeInitMangoAccountInstruction(
+      MANGO_PROG_ID,
+      this.group.publicKey,
+      newMangoAcc.account.publicKey,
+      ownerPk,
+    );
+    const ixsAndSigners: ixsAndSigners = {
+      ixs: [newMangoAcc.instruction, initMangoAccountIx],
+      signers: [newMangoAcc.account],
+    };
+    return [ixsAndSigners, newMangoAcc.account.publicKey]
+  }
+
+  async loadMangoAccForOwner(
+    ownerPk: PublicKey,
+  ): Promise<MangoAccount> {
+    //todo currently taking the 0th account, but probably want some logic to select the right one
+    const loadedMangoAcc = (await this.loadUserAccounts(
+      ownerPk,
+    ))[0];
+    return this.nativeClient.getMangoAccount(loadedMangoAcc.publicKey, SERUM_PROG_ID);
   }
 }
