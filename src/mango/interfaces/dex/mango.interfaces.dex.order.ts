@@ -23,5 +23,4 @@ export interface IMangoDEXOrderPlaceParamsParsed {
   size: number,
   orderType: orderType,
   ownerPk: PublicKey,
-  mangoAccPk: PublicKey,
 }

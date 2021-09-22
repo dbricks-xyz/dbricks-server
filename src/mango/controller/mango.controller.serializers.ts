@@ -44,7 +44,6 @@ export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParse
     size: parseFloat(body.size),
     orderType: body.orderType,
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
   };
 }
 

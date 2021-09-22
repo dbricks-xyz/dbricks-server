@@ -13,7 +13,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPk.toBase58()}`);
     }
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
 
     const tx = await this.prepPlaceSpotOrderTx(
       this.group,
@@ -60,7 +60,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
   async placePerp(params: IMangoDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Necessary to load mangoCache
     const perpMarket = await this.loadPerpMarket(params.marketPk);
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
 
     const tx = await this.prepPlacePerpOrderTx(
       mangoAcc,

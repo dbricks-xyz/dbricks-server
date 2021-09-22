@@ -182,7 +182,8 @@ export default class MangoClient extends SolClient {
     return {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig};
   }
 
-  async loadSpotMarkets() {
+  //todo none of these functions have return values - makes it very difficult to debug
+  async loadSpotMarkets(): Promise<Market[]> {
     const allmarketInfo = await this.getAllMarketInfos();
     const {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig} = allmarketInfo;
     const spotMarkets = allMarketConfigs.filter((config) => config.kind == 'spot').map((config, i) => {
