@@ -176,19 +176,16 @@ export default class SerumClient extends SolClient {
     }
   }
 
-  async getBaseQuoteFromMarket(marketPk: string): Promise<[string, string]> {
+  async getMarketMintsFromMarketPk(marketPk: string): Promise<[string, string]> {
     const marketName = tryGetSerumMarketName(marketPk);
-    console.log('naaame', marketName)
     if (marketName) {
       return marketName.split('/') as [string, string];
     }
     try {
       const market = await this.loadSerumMarket(new PublicKey(marketPk));
       return [
-        market.baseMintAddress.toBase58()
-          .substring(0, 5),
+        market.baseMintAddress.toBase58(),
         market.quoteMintAddress.toBase58()
-          .substring(0, 5),
       ];
     } catch (e) {
       //todo need better err handling

@@ -154,7 +154,7 @@ export default class SolClient {
     )).value;
 
     if (tokenAccounts.length === 0) {
-      console.log(`Creating token account for mint ${mintPk.toBase58()}`);
+      log(`Creating token account for mint ${mintPk.toBase58()}`);
       [ixsAndSigners, tokenAccPk] = await this.prepCreateTokenAccTx(ownerPk, mintPk);
     } else {
       tokenAccPk = tokenAccounts[0].pubkey;
