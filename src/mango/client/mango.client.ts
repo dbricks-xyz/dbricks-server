@@ -182,7 +182,6 @@ export default class MangoClient extends SolClient {
     return {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig};
   }
 
-  //todo none of these functions have return values - makes it very difficult to debug
   async loadSpotMarkets(): Promise<Market[]> {
     const allmarketInfo = await this.getAllMarketInfos();
     const {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig} = allmarketInfo;
@@ -201,6 +200,7 @@ export default class MangoClient extends SolClient {
     return spotMarkets;
   }
 
+  //todo all functions should have return values - otherwise lose the point of TS
   getMangoGroupConfig() {
     const mangoGroupConfig = Config.ids().getGroup(
       this.cluster,
@@ -648,6 +648,7 @@ export default class MangoClient extends SolClient {
     return {ixs: transactionIxs, signers: additionalSigners};
   }
 
+  //todo currently fails when trying to cancel multiple orders - look at how I did serum
   async prepCancelSpotOrderTx(
     mangoAccount: MangoAccount,
     ownerPk: PublicKey,
@@ -904,7 +905,7 @@ export default class MangoClient extends SolClient {
   async loadMangoAccForOwner(
     ownerPk: PublicKey,
   ): Promise<MangoAccount> {
-    //todo currently taking the 0th account, but probably want some logic to select the right one
+    //todo currently taking the 0th account (out of laziness). Is there any logic we need to run here or is that ok?
     const loadedMangoAcc = (await this.loadUserAccounts(
       ownerPk,
     ))[0];

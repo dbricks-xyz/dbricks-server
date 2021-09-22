@@ -37,12 +37,12 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPk.toBase58()}`);
     }
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
     const openOrders = mangoAcc.spotOpenOrdersAccounts.find(
       (acc) => acc?.market.toBase58() === params.marketPk.toBase58(),
     );
     if (!openOrders) {
-      throw new Error(`Could not find open orders from: ${params.mangoAccPk.toBase58()} for market: ${params.marketPk.toBase58()}`);
+      throw new Error(`Could not find open orders from: ${mangoAcc.publicKey.toBase58()} for market: ${params.marketPk.toBase58()}`);
     }
     const openOrdersPk = openOrders.owner;
     const orders = await spotMarket.loadOrdersForOwner(this.connection, openOrdersPk);
@@ -78,15 +78,16 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
   async cancelPerp(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Group is used in prepCancelPerpOrderTx
     const perpMarket = await this.loadPerpMarket(params.marketPk);
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
 
     const openOrders = await perpMarket.loadOrdersForAccount(
       this.connection,
       mangoAcc,
     );
+    console.log('oo are', openOrders.map(o => o.orderId.toString()));
     const order = openOrders.find((o) => o.orderId.toString() === params.orderId.toString());
     if (!order) {
-      throw new Error(`Could not find perp order: ${params.orderId.toString}`);
+      throw new Error(`Could not find perp order: ${params.orderId.toString()}`);
     }
 
     const tx = await this.prepCancelPerpOrderTx(

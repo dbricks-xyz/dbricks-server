@@ -13,7 +13,6 @@ export interface IMangoDEXOrderCancelParamsParsed {
   marketPk: PublicKey,
   orderId: BN,
   ownerPk: PublicKey,
-  mangoAccPk: PublicKey,
 }
 
 export interface IMangoDEXOrderPlaceParamsParsed {

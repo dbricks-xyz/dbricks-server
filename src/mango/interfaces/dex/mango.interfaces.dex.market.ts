@@ -9,5 +9,4 @@ export interface IMangoDEXMarket {
 export interface IMangoDEXMarketSettleParamsParsed {
   marketPk: PublicKey,
   ownerPk: PublicKey,
-  mangoAccPk: PublicKey,
 }

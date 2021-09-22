@@ -53,7 +53,6 @@ export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsPar
     marketPk: deserializePk(body.marketPk),
     orderId: new BN(body.orderId, 16), // comes as string, hex,
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
   };
 }
 
@@ -62,6 +61,5 @@ export function deserializeSettle(req: e.Request): IMangoDEXMarketSettleParamsPa
   return {
     marketPk: deserializePk(body.marketPk),
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
   };
 }
