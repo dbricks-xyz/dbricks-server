@@ -2,19 +2,19 @@ import e from 'express';
 import BN from 'bn.js';
 import {
   deserializePk,
-  IMangoDEXMarketSettleParams,
-  IMangoDEXOrderCancelParams,
-  IMangoDEXOrderPlaceParams,
   IMangoLenderDepositParams,
-  IMangoLenderWithdrawParams
+  IMangoLenderWithdrawParams,
+  ISerumDEXMarketSettleParams,
+  ISerumDEXOrderCancelParams,
+  ISerumDEXOrderPlaceParams
 } from 'dbricks-lib';
 import {IMangoLenderDepositParamsParsed} from '../interfaces/lender/mango.interfaces.lender.deposit';
 import {IMangoLenderWithdrawParamsParsed} from '../interfaces/lender/mango.interfaces.lender.withdraw';
+import {ISerumDEXMarketSettleParamsParsed} from "../../serum/interfaces/dex/serum.interfaces.dex.market";
 import {
-  IMangoDEXOrderCancelParamsParsed,
-  IMangoDEXOrderPlaceParamsParsed
-} from '../interfaces/dex/mango.interfaces.dex.order';
-import {IMangoDEXMarketSettleParamsParsed} from '../interfaces/dex/mango.interfaces.dex.market';
+  ISerumDEXOrderCancelParamsParsed,
+  ISerumDEXOrderPlaceParamsParsed
+} from "../../serum/interfaces/dex/serum.interfaces.dex.order";
 
 export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsParsed {
   const body: IMangoLenderDepositParams = req.body;
@@ -35,8 +35,8 @@ export function deserializeWithdraw(req: e.Request): IMangoLenderWithdrawParamsP
   };
 }
 
-export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParsed {
-  const body: IMangoDEXOrderPlaceParams = req.body;
+export function deserializePlace(req: e.Request): ISerumDEXOrderPlaceParamsParsed {
+  const body: ISerumDEXOrderPlaceParams = req.body;
   return {
     marketPk: deserializePk(body.marketPk),
     side: body.side,
@@ -47,8 +47,8 @@ export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParse
   };
 }
 
-export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsParsed {
-  const body: IMangoDEXOrderCancelParams = req.body;
+export function deserializeCancel(req: e.Request): ISerumDEXOrderCancelParamsParsed {
+  const body: ISerumDEXOrderCancelParams = req.body;
   return {
     marketPk: deserializePk(body.marketPk),
     orderId: new BN(body.orderId, 16), // comes as string, hex,
@@ -56,8 +56,8 @@ export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsPar
   };
 }
 
-export function deserializeSettle(req: e.Request): IMangoDEXMarketSettleParamsParsed {
-  const body: IMangoDEXMarketSettleParams = req.body;
+export function deserializeSettle(req: e.Request): ISerumDEXMarketSettleParamsParsed {
+  const body: ISerumDEXMarketSettleParams = req.body;
   return {
     marketPk: deserializePk(body.marketPk),
     ownerPk: deserializePk(body.ownerPk),

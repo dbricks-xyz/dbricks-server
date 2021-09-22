@@ -1,11 +1,14 @@
-import { ixsAndSigners, orderType, side } from 'dbricks-lib';
-import { Order } from '@project-serum/serum/lib/market';
-import { IMangoDEXOrder, IMangoDEXOrderPlaceParamsParsed, IMangoDEXOrderCancelParamsParsed } from '../interfaces/dex/mango.interfaces.dex.order';
-import { SERUM_PROG_ID } from '../../config/config';
+import {ixsAndSigners} from 'dbricks-lib';
+import {Order} from '@project-serum/serum/lib/market';
+import {IMangoDEXOrder,} from '../interfaces/dex/mango.interfaces.dex.order';
 import MangoClient from '../client/mango.client';
+import {
+  ISerumDEXOrderCancelParamsParsed,
+  ISerumDEXOrderPlaceParamsParsed
+} from "../../serum/interfaces/dex/serum.interfaces.dex.order";
 
 export default class MangoOrderService extends MangoClient implements IMangoDEXOrder {
-  async placeSpot(params: IMangoDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
+  async placeSpot(params: ISerumDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     const markets = await this.loadSpotMarkets();
     const spotMarket = markets.find(
       (m) => m.publicKey.toBase58() === params.marketPk.toBase58(),
@@ -29,7 +32,8 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
-  async cancelSpot(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
+  //todo needs to be able to cancel all orders (see serum)
+  async cancelSpot(params: ISerumDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     const markets = await this.loadSpotMarkets();
     const spotMarket = markets.find(
       (m) => m.publicKey.toBase58() === params.marketPk.toBase58(),
@@ -46,7 +50,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     }
     const openOrdersPk = openOrders.owner;
     const orders = await spotMarket.loadOrdersForOwner(this.connection, openOrdersPk);
-    const order = orders.find((o) => o.orderId.toString() === params.orderId.toString()) as Order;
+    const order = orders.find((o) => o.orderId.toString() === params.orderId!.toString()) as Order;
 
     const tx = await this.prepCancelSpotOrderTx(
       mangoAcc,
@@ -57,7 +61,8 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
-  async placePerp(params: IMangoDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
+  //todo needs to be able to cancel all orders (see serum)
+  async placePerp(params: ISerumDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Necessary to load mangoCache
     const perpMarket = await this.loadPerpMarket(params.marketPk);
     const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
@@ -75,7 +80,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
-  async cancelPerp(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
+  async cancelPerp(params: ISerumDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Group is used in prepCancelPerpOrderTx
     const perpMarket = await this.loadPerpMarket(params.marketPk);
     const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
@@ -85,9 +90,9 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
       mangoAcc,
     );
     console.log('oo are', openOrders.map(o => o.orderId.toString()));
-    const order = openOrders.find((o) => o.orderId.toString() === params.orderId.toString());
+    const order = openOrders.find((o) => o.orderId.toString() === params.orderId!.toString());
     if (!order) {
-      throw new Error(`Could not find perp order: ${params.orderId.toString()}`);
+      throw new Error(`Could not find perp order: ${params.orderId!.toString()}`);
     }
 
     const tx = await this.prepCancelPerpOrderTx(
