@@ -9,4 +9,5 @@ export interface IMangoLenderDepositParamsParsed {
   mintPk: PublicKey,
   quantity: number,
   ownerPk: PublicKey,
+  mangoAccNr: number,
 }

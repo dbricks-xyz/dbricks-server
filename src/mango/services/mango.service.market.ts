@@ -1,12 +1,14 @@
 import {ixsAndSigners} from 'dbricks-lib';
 import {QUOTE_INDEX} from '@blockworks-foundation/mango-client';
-import {IMangoDEXMarket} from '../interfaces/dex/mango.interfaces.dex.market';
+import {
+  IMangoDEXMarket,
+  IMangoDEXMarketSettleParamsParsed
+} from '../interfaces/dex/mango.interfaces.dex.market';
 import MangoClient from '../client/mango.client';
-import {ISerumDEXMarketSettleParamsParsed} from "../../serum/interfaces/dex/serum.interfaces.dex.market";
 
 export default class MangoMarketService extends MangoClient implements IMangoDEXMarket {
-  async settleSpot(params: ISerumDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
+  async settleSpot(params: IMangoDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
     const markets = await this.loadSpotMarkets();
 
     const tx = await this.prepSettleSpotTx(
@@ -17,9 +19,9 @@ export default class MangoMarketService extends MangoClient implements IMangoDEX
     return [tx];
   }
 
-  async settlePerp(params: ISerumDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
+  async settlePerp(params: IMangoDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup();
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
     const perpMarket = await this.loadPerpMarket(params.marketPk);
     const marketIndex = this.group.getPerpMarketIndex(perpMarket.publicKey);
     const mangoCache = await this.group.loadCache(this.connection);

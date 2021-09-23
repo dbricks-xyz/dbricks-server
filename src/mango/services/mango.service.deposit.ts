@@ -10,7 +10,7 @@ export default class MangoDepositService extends MangoClient implements IMangoLe
     const bankVaultInfo = await this.loadBankVaultInformation(params.mintPk);
     const tokenAcc = await this.loadTokenAccount(params.ownerPk, params.mintPk);
     const { rootBank, nodeBank, vault } = bankVaultInfo;
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
 
     const tx = await this.prepDepositTx(
       params.ownerPk,

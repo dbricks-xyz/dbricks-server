@@ -904,11 +904,12 @@ export default class MangoClient extends SolClient {
 
   async loadMangoAccForOwner(
     ownerPk: PublicKey,
+    mangoAccNr: number,
   ): Promise<MangoAccount> {
     //todo currently taking the 0th account (out of laziness). Is there any logic we need to run here or is that ok?
     const loadedMangoAcc = (await this.loadUserAccounts(
       ownerPk,
-    ))[0];
+    ))[mangoAccNr];
     return this.nativeClient.getMangoAccount(loadedMangoAcc.publicKey, SERUM_PROG_ID);
   }
 }

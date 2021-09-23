@@ -10,4 +10,5 @@ export interface IMangoLenderWithdrawParamsParsed {
   quantity: number,
   isBorrow: boolean,
   ownerPk: PublicKey,
+  mangoAccNr: number,
 }

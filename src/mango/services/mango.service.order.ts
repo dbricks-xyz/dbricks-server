@@ -1,14 +1,13 @@
 import {ixsAndSigners} from 'dbricks-lib';
 import {Order} from '@project-serum/serum/lib/market';
-import {IMangoDEXOrder,} from '../interfaces/dex/mango.interfaces.dex.order';
-import MangoClient from '../client/mango.client';
 import {
-  ISerumDEXOrderCancelParamsParsed,
-  ISerumDEXOrderPlaceParamsParsed
-} from "../../serum/interfaces/dex/serum.interfaces.dex.order";
+  IMangoDEXOrder, IMangoDEXOrderCancelParamsParsed,
+  IMangoDEXOrderPlaceParamsParsed,
+} from '../interfaces/dex/mango.interfaces.dex.order';
+import MangoClient from '../client/mango.client';
 
 export default class MangoOrderService extends MangoClient implements IMangoDEXOrder {
-  async placeSpot(params: ISerumDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
+  async placeSpot(params: IMangoDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     const markets = await this.loadSpotMarkets();
     const spotMarket = markets.find(
       (m) => m.publicKey.toBase58() === params.marketPk.toBase58(),
@@ -16,7 +15,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPk.toBase58()}`);
     }
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
 
     const tx = await this.prepPlaceSpotOrderTx(
       this.group,
@@ -33,7 +32,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
   }
 
   //todo needs to be able to cancel all orders (see serum)
-  async cancelSpot(params: ISerumDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
+  async cancelSpot(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     const markets = await this.loadSpotMarkets();
     const spotMarket = markets.find(
       (m) => m.publicKey.toBase58() === params.marketPk.toBase58(),
@@ -41,7 +40,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPk.toBase58()}`);
     }
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
     const openOrders = mangoAcc.spotOpenOrdersAccounts.find(
       (acc) => acc?.market.toBase58() === params.marketPk.toBase58(),
     );
@@ -62,10 +61,10 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
   }
 
   //todo needs to be able to cancel all orders (see serum)
-  async placePerp(params: ISerumDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
+  async placePerp(params: IMangoDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Necessary to load mangoCache
     const perpMarket = await this.loadPerpMarket(params.marketPk);
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
 
     const tx = await this.prepPlacePerpOrderTx(
       mangoAcc,
@@ -80,10 +79,10 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
-  async cancelPerp(params: ISerumDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
+  async cancelPerp(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Group is used in prepCancelPerpOrderTx
     const perpMarket = await this.loadPerpMarket(params.marketPk);
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
 
     const openOrders = await perpMarket.loadOrdersForAccount(
       this.connection,
