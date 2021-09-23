@@ -12,6 +12,7 @@ import {AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,} from '@s
 import {COMMITTMENT, CONNECTION_URL, TESTING_KP_PATH} from '../../config/config';
 import {loadKpSync, sleep} from '../util/common.util';
 import {ixsAndSigners} from "dbricks-lib";
+import {Market} from "@project-serum/serum";
 
 const log: debug.IDebugger = debug('app:sol-client');
 
@@ -136,6 +137,31 @@ export default class SolClient {
       ),
     );
     return [{ixs: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
+  }
+
+  async getOrCreateTokenAccByMint(
+    ownerPk: PublicKey,
+    mintPk: PublicKey,
+  ): Promise<[ixsAndSigners, PublicKey]> {
+    let ixsAndSigners: ixsAndSigners = {ixs: [], signers: []};
+    let tokenAccPk: PublicKey;
+    if (mintPk.toBase58() === 'So11111111111111111111111111111111111111112') {
+      return [ixsAndSigners, ownerPk];
+    }
+    const tokenAccounts = (await this.connection.getTokenAccountsByOwner(ownerPk, {
+        mint: mintPk,
+      }
+    )).value;
+
+    if (tokenAccounts.length === 0) {
+      log(`Creating token account for mint ${mintPk.toBase58()}`);
+      [ixsAndSigners, tokenAccPk] = await this.prepCreateTokenAccTx(ownerPk, mintPk);
+    } else {
+      tokenAccPk = tokenAccounts[0].pubkey;
+    }
+    log(`User's account for mint ${mintPk.toBase58()} is ${tokenAccPk.toBase58()}`);
+
+    return [ixsAndSigners, tokenAccPk];
   }
 
   // --------------------------------------- testing only

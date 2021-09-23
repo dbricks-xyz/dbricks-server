@@ -1,5 +1,15 @@
 Some thoughts on where we are now
 
+# To run
+```
+1. yarn
+2. yarn update (pulls latest dbricks lib)
+3. add the following to .env (obv modify as needed)
+NETWORK=mainnet
+KP_PATH=/Users/ilmoi/.config/solana/id.json
+4. yarn debug
+```
+
 # Architecture
 
 Currently:

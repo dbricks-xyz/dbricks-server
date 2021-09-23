@@ -1,20 +1,15 @@
 import e from 'express';
 import BN from 'bn.js';
 import {
-  deserializePk,
-  IMangoDEXMarketSettleParams,
+  deserializePk, IMangoDEXMarketSettleParams,
   IMangoDEXOrderCancelParams,
   IMangoDEXOrderPlaceParams,
-  IMangoLenderDepositParams,
-  IMangoLenderWithdrawParams
+  IMangoLenderDepositParams, IMangoLenderWithdrawParams
 } from 'dbricks-lib';
-import {IMangoLenderDepositParamsParsed} from '../interfaces/lender/mango.interfaces.lender.deposit';
-import {IMangoLenderWithdrawParamsParsed} from '../interfaces/lender/mango.interfaces.lender.withdraw';
-import {
-  IMangoDEXOrderCancelParamsParsed,
-  IMangoDEXOrderPlaceParamsParsed
-} from '../interfaces/dex/mango.interfaces.dex.order';
-import {IMangoDEXMarketSettleParamsParsed} from '../interfaces/dex/mango.interfaces.dex.market';
+import { IMangoLenderDepositParamsParsed } from '../interfaces/lender/mango.interfaces.lender.deposit';
+import { IMangoLenderWithdrawParamsParsed } from '../interfaces/lender/mango.interfaces.lender.withdraw';
+import { IMangoDEXOrderPlaceParamsParsed, IMangoDEXOrderCancelParamsParsed } from '../interfaces/dex/mango.interfaces.dex.order';
+import { IMangoDEXMarketSettleParamsParsed } from '../interfaces/dex/mango.interfaces.dex.market';
 
 export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsParsed {
   const body: IMangoLenderDepositParams = req.body;
@@ -22,7 +17,7 @@ export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsPar
     mintPk: deserializePk(body.mintPk),
     quantity: parseFloat(body.quantity),
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: body.mangoAccPk ? deserializePk(body.mangoAccPk) : undefined,
+    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
   };
 }
 
@@ -33,7 +28,7 @@ export function deserializeWithdraw(req: e.Request): IMangoLenderWithdrawParamsP
     quantity: parseFloat(body.quantity),
     isBorrow: body.isBorrow,
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
+    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
   };
 }
 
@@ -46,7 +41,7 @@ export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParse
     size: parseFloat(body.size),
     orderType: body.orderType,
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
+    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
   };
 }
 
@@ -56,7 +51,7 @@ export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsPar
     marketPk: deserializePk(body.marketPk),
     orderId: new BN(body.orderId, 16), // comes as string, hex,
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
+    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
   };
 }
 
@@ -65,6 +60,6 @@ export function deserializeSettle(req: e.Request): IMangoDEXMarketSettleParamsPa
   return {
     marketPk: deserializePk(body.marketPk),
     ownerPk: deserializePk(body.ownerPk),
-    mangoAccPk: deserializePk(body.mangoAccPk),
+    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
   };
 }

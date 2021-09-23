@@ -1,7 +1,9 @@
-import { ixsAndSigners, orderType, side } from 'dbricks-lib';
-import { Order } from '@project-serum/serum/lib/market';
-import { IMangoDEXOrder, IMangoDEXOrderPlaceParamsParsed, IMangoDEXOrderCancelParamsParsed } from '../interfaces/dex/mango.interfaces.dex.order';
-import { SERUM_PROG_ID } from '../../config/config';
+import {ixsAndSigners} from 'dbricks-lib';
+import {Order} from '@project-serum/serum/lib/market';
+import {
+  IMangoDEXOrder, IMangoDEXOrderCancelParamsParsed,
+  IMangoDEXOrderPlaceParamsParsed,
+} from '../interfaces/dex/mango.interfaces.dex.order';
 import MangoClient from '../client/mango.client';
 
 export default class MangoOrderService extends MangoClient implements IMangoDEXOrder {
@@ -13,7 +15,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPk.toBase58()}`);
     }
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
 
     const tx = await this.prepPlaceSpotOrderTx(
       this.group,
@@ -29,6 +31,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
+  //todo needs to be able to cancel all orders (see serum)
   async cancelSpot(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     const markets = await this.loadSpotMarkets();
     const spotMarket = markets.find(
@@ -37,16 +40,16 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPk.toBase58()}`);
     }
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
     const openOrders = mangoAcc.spotOpenOrdersAccounts.find(
       (acc) => acc?.market.toBase58() === params.marketPk.toBase58(),
     );
     if (!openOrders) {
-      throw new Error(`Could not find open orders from: ${params.mangoAccPk.toBase58()} for market: ${params.marketPk.toBase58()}`);
+      throw new Error(`Could not find open orders from: ${mangoAcc.publicKey.toBase58()} for market: ${params.marketPk.toBase58()}`);
     }
     const openOrdersPk = openOrders.owner;
     const orders = await spotMarket.loadOrdersForOwner(this.connection, openOrdersPk);
-    const order = orders.find((o) => o.orderId.toString() === params.orderId.toString()) as Order;
+    const order = orders.find((o) => o.orderId.toString() === params.orderId!.toString()) as Order;
 
     const tx = await this.prepCancelSpotOrderTx(
       mangoAcc,
@@ -57,10 +60,11 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
+  //todo needs to be able to cancel all orders (see serum)
   async placePerp(params: IMangoDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Necessary to load mangoCache
     const perpMarket = await this.loadPerpMarket(params.marketPk);
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
 
     const tx = await this.prepPlacePerpOrderTx(
       mangoAcc,
@@ -78,15 +82,16 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
   async cancelPerp(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Group is used in prepCancelPerpOrderTx
     const perpMarket = await this.loadPerpMarket(params.marketPk);
-    const mangoAcc = await this.nativeClient.getMangoAccount(params.mangoAccPk, SERUM_PROG_ID);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
 
     const openOrders = await perpMarket.loadOrdersForAccount(
       this.connection,
       mangoAcc,
     );
-    const order = openOrders.find((o) => o.orderId.toString() === params.orderId.toString());
+    console.log('oo are', openOrders.map(o => o.orderId.toString()));
+    const order = openOrders.find((o) => o.orderId.toString() === params.orderId!.toString());
     if (!order) {
-      throw new Error(`Could not find perp order: ${params.orderId.toString}`);
+      throw new Error(`Could not find perp order: ${params.orderId!.toString()}`);
     }
 
     const tx = await this.prepCancelPerpOrderTx(

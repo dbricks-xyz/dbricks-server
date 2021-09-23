@@ -5,6 +5,7 @@ import cors from 'cors';
 import CommonRoutesConfig from './common/routes/common.routes.config';
 import { SerumRoutes } from './serum/routes/serum.routes';
 import { MangoRoutes } from './mango/routes/mango.routes';
+import {CommonRoutes} from "./common/routes/common.routes";
 /* eslint-enable */
 
 const app: e.Application = e();
@@ -28,6 +29,7 @@ app.use(expressWinston.logger(loggerOptions));
 
 // routes
 export const routes: Array<CommonRoutesConfig> = [];
+routes.push(new CommonRoutes(app));
 routes.push(new SerumRoutes(app));
 routes.push(new MangoRoutes(app));
 

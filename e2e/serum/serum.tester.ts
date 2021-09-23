@@ -25,8 +25,6 @@ export default class SerumTester extends SolClient {
 
   user2Kp: Keypair = new Keypair();
 
-  baseUser1Pk!: PublicKey;
-
   quoteUser1Pk!: PublicKey;
 
   baseUser2Pk!: PublicKey;
@@ -52,7 +50,7 @@ export default class SerumTester extends SolClient {
     this.quoteMint = await this._createMint(this.user1Kp);
 
     // user 1 - we give them quote
-    this.baseUser1Pk = await this._createTokenAcc(this.baseMint, this.user1Pk);
+    // NOTE: we intentionally are NOT creating the base account for user 1. The BE should take care of that.
     this.quoteUser1Pk = await this._createTokenAcc(this.quoteMint, this.user1Pk);
     await this._fundTokenAcc(this.quoteMint, this.user1Pk, this.quoteUser1Pk, 10000);
 

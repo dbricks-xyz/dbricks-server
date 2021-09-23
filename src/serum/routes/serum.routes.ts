@@ -41,7 +41,7 @@ export class SerumRoutes extends CommonRoutesConfig {
     this.app.route('/serum/markets/basequote')
       .post(
         SerumMiddleware.validateStuff,
-        SerumController.getBaseQuote
+        SerumController.getMarketMints
       )
 
     return this.app;

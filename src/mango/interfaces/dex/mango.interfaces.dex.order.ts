@@ -1,6 +1,8 @@
-import { PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
-import { ixsAndSigners, orderType, side } from 'dbricks-lib';
+import {ixsAndSigners} from 'dbricks-lib';
+import {
+  ISerumDEXOrderCancelParamsParsed,
+  ISerumDEXOrderPlaceParamsParsed
+} from "../../../serum/interfaces/dex/serum.interfaces.dex.order";
 
 export interface IMangoDEXOrder {
   placeSpot: (params: IMangoDEXOrderPlaceParamsParsed) => Promise<ixsAndSigners[]>;
@@ -9,19 +11,10 @@ export interface IMangoDEXOrder {
   cancelPerp: (params: IMangoDEXOrderCancelParamsParsed) => Promise<ixsAndSigners[]>;
 }
 
-export interface IMangoDEXOrderCancelParamsParsed {
-  marketPk: PublicKey,
-  orderId: BN,
-  ownerPk: PublicKey,
-  mangoAccPk: PublicKey,
+export interface IMangoDEXOrderPlaceParamsParsed extends ISerumDEXOrderPlaceParamsParsed {
+  mangoAccNr: number,
 }
 
-export interface IMangoDEXOrderPlaceParamsParsed {
-  marketPk: PublicKey,
-  side: side,
-  price: number,
-  size: number,
-  orderType: orderType,
-  ownerPk: PublicKey,
-  mangoAccPk: PublicKey,
+export interface IMangoDEXOrderCancelParamsParsed extends ISerumDEXOrderCancelParamsParsed {
+  mangoAccNr: number,
 }

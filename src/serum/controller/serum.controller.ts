@@ -49,9 +49,9 @@ class SerumController {
     res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
   }
 
-  async getBaseQuote(req: e.Request, res: e.Response) {
+  async getMarketMints(req: e.Request, res: e.Response) {
     const serumMarketService = new SerumMarketService();
-    const [base, quote] = await serumMarketService.getBaseQuote(req.body.marketPk);
+    const [base, quote] = await serumMarketService.getMarketMints(req.body.marketPk);
     log('Base/quote names generated');
     res.status(200).send([base, quote]);
   }

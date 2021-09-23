@@ -249,9 +249,14 @@
     "name": "SBR",
     "network": "mainnet"
   },
-    {
+  {
     "address": "ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx",
     "name": "ATLAS",
+    "network": "mainnet"
+  },
+  {
+    "address": "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac",
+    "name": "MNGO",
     "network": "mainnet"
   }
 ]

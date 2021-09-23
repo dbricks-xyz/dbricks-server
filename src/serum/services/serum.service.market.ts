@@ -76,8 +76,8 @@ export default class SerumMarketService extends SerumClient implements ISerumDEX
     return [tx];
   }
 
-  async getBaseQuote(marketPk: string): Promise<[string, string]> {
-    return this.getBaseQuoteFromMarket(marketPk);
+  async getMarketMints(marketPk: string): Promise<[string, string]> {
+    return this.getMarketMintsFromMarketPk(marketPk);
   }
 
 }
