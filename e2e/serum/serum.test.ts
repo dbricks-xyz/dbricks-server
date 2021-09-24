@@ -29,44 +29,44 @@ describe('Serum', () => {
   });
 });
 
-// describe('Serum', () => {
-//   it('Inits market + places/cancels a trade', async () => {
-//     const fundingAmount = 10000;
-//     const amount = 100;
-//     const price = 10;
-//     const tester = new SerumTester();
-//     await tester.prepAccs(fundingAmount);
-//     await tester.prepMarket();
-//
-//     //place order
-//     await placeOrder(tester, 'buy', amount, price, tester.user1Kp);
-//     await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount-amount*price, tester.user1Kp);
-//
-//     //cancel order
-//     const cancelTx = (await tester.requestCancelOrderIx(
-//       'affffffffffffffff',
-//       tester.user1Pk.toBase58(),
-//     ))[0];
-//     cancelTx.signers.unshift(tester.user1Kp);
-//     await tester._prepareAndSendTx(cancelTx);
-//     await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount, tester.user1Kp);
-//
-//     //place 2 more orders
-//     await placeOrder(tester, 'buy', amount, price, tester.user1Kp);
-//     await placeOrder(tester, 'buy', amount, price, tester.user1Kp);
-//     await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount - 2 * amount*price, tester.user1Kp);
-//
-//     //cancel all at once
-//     const cancelAllTx = (await tester.requestCancelOrderIx(
-//       '',
-//       tester.user1Pk.toBase58(),
-//     ))[0];
-//     cancelAllTx.signers.unshift(tester.user1Kp);
-//     await tester._prepareAndSendTx(cancelAllTx);
-//     await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount, tester.user1Kp);
-//
-//   });
-// });
+describe('Serum', () => {
+  it('Inits market + places/cancels a trade', async () => {
+    const fundingAmount = 10000;
+    const amount = 100;
+    const price = 10;
+    const tester = new SerumTester();
+    await tester.prepAccs(fundingAmount);
+    await tester.prepMarket();
+
+    //place order
+    await placeOrder(tester, 'buy', amount, price, tester.user1Kp);
+    await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount-amount*price, tester.user1Kp);
+
+    //cancel order
+    const cancelTx = (await tester.requestCancelOrderIx(
+      'affffffffffffffff',
+      tester.user1Pk.toBase58(),
+    ))[0];
+    cancelTx.signers.unshift(tester.user1Kp);
+    await tester._prepareAndSendTx(cancelTx);
+    await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount, tester.user1Kp);
+
+    //place 2 more orders
+    await placeOrder(tester, 'buy', amount, price, tester.user1Kp);
+    await placeOrder(tester, 'buy', amount, price, tester.user1Kp);
+    await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount - 2 * amount*price, tester.user1Kp);
+
+    //cancel all at once
+    const cancelAllTx = (await tester.requestCancelOrderIx(
+      '',
+      tester.user1Pk.toBase58(),
+    ))[0];
+    cancelAllTx.signers.unshift(tester.user1Kp);
+    await tester._prepareAndSendTx(cancelAllTx);
+    await settleAndVerify(tester, tester.quoteMint.publicKey, fundingAmount, tester.user1Kp);
+
+  });
+});
 
 async function settleAndVerify(tester: SerumTester, mint: PublicKey, expectedAmount: number, user: Keypair) {
   // must consume events for settlement to work

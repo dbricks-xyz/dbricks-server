@@ -11,6 +11,7 @@ import {
   ISerumDEXOrderCancelParams,
   ISerumDEXOrderPlaceParams,
   side,
+  orderType,
 } from "dbricks-lib";
 import {saveReqResToJSON} from "../../docs/docs.generator";
 import SerumClient from "../../src/serum/client/serum.client";
@@ -77,13 +78,13 @@ export default class SerumTester extends SerumClient {
     };
     const res = await request(app).post(route).send(params);
     saveReqResToJSON(
-      '0serum.0markets.0InitMarket',
+      'serum.markets.init',
+      'serum',
       'POST',
       route,
       params,
       res.body
     );
-
     return deserializeIxsAndSigners(res.body);
   }
 
@@ -91,36 +92,66 @@ export default class SerumTester extends SerumClient {
     side: side,
     price: string,
     size: string,
-    orderType: string,
+    orderType: orderType,
     ownerPk: string,
   ) {
-    const res = await request(app).post('/serum/orders').send({
+    const route = '/serum/orders';
+    const params: ISerumDEXOrderPlaceParams = {
       marketPk: this.marketKp.publicKey.toBase58(),
       side,
       price,
       size,
       orderType,
       ownerPk,
-    } as ISerumDEXOrderPlaceParams).expect(200);
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'serum.orders.place',
+      'serum',
+      'POST',
+      route,
+      params,
+      res.body
+    );
     return deserializeIxsAndSigners(res.body);
   }
 
   async requestSettleIx(
     ownerPk: string,
   ) {
-    const res = await request(app).post('/serum/markets/settle').send({
+    const route = '/serum/markets/settle';
+    const params: ISerumDEXMarketSettleParams = {
       marketPk: this.marketKp.publicKey.toBase58(),
       ownerPk,
-    } as ISerumDEXMarketSettleParams).expect(200);
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'serum.markets.settle',
+      'serum',
+      'POST',
+      route,
+      params,
+      res.body
+    );
     return deserializeIxsAndSigners(res.body);
   }
 
   async requestCancelOrderIx(orderId: string, ownerPk: string) {
-    const res = await request(app).post('/serum/orders/cancel').send({
+    const route = '/serum/orders/cancel';
+    const params: ISerumDEXOrderCancelParams = {
       marketPk: this.marketKp.publicKey.toBase58(),
       orderId,
       ownerPk,
-    } as ISerumDEXOrderCancelParams).expect(200);
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'serum.orders.cancel',
+      'serum',
+      'POST',
+      route,
+      params,
+      res.body
+    );
     return deserializeIxsAndSigners(res.body);
   }
 

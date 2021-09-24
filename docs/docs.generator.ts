@@ -3,6 +3,7 @@ import fs from "fs";
 
 export function saveReqResToJSON(
   name: string,
+  dirName: string,
   method: Method,
   route: string,
   req: any,
@@ -17,8 +18,13 @@ export function saveReqResToJSON(
     resSchema: parseHighLevelType(dedupedRes),
   }
 
+  const dir = `docs/out/${dirName}`
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, {recursive: true});
+  }
+
   const finalObjStr = JSON.stringify(finalObj);
-  fs.writeFileSync(`docs/out/${name}.json`, finalObjStr);
+  fs.writeFileSync(`${dir}/${name}.json`, finalObjStr);
 }
 
 // --------------------------------------- dedup logic
