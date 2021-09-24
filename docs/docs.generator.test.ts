@@ -1,83 +1,102 @@
-import {dedupObject} from "./docs.generator";
+import {dedupObject, parseObjectType} from "./docs.generator";
 
 describe('docs generation logic', () => {
-  it('dedups objects and arrays ok', () => {
-    const o = {
-      //basic types
-      a: 'string',
+  const o = {
+    //basic types
+    a: 's',
+    b: true,
+    c: 123,
+    //triple nested array
+    d: [{
+      a: 's',
       b: true,
       c: 123,
-      //triple nested array
       d: [{
-        a: 'string',
+        a: 's',
         b: true,
         c: 123,
         d: [{
-          a: 'string',
+          a: 's',
           b: true,
           c: 123,
-          d: [{
-            a: 'string',
-            b: true,
-            c: 123,
-          }, {
-            a: 'string',
-            b: true,
-            c: 123,
-          }]
         }, {
-          a: 'string',
+          a: 's',
           b: true,
           c: 123,
-          d: [{
-            a: 'string',
-            b: true,
-            c: 123,
-          }, {
-            a: 'string',
-            b: true,
-            c: 123,
-          }]
         }]
       }, {
-        a: 'string',
+        a: 's',
         b: true,
         c: 123,
         d: [{
-          a: 'string',
+          a: 's',
           b: true,
           c: 123,
         }, {
-          a: 'string',
+          a: 's',
           b: true,
           c: 123,
         }]
-      }],
-      //triple nested object
-      e: {
-        a: 'string',
+      }]
+    }, {
+      a: 's',
+      b: true,
+      c: 123,
+      d: [{
+        a: 's',
+        b: true,
+        c: 123,
+      }, {
+        a: 's',
+        b: true,
+        c: 123,
+      }]
+    }],
+    //triple nested object
+    e: {
+      a: 's',
+      b: true,
+      c: 123,
+      d: {
+        a: 's',
         b: true,
         c: 123,
         d: {
-          a: 'string',
+          a: 's',
           b: true,
           c: 123,
-          d: {
-            a: 'string',
-            b: true,
-            c: 123,
-            d: [5,6,7]
-          }
+          d: [5, 6, 7],
+          e: [[8,9,10]]
         }
       }
     }
+  }
+
+  it('dedups objects and arrays', () => {
     const result = dedupObject(o);
     //all arrays must be shortened to 1
+    //this includes arrays inside arrays
     expect(result.d.length).toEqual(1);
     expect(result.d[0].d.length).toEqual(1);
     expect(result.d[0].d[0].d.length).toEqual(1);
-    //max depth is indeed reached
+    //and arrays inside objects
     expect(result.e.d.d.d.length).toEqual(1);
     expect(result.e.d.d.d[0]).toEqual(5);
+    expect(result.e.d.d.e[0][0]).toEqual(8);
+  })
+
+  it('parses objects and arrays', () => {
+    const result = parseObjectType(o);
+    expect(result.a).toEqual('string')
+    expect(result.b).toEqual('boolean')
+    expect(result.c).toEqual('number')
+    expect(result.d[0].a).toEqual('string')
+    expect(result.d[0].d[0].a).toEqual('string')
+    expect(result.d[0].d[0].d[0].a).toEqual('string')
+    expect(result.e.a).toEqual('string');
+    expect(result.e.d.a).toEqual('string');
+    expect(result.e.d.d.a).toEqual('string');
+    expect(result.e.d.d.d[0]).toEqual('number');
+    expect(result.e.d.d.e[0][0]).toEqual('number');
   })
 })

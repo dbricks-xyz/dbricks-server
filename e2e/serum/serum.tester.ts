@@ -78,7 +78,6 @@ export default class SerumTester extends SerumClient {
     const res = await request(app).post(route).send(params);
     saveReqResToJSON(
       '0serum.0markets.0InitMarket',
-      "Initiates a new market on Serum.",
       'POST',
       route,
       params,
