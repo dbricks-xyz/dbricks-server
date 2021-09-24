@@ -357,7 +357,7 @@ export default class MangoClient extends SolClient {
     mangoPk?: PublicKey,
   ): Promise<ixsAndSigners> {
     const ixsAndSigners: ixsAndSigners = {
-      ixs: [],
+      instructions: [],
       signers: [],
     }
     const tokenIndex = this.group.getRootBankIndex(rootBank);
@@ -366,7 +366,7 @@ export default class MangoClient extends SolClient {
     let destinationPk: PublicKey;
     if (!mangoPk) { // Init Mango Account before deposit
       const [newAccIxsAndSigners, newAccPk] = await this.createMangoAcc(ownerPk);
-      ixsAndSigners.ixs.push(...newAccIxsAndSigners.ixs);
+      ixsAndSigners.instructions.push(...newAccIxsAndSigners.instructions);
       ixsAndSigners.signers.push(...newAccIxsAndSigners.signers)
       destinationPk = newAccPk;
     } else {
@@ -380,7 +380,7 @@ export default class MangoClient extends SolClient {
     ) {
       //todo antipattern here - you should not be modifying passed in args
       wrappedSolAccount = await this.addWrappedSolCreateAccountIx(
-        ixsAndSigners.ixs,
+        ixsAndSigners.instructions,
         ixsAndSigners.signers,
         ownerPk,
         quantity,
@@ -404,11 +404,11 @@ export default class MangoClient extends SolClient {
       wrappedSolAccount ? wrappedSolAccount.publicKey : tokenAcc,
       nativeQuantity,
     );
-    ixsAndSigners.ixs.push(depositIx);
+    ixsAndSigners.instructions.push(depositIx);
 
     if (wrappedSolAccount) {
       this.addWrappedSolCloseAccountIx(
-        ixsAndSigners.ixs,
+        ixsAndSigners.instructions,
         ownerPk,
         wrappedSolAccount,
       );
@@ -494,7 +494,7 @@ export default class MangoClient extends SolClient {
       );
     }
 
-    return {ixs: transactionIxs, signers: additionalSigners};
+    return {instructions: transactionIxs, signers: additionalSigners};
   }
 
   async prepPlaceSpotOrderTx(
@@ -645,7 +645,7 @@ export default class MangoClient extends SolClient {
     );
     transactionIxs.push(placeOrderInstruction);
 
-    return {ixs: transactionIxs, signers: additionalSigners};
+    return {instructions: transactionIxs, signers: additionalSigners};
   }
 
   //todo currently fails when trying to cancel multiple orders - look at how I did serum
@@ -675,7 +675,7 @@ export default class MangoClient extends SolClient {
 
     await this.addSpotSettleFundsIx(transactionIxs, this.group, mangoAccount, spotMarket, ownerPk);
 
-    return {ixs: transactionIxs, signers: []};
+    return {instructions: transactionIxs, signers: []};
   }
 
   async prepSettleSpotTx(
@@ -701,7 +701,7 @@ export default class MangoClient extends SolClient {
       await this.addSpotSettleFundsIx(transactionIxs, this.group, mangoAccount, spotMarket, ownerPk);
     }
 
-    return {ixs: transactionIxs, signers: []}
+    return {instructions: transactionIxs, signers: []}
   }
 
   async prepPlacePerpOrderTx(
@@ -751,7 +751,7 @@ export default class MangoClient extends SolClient {
     );
     transactionIxs.push(instruction);
 
-    return {ixs: transactionIxs, signers: []}
+    return {instructions: transactionIxs, signers: []}
   }
 
   async prepCancelPerpOrderTx(
@@ -774,7 +774,7 @@ export default class MangoClient extends SolClient {
     );
     transactionIxs.push(instruction);
 
-    return {ixs: transactionIxs, signers: []}
+    return {instructions: transactionIxs, signers: []}
   }
 
   async prepSettlePerpTx(
@@ -797,7 +797,7 @@ export default class MangoClient extends SolClient {
     let sign: number;
     if (pnl.eq(ZERO_I80F48)) {
       // Can't settle pnl if there is no pnl
-      return {ixs: [], signers: []};
+      return {instructions: [], signers: []};
     } else if (pnl.gt(ZERO_I80F48)) {
       sign = 1;
     } else {
@@ -824,7 +824,7 @@ export default class MangoClient extends SolClient {
       const remSign = pnl.gt(ZERO_I80F48) ? 1 : -1;
       if (remSign !== sign) {
         // if pnl has changed sign, then we're done
-        return {ixs: transactionIxs, signers: []}
+        return {instructions: transactionIxs, signers: []}
       }
     }
 
@@ -877,7 +877,7 @@ export default class MangoClient extends SolClient {
       }
     }
 
-    return {ixs: transactionIxs, signers: []}
+    return {instructions: transactionIxs, signers: []}
   }
 
   async createMangoAcc(
@@ -896,7 +896,7 @@ export default class MangoClient extends SolClient {
       ownerPk,
     );
     const ixsAndSigners: ixsAndSigners = {
-      ixs: [newMangoAcc.instruction, initMangoAccountIx],
+      instructions: [newMangoAcc.instruction, initMangoAccountIx],
       signers: [newMangoAcc.account],
     };
     return [ixsAndSigners, newMangoAcc.account.publicKey]

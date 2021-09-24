@@ -67,7 +67,7 @@ export default class SerumClient extends SolClient {
       // pruneAuthority = undefined,
     });
     return {
-      ixs: [initMarketIx],
+      instructions: [initMarketIx],
       signers: [],
     };
   }
@@ -91,7 +91,7 @@ export default class SerumClient extends SolClient {
       feeDiscountPubkey: null, // needed to enable devnet/localnet
     });
     return {
-      ixs: [...placeOrderTx.transaction.instructions],
+      instructions: [...placeOrderTx.transaction.instructions],
       signers: [...placeOrderTx.signers],
     }
   }
@@ -110,11 +110,11 @@ export default class SerumClient extends SolClient {
       );
     } catch (e) {
       log('failed to load open orders', e);
-      return {ixs: [], signers: []};
+      return {instructions: [], signers: []};
     }
     //none returned
     if (orders.length === 0) {
-      return {ixs: [], signers: []};
+      return {instructions: [], signers: []};
     }
     //if specific order id passed
     if (orderId) {
@@ -129,23 +129,23 @@ export default class SerumClient extends SolClient {
         order,
       );
       return {
-        ixs: [...cancelOrderTx.instructions],
+        instructions: [...cancelOrderTx.instructions],
         signers: [],
       }
     }
     //else just cancel all
     //todo note this will fail if too many orders outstanding, need to split
-    const ixs: TransactionInstruction[] = [];
+    const instructions: TransactionInstruction[] = [];
     orders.forEach(async (o) => {
       const cancelOrderTx = await market.makeCancelOrderTransaction(
         this.connection,
         ownerPk,
         o,
       );
-      ixs.push(...cancelOrderTx.instructions)
+      instructions.push(...cancelOrderTx.instructions)
     })
     return {
-      ixs,
+      instructions,
       signers: [],
     }
   }
@@ -162,7 +162,7 @@ export default class SerumClient extends SolClient {
       this.connection, ownerPk,
     );
     if (openOrdersAccounts.length === 0) {
-      return {ixs: [], signers: []};
+      return {instructions: [], signers: []};
     }
     const settleFundsTx = await market.makeSettleFundsTransaction(
       this.connection,
@@ -171,7 +171,7 @@ export default class SerumClient extends SolClient {
       ownerQuotePk,
     );
     return {
-      ixs: [...settleFundsTx.transaction.instructions],
+      instructions: [...settleFundsTx.transaction.instructions],
       signers: [...settleFundsTx.signers],
     }
   }
@@ -313,7 +313,7 @@ export default class SerumClient extends SolClient {
     );
 
     return {
-      ixs: [marketIx, reqQIx, eventQIx, bidsIx, asksIx],
+      instructions: [marketIx, reqQIx, eventQIx, bidsIx, asksIx],
       signers: [marketKp, reqQKp, eventQKp, bidsKp, asksKp],
     }
   }
@@ -328,7 +328,7 @@ export default class SerumClient extends SolClient {
     const quoteVaultKp = new Keypair();
 
     // as per https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L519
-    const ixs = [
+    const instructions = [
       SystemProgram.createAccount({
         fromPubkey: ownerPk,
         newAccountPubkey: baseVaultKp.publicKey,
@@ -355,7 +355,7 @@ export default class SerumClient extends SolClient {
       }),
     ];
     return {
-      ixs,
+      instructions,
       signers: [baseVaultKp, quoteVaultKp],
     }
   }
@@ -371,7 +371,7 @@ export default class SerumClient extends SolClient {
       openOrders.map((oo) => oo.publicKey), 100,
     );
     await this._prepareAndSendTx({
-      ixs: [consumeEventsIx],
+      instructions: [consumeEventsIx],
       signers: [ownerKp],
     });
   }

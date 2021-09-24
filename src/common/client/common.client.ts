@@ -12,7 +12,6 @@ import {AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,} from '@s
 import {COMMITTMENT, CONNECTION_URL, TESTING_KP_PATH} from '../../config/config';
 import {loadKpSync, sleep} from '../util/common.util';
 import {ixsAndSigners} from "dbricks-lib";
-import {Market} from "@project-serum/serum";
 
 const log: debug.IDebugger = debug('app:sol-client');
 
@@ -136,14 +135,14 @@ export default class SolClient {
         ownerPk,
       ),
     );
-    return [{ixs: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
+    return [{instructions: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
   }
 
   async getOrCreateTokenAccByMint(
     ownerPk: PublicKey,
     mintPk: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey]> {
-    let ixsAndSigners: ixsAndSigners = {ixs: [], signers: []};
+    let ixsAndSigners: ixsAndSigners = {instructions: [], signers: []};
     let tokenAccPk: PublicKey;
     if (mintPk.toBase58() === 'So11111111111111111111111111111111111111112') {
       return [ixsAndSigners, ownerPk];
@@ -167,7 +166,7 @@ export default class SolClient {
   // --------------------------------------- testing only
 
   async _prepareAndSendTx(ixsAndSigners: ixsAndSigners) {
-    const tx = new Transaction().add(...ixsAndSigners.ixs);
+    const tx = new Transaction().add(...ixsAndSigners.instructions);
     const sig = await sendAndConfirmTransaction(this.connection, tx, ixsAndSigners.signers);
     console.log('Tx successful,', sig);
     return sig;
@@ -228,7 +227,7 @@ export default class SolClient {
       lamports,
     })
     await this._prepareAndSendTx({
-      ixs: [transferIx],
+      instructions: [transferIx],
       signers: [fromKp]
     })
   }

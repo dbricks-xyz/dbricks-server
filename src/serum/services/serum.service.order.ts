@@ -38,14 +38,14 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
       params.orderId,
     );
     //the next steps are needed in case there are too many orders to cancel in a single Tx
-    const flattenedBricks: flattenedBrick[] = ixsAndSigners.ixs.map(i => {
+    const flattenedBricks: flattenedBrick[] = ixsAndSigners.instructions.map(i => {
       return {
         id: 0,
         desc: '',
         ixsAndSigners: {
-          ixs: [i],
+          instructions: [i],
           signers: []
-        }
+        } as ixsAndSigners
       }
     })
     const sizedBricks = await (new DBricksSDK(CONNECTION_URL, COMMITTMENT)).findOptimalBrickSize(
@@ -54,7 +54,7 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
     );
     return sizedBricks.map(brick => {
         return {
-          ixs: brick.tx.instructions,
+          instructions: brick.tx.instructions,
           signers: [],
         } as ixsAndSigners;
     })
