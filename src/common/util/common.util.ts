@@ -56,9 +56,9 @@ export function tryGetSerumMarketName(marketPk: string): string | undefined {
 
 export function mergeIxsAndSigners(x: ixsAndSigners, y: ixsAndSigners): ixsAndSigners {
   const result = x;
-  y.ixs.forEach(yix => {
-    if (result.ixs.indexOf(yix) === -1) {
-      result.ixs.push(yix)
+  y.instructions.forEach(yix => {
+    if (result.instructions.indexOf(yix) === -1) {
+      result.instructions.push(yix)
     }
   });
   y.signers.forEach(ysigner => {

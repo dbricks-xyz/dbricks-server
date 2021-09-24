@@ -11,15 +11,20 @@ import {
   ISerumDEXOrderCancelParams,
   ISerumDEXOrderPlaceParams,
   side,
+  orderType,
 } from "dbricks-lib";
-import SolClient from "../../src/common/client/common.client";
+import {saveReqResToJSON} from "../../docs/docs.generator";
+import SerumClient from "../../src/serum/client/serum.client";
+import {Market} from "@project-serum/serum";
 
-export default class SerumTester extends SolClient {
+export default class SerumTester extends SerumClient {
   baseMint!: Token;
 
   quoteMint!: Token;
 
   marketKp!: Keypair;
+
+  market!: Market;
 
   user1Kp: Keypair;
 
@@ -44,7 +49,7 @@ export default class SerumTester extends SolClient {
     return this.user2Kp.publicKey;
   }
 
-  async prepAccs() {
+  async prepAccs(fundingAmount: number) {
     // token mints
     this.baseMint = await this._createMint(this.user1Kp);
     this.quoteMint = await this._createMint(this.user1Kp);
@@ -52,68 +57,101 @@ export default class SerumTester extends SolClient {
     // user 1 - we give them quote
     // NOTE: we intentionally are NOT creating the base account for user 1. The BE should take care of that.
     this.quoteUser1Pk = await this._createTokenAcc(this.quoteMint, this.user1Pk);
-    await this._fundTokenAcc(this.quoteMint, this.user1Pk, this.quoteUser1Pk, 10000);
+    await this._fundTokenAcc(this.quoteMint, this.user1Pk, this.quoteUser1Pk, fundingAmount);
 
     // user 2 - we give them base
     //todo temp workaround until figure out airdrops on localnet
     await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
     this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.user2Pk);
     this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.user2Pk);
-    await this._fundTokenAcc(this.baseMint, this.user1Pk, this.baseUser2Pk, 10000);
+    await this._fundTokenAcc(this.baseMint, this.user1Pk, this.baseUser2Pk, fundingAmount);
   }
 
   async requestInitMarketIx() {
-    const res = await request(app).post('/serum/markets/').send({
+    const route = '/serum/markets/';
+    const params: ISerumDEXMarketInitParams = {
       baseMintPk: this.baseMint.publicKey.toBase58(),
       quoteMintPk: this.quoteMint.publicKey.toBase58(),
       lotSize: '1',
       tickSize: '1',
       ownerPk: this.user1Pk.toBase58(),
-    } as ISerumDEXMarketInitParams)
-
-    const ixsAndSigners = deserializeIxsAndSigners(res.body);
-
-    //the 1st keypair returned is always the marketKp
-    this.marketKp = ixsAndSigners[0].signers[0] as Keypair;
-    console.log('New market Pk is', this.marketKp.publicKey.toBase58());
-
-    return ixsAndSigners
+    };
+    const res = await request(app).post(route).send(params);
+    saveReqResToJSON(
+      'serum.markets.init',
+      'serum',
+      'POST',
+      route,
+      params,
+      res.body
+    );
+    return deserializeIxsAndSigners(res.body);
   }
 
   async requestPlaceOrderIx(
     side: side,
     price: string,
     size: string,
-    orderType: string,
+    orderType: orderType,
     ownerPk: string,
   ) {
-    const res = await request(app).post('/serum/orders').send({
+    const route = '/serum/orders';
+    const params: ISerumDEXOrderPlaceParams = {
       marketPk: this.marketKp.publicKey.toBase58(),
       side,
       price,
       size,
       orderType,
       ownerPk,
-    } as ISerumDEXOrderPlaceParams).expect(200);
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'serum.orders.place',
+      'serum',
+      'POST',
+      route,
+      params,
+      res.body
+    );
     return deserializeIxsAndSigners(res.body);
   }
 
   async requestSettleIx(
     ownerPk: string,
   ) {
-    const res = await request(app).post('/serum/markets/settle').send({
+    const route = '/serum/markets/settle';
+    const params: ISerumDEXMarketSettleParams = {
       marketPk: this.marketKp.publicKey.toBase58(),
       ownerPk,
-    } as ISerumDEXMarketSettleParams).expect(200);
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'serum.markets.settle',
+      'serum',
+      'POST',
+      route,
+      params,
+      res.body
+    );
     return deserializeIxsAndSigners(res.body);
   }
 
   async requestCancelOrderIx(orderId: string, ownerPk: string) {
-    const res = await request(app).post('/serum/orders/cancel').send({
+    const route = '/serum/orders/cancel';
+    const params: ISerumDEXOrderCancelParams = {
       marketPk: this.marketKp.publicKey.toBase58(),
       orderId,
       ownerPk,
-    } as ISerumDEXOrderCancelParams).expect(200);
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'serum.orders.cancel',
+      'serum',
+      'POST',
+      route,
+      params,
+      res.body
+    );
     return deserializeIxsAndSigners(res.body);
   }
 
@@ -123,5 +161,10 @@ export default class SerumTester extends SolClient {
     tx2.signers.unshift(this.user1Kp);
     await this._prepareAndSendTx(tx1);
     await this._prepareAndSendTx(tx2);
+    //the 1st keypair returned is always the marketKp
+    this.marketKp = tx1.signers[1] as Keypair;
+    console.log('New market Pk is', this.marketKp.publicKey.toBase58());
+    this.market = await this.loadSerumMarket(this.marketKp.publicKey);
   }
 }
+
