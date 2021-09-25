@@ -54,13 +54,14 @@ export function tryGetSerumMarketName(marketPk: string): string | undefined {
   return foundMarket ? foundMarket.name : undefined
 }
 
+/**
+ * NOTE: deduplicates signers, but not instructions.
+ * This is because instructions can repeat (eg 2 place orders), but signers can't
+ */
 export function mergeIxsAndSigners(x: ixsAndSigners, y: ixsAndSigners): ixsAndSigners {
-  const result = x;
-  y.instructions.forEach(yix => {
-    if (result.instructions.indexOf(yix) === -1) {
-      result.instructions.push(yix)
-    }
-  });
+  const result: ixsAndSigners = {instructions: [], signers: []};
+  result.instructions = [...x.instructions, ...y.instructions];
+  result.signers = [...x.signers];
   y.signers.forEach(ysigner => {
     if (result.signers.indexOf(ysigner) === -1) {
       result.signers.push(ysigner)
