@@ -1,0 +1,111 @@
+{
+  "cluster_urls": {
+    "localnet": "http://127.0.0.1:8899"
+  },
+  "groups": [
+    {
+      "cluster": "localnet",
+      "name": "localnet.1",
+      "publicKey": "H67tPyxWXA7PnUtS9iuyfHvPKgEdC9gFJDpso4bADWZn",
+      "quoteSymbol": "QUOTE",
+      "mangoProgramId": "EFUJ77cT4eFczspUS11K8BMbmmVxdQLk1pF8dhXk3Ri4",
+      "serumProgramId": "5xmw9VJtx2FKyad2DL15i7yeZasm38NaL3JZiT3sm4ZT",
+      "tokens": [
+        {
+          "symbol": "QUOTE",
+          "mintKey": "J6Zon5HhFvcuyK6NLrweegfMRTv3EqR1JHLNkgCqEu4W",
+          "decimals": 0,
+          "rootKey": "2jvcxiffNLrJLeMpHcY3hzjF25gPmLhgJ5bi7t95xjAy",
+          "nodeKeys": [
+            "8CHt3hLrepgwmt8EgcDcRox37SsEzk7mBM2uQzcJ9wyT"
+          ]
+        },
+        {
+          "symbol": "BASE",
+          "mintKey": "69aTrrtmEBAvfTkwcTxPJuGn94aS8A7XkyRYjv7uCJHU",
+          "decimals": 0,
+          "rootKey": "HezWJKEPuLgTB7dzH1v44uC55X7jcd4Gsf6E4uAm53wa",
+          "nodeKeys": [
+            "Gt9AapYKUUqnn23pxUb1ao3hcRdDr7B7sSjwJTZ6HyNa"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "QUOTE",
+          "publicKey": "8P5eNBGwCCCVyAXznrhqN9izTF2kRV2ZApocCuAUZYuX"
+        },
+        {
+          "symbol": "BASE",
+          "publicKey": "8cgayv4iPet4XxznCdZGTGfbGpcR1JqpcL5dtP9zkwwU"
+        }
+      ],
+      "perpMarkets": [],
+      "spotMarkets": [
+        {
+          "name": "BASE/QUOTE",
+          "publicKey": "HBM8JpjTCcph1jtHSM4TVYdUVfHGhQk9Lw1xGWVeKu1H",
+          "baseSymbol": "BASE",
+          "baseDecimals": 0,
+          "quoteDecimals": 0,
+          "marketIndex": 1,
+          "bidsKey": "E6yEj36wpCebwhNbRhgbbhhE4CZVW3DCbZsLbkBWPcCp",
+          "asksKey": "E1hbDTs1HgYBYE8vNcLs5K4kXuPCogSknLupvK2kewVU",
+          "eventsKey": "FLEi7Rp8YXpK2QH6wrqeZUPThEihieU37W7QdhehQnFR"
+        }
+      ]
+    },
+    {
+      "cluster": "localnet",
+      "name": "Local Mango Test Group",
+      "publicKey": "GrNa8MZgJbUykgUWHP9yz8xUBKC4rbcANk7iiC3P963i",
+      "quoteSymbol": "QUOTE",
+      "mangoProgramId": "EFUJ77cT4eFczspUS11K8BMbmmVxdQLk1pF8dhXk3Ri4",
+      "serumProgramId": "5xmw9VJtx2FKyad2DL15i7yeZasm38NaL3JZiT3sm4ZT",
+      "tokens": [
+        {
+          "symbol": "QUOTE",
+          "mintKey": "89tSXF62t7SejHpdXs375BnncjALmaL6py1YFm1Ho1JB",
+          "decimals": 0,
+          "rootKey": "CkykYW2w8JCQ8Ywu7BBeTT1fBJkYBqBiSFTiactHsnHE",
+          "nodeKeys": [
+            "4MJKg2AgQtiXgQw4run4ASuHnehCQirrd7i5ZpeWPywL"
+          ]
+        },
+        {
+          "symbol": "BASE",
+          "mintKey": "BF9NmhLNyomyRriy4h2MUYRkTvRmfTMYJ2Q5B43DJge6",
+          "decimals": 0,
+          "rootKey": "9yeHbusPv1QXLNHg8G6AcKa5LU4X3jBhppxxVYQLe6MJ",
+          "nodeKeys": [
+            "7qbK6qYtgfKiKwG1c3X3wsZRXrkvN3Bn7bLuRa1tXEp"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "QUOTE",
+          "publicKey": "4UTvurqjuEx9dzCNDxdTMrWHh9CNqzaDunwaJurXQJ5M"
+        },
+        {
+          "symbol": "BASE",
+          "publicKey": "9vNZUprgdRRECeBsd6mD5wiNSUMb1QJFfGCMMMXkt5tW"
+        }
+      ],
+      "perpMarkets": [],
+      "spotMarkets": [
+        {
+          "name": "BASE/QUOTE",
+          "publicKey": "A3KUo9peA3kq37BuuQBZYWs9hZBywtd5nDG1c7pLHbUC",
+          "baseSymbol": "BASE",
+          "baseDecimals": 0,
+          "quoteDecimals": 0,
+          "marketIndex": 1,
+          "bidsKey": "FbkqVdhhRJiu5AQaqPs2pmyMDr7tbMPtzRhrHEuZD9eE",
+          "asksKey": "CMWyDvLyamoFMti1vmwEJy6k6Rx8vUTfMrdLoT8fuq8R",
+          "eventsKey": "8KAKceKPZcjxvaTe96DgDcGvVzKUT3uFzYgsQm4koYtW"
+        }
+      ]
+    }
+  ]
+}

@@ -10,7 +10,12 @@ export default class MangoDepositService extends MangoClient implements IMangoLe
     const bankVaultInfo = await this.loadBankVaultInformation(params.mintPk);
     const tokenAcc = await this.loadTokenAccount(params.ownerPk, params.mintPk);
     const { rootBank, nodeBank, vault } = bankVaultInfo;
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
+
+    const ownerHasMangoAccs = await this.ownerHasMangoAccs(params.ownerPk);
+    let mangoAcc;
+    if (ownerHasMangoAccs) {
+      mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
+    }
 
     const tx = await this.prepDepositTx(
       params.ownerPk,
@@ -19,7 +24,7 @@ export default class MangoDepositService extends MangoClient implements IMangoLe
       vault,
       tokenAcc.publicKey,
       params.quantity,
-      mangoAcc.publicKey,
+      mangoAcc?.publicKey,
     );
     return [tx];
   }
