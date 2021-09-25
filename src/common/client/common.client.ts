@@ -46,7 +46,7 @@ export default class SolClient {
     return balance.value.uiAmount;
   }
 
-  async getBalance(publicKey: PublicKey) {
+  async getBalance(publicKey: PublicKey): Promise<number> {
     return this.connection.getBalance(publicKey);
   }
 
@@ -165,7 +165,11 @@ export default class SolClient {
 
   // --------------------------------------- testing only
 
-  async _prepareAndSendTx(ixsAndSigners: ixsAndSigners) {
+  async _prepareAndSendTx(ixsAndSigners: ixsAndSigners): Promise<string | undefined> {
+    if (ixsAndSigners.instructions.length === 0) {
+      log('No instructions provided, aborting.')
+      return;
+    }
     const tx = new Transaction().add(...ixsAndSigners.instructions);
     const sig = await sendAndConfirmTransaction(this.connection, tx, ixsAndSigners.signers);
     console.log('Tx successful,', sig);

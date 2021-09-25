@@ -41,13 +41,7 @@ export default class SerumTester extends SerumClient {
     this.user1Kp = loadKpSync(TESTING_KP_PATH);
   }
 
-  get user1Pk() {
-    return this.user1Kp.publicKey;
-  }
-
-  get user2Pk() {
-    return this.user2Kp.publicKey;
-  }
+  // --------------------------------------- preparators
 
   async prepAccs(fundingAmount: number) {
     // token mints
@@ -56,16 +50,30 @@ export default class SerumTester extends SerumClient {
 
     // user 1 - we give them quote
     // NOTE: we intentionally are NOT creating the base account for user 1. The BE should take care of that.
-    this.quoteUser1Pk = await this._createTokenAcc(this.quoteMint, this.user1Pk);
-    await this._fundTokenAcc(this.quoteMint, this.user1Pk, this.quoteUser1Pk, fundingAmount);
+    this.quoteUser1Pk = await this._createTokenAcc(this.quoteMint, this.user1Kp.publicKey);
+    await this._fundTokenAcc(this.quoteMint, this.user1Kp.publicKey, this.quoteUser1Pk, fundingAmount);
 
     // user 2 - we give them base
     //todo temp workaround until figure out airdrops on localnet
     await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
-    this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.user2Pk);
-    this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.user2Pk);
-    await this._fundTokenAcc(this.baseMint, this.user1Pk, this.baseUser2Pk, fundingAmount);
+    this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.user2Kp.publicKey);
+    this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.user2Kp.publicKey);
+    await this._fundTokenAcc(this.baseMint, this.user1Kp.publicKey, this.baseUser2Pk, fundingAmount);
   }
+
+  async prepMarket() {
+    const [tx1, tx2] = await this.requestInitMarketIx();
+    tx1.signers.unshift(this.user1Kp);
+    tx2.signers.unshift(this.user1Kp);
+    await this._prepareAndSendTx(tx1);
+    await this._prepareAndSendTx(tx2);
+    //the 1st keypair returned is always the marketKp
+    this.marketKp = tx1.signers[1] as Keypair;
+    console.log('New market Pk is', this.marketKp.publicKey.toBase58());
+    this.market = await this.loadSerumMarket(this.marketKp.publicKey);
+  }
+
+  // --------------------------------------- requesters
 
   async requestInitMarketIx() {
     const route = '/serum/markets/';
@@ -74,7 +82,7 @@ export default class SerumTester extends SerumClient {
       quoteMintPk: this.quoteMint.publicKey.toBase58(),
       lotSize: '1',
       tickSize: '1',
-      ownerPk: this.user1Pk.toBase58(),
+      ownerPk: this.user1Kp.publicKey.toBase58(),
     };
     const res = await request(app).post(route).send(params);
     saveReqResToJSON(
@@ -155,16 +163,47 @@ export default class SerumTester extends SerumClient {
     return deserializeIxsAndSigners(res.body);
   }
 
-  async prepMarket() {
-    const [tx1, tx2] = await this.requestInitMarketIx();
-    tx1.signers.unshift(this.user1Kp);
-    tx2.signers.unshift(this.user1Kp);
-    await this._prepareAndSendTx(tx1);
-    await this._prepareAndSendTx(tx2);
-    //the 1st keypair returned is always the marketKp
-    this.marketKp = tx1.signers[1] as Keypair;
-    console.log('New market Pk is', this.marketKp.publicKey.toBase58());
-    this.market = await this.loadSerumMarket(this.marketKp.publicKey);
+  // --------------------------------------- helpers
+
+  async placeLimitOrder(user: Keypair, side: side, amount: number, price: number) {
+    const tx = (await this.requestPlaceOrderIx(
+      side,
+      `${price}`,
+      `${amount}`,
+      'limit',
+      user.publicKey.toBase58(),
+    ))[0];
+    tx.signers.unshift(user);
+    await this._prepareAndSendTx(tx);
+  }
+
+  async cancelOrder(user: Keypair, orderId: string) {
+    const cancelTx = (await this.requestCancelOrderIx(
+      orderId,
+      user.publicKey.toBase58(),
+    ))[0];
+    cancelTx.signers.unshift(this.user1Kp);
+    await this._prepareAndSendTx(cancelTx);
+  }
+
+  async verifyOpenOrdersCount(user: Keypair, orderCount: number) {
+    const openOrders = await this.loadOrdersForOwner(this.market, user.publicKey);
+    expect(openOrders.length).toEqual(orderCount);
+  }
+
+  async settleAndVerifyAmount(user: Keypair, mint: PublicKey, expectedAmount: number) {
+    // must consume events for settlement to work
+    await this._consumeEvents(this.market, user);
+    // settle
+    const settleTx = (await this.requestSettleIx(user.publicKey.toBase58()))[0];
+    settleTx.signers.unshift(user);
+    await this._prepareAndSendTx(settleTx);
+    // verify went through
+    const userTokenAccounts = await this.getTokenAccsForOwner(
+      user.publicKey,
+      mint,
+    );
+    expect(userTokenAccounts[0].amount).toEqual(expectedAmount);
   }
 }
 
