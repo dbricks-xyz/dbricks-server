@@ -54,7 +54,6 @@ export default class SerumTester extends SerumClient {
     await this._fundTokenAcc(this.quoteMint, this.user1Kp.publicKey, this.quoteUser1Pk, fundingAmount);
 
     // user 2 - we give them base
-    //todo temp workaround until figure out airdrops on localnet
     await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
     this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.user2Kp.publicKey);
     this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.user2Kp.publicKey);

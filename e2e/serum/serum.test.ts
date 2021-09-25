@@ -1,10 +1,10 @@
 import SerumTester from "./serum.tester";
 
-describe('Serum', () => {
-  const fundingAmount = 10000;
-  const amount = 100;
-  const price = 10;
+const fundingAmount = 10000;
+const amount = 100;
+const price = 10;
 
+describe('Serum', () => {
   // √ tests place order: 1)buy ,2)sell
   // √ tests settle order 1)no settle acc (user1), 2)xisting settle acc(user2)
   it('Inits market + places/settles a trade', async () => {
@@ -25,8 +25,9 @@ describe('Serum', () => {
     // since user 1 is the maker - user 2 pays the fees as a taker
     await tester.settleAndVerifyAmount(tester.user2Kp, tester.quoteMint.publicKey, amount * price - 3);
   });
+});
 
-  // here it's ok to run the tests asyncronously - since we're interacting with 2 different markets
+describe('Serum', () => {
   // √ tests cancelling 1 order
   // √ tests cancelling all orders (single transaction)
   // √ tests cancelling all orders (split transactions)
