@@ -123,6 +123,10 @@ export default class SerumClient extends SolClient {
           return o;
         }
       });
+      if (!order) {
+        log(`order with id ${orderId} not found`)
+        return {instructions: [], signers: []};
+      }
       const cancelOrderTx = await market.makeCancelOrderTransaction(
         this.connection,
         ownerPk,
@@ -134,7 +138,6 @@ export default class SerumClient extends SolClient {
       }
     }
     //else just cancel all
-    //todo note this will fail if too many orders outstanding, need to split
     const instructions: TransactionInstruction[] = [];
     orders.forEach(async (o) => {
       const cancelOrderTx = await market.makeCancelOrderTransaction(
