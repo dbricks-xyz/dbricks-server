@@ -110,8 +110,9 @@ export default class SolClient {
    * This prepares the TX and returns it, instead of sending it.
    */
   async prepCreateTokenAccTx(
-    ownerPk: PublicKey,
+    payerPk: PublicKey,
     mintPk: PublicKey,
+    ownerPk?: PublicKey,
   ): Promise<[ixsAndSigners, PublicKey]> {
     // Allocate memory for the account
     const balanceNeeded = await this.getMinBalanceRentForExemptAccount();
@@ -120,7 +121,7 @@ export default class SolClient {
     const transaction = new Transaction();
     transaction.add(
       SystemProgram.createAccount({
-        fromPubkey: ownerPk,
+        fromPubkey: payerPk,
         newAccountPubkey: newAccount.publicKey,
         lamports: balanceNeeded,
         space: AccountLayout.span,
@@ -132,7 +133,7 @@ export default class SolClient {
         TOKEN_PROGRAM_ID,
         mintPk,
         newAccount.publicKey,
-        ownerPk,
+        ownerPk ?? payerPk,
       ),
     );
     return [{instructions: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];

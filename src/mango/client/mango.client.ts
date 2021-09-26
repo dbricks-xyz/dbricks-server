@@ -74,6 +74,8 @@ export type BankVaultInformation = {
 };
 
 export default class MangoClient extends SolClient {
+  MANGO_CONFIG_PATH: string = './mangoConfig.json';
+
   nativeClient: NativeMangoClient;
 
   group!: MangoGroup;
@@ -97,14 +99,13 @@ export default class MangoClient extends SolClient {
     } else {
       this.groupName = 'localnet.1';
       this.cluster = 'localnet';
-      this.config = this.readConfig('/home/dboures/dev/dbricks/dbricks-server/e2e/mango/mangoConfig.json'); // TODO: env string, figure out where to put read func
+      this.config = this.readConfig();
     }
     log('Initialized Mango client');
   }
 
-  // TODO : dedupe
-  readConfig(configPath: string): Config {
-    return new Config(JSON.parse(fs.readFileSync(configPath, 'utf-8')));
+  readConfig(): Config {
+    return new Config(JSON.parse(fs.readFileSync(this.MANGO_CONFIG_PATH, 'utf-8')));
   }
 
   async loadGroup(): Promise<void> {
@@ -140,15 +141,6 @@ export default class MangoClient extends SolClient {
     }
   }
 
-  async ownerHasMangoAccs(
-    ownerPk: PublicKey,
-  ): Promise<boolean> {
-    const accts = await this.loadUserAccounts(
-      ownerPk,
-    );
-    return accts.length > 0;
-  }
-
   async loadMangoAccForOwner(
     ownerPk: PublicKey,
     mangoAccNr: number,
@@ -178,20 +170,6 @@ export default class MangoClient extends SolClient {
       nodeBank,
       vault,
     };
-  }
-
-  async loadTokenAccount(ownerPk: PublicKey, mintPk: PublicKey): Promise<TokenAccount> {
-    const tokenAccs = await getTokenAccountsByOwnerWithWrappedSol(
-      this.connection,
-      ownerPk,
-    );
-    const tokenAccount = tokenAccs.find(
-      (acc) => acc.mint.toBase58() === mintPk.toBase58(),
-    );
-    if (!tokenAccount) {
-      throw new Error(`Error loading ${mintPk} token account`);
-    }
-    return tokenAccount;
   }
 
   async getAllMarketInfos(): Promise<{
@@ -409,7 +387,7 @@ export default class MangoClient extends SolClient {
     vault: PublicKey,
     tokenAcc: PublicKey,
     quantity: number,
-    mangoPk?: PublicKey,
+    mangoAccNr:number,
   ): Promise<ixsAndSigners> {
     const ixsAndSigners: ixsAndSigners = {
       instructions: [],
@@ -417,15 +395,17 @@ export default class MangoClient extends SolClient {
     };
     const tokenIndex = this.group.getRootBankIndex(rootBank);
     const tokenMint = this.group.tokens[tokenIndex].mint;
+    const mangoAccs = await this.loadUserAccounts(ownerPk);
 
     let destinationPk: PublicKey;
-    if (!mangoPk) { // Init Mango Account before deposit
+    if (mangoAccs.length === 0) { // Init Mango Account before deposit
       const [newAccIxsAndSigners, newAccPk] = await this.prepCreateMangoAccTx(ownerPk);
       ixsAndSigners.instructions.push(...newAccIxsAndSigners.instructions);
       ixsAndSigners.signers.push(...newAccIxsAndSigners.signers);
       destinationPk = newAccPk;
     } else {
-      destinationPk = mangoPk;
+      // TODO: UI should always pass a valid number, but what if it doesn't?
+      destinationPk = mangoAccs[mangoAccNr].publicKey;
     }
 
     let wrappedSolAccount: Keypair | null = null;

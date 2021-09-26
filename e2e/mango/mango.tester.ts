@@ -1,24 +1,21 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable dot-notation */
 import request from 'supertest';
-import {Cluster, Config, createTokenAccountInstructions, getOracleBySymbol, getPerpMarketByBaseSymbol, getSpotMarketByBaseSymbol, getTokenBySymbol, GroupConfig, makeCachePerpMarketsInstruction, makeCachePricesInstruction, makeCacheRootBankInstruction, makeUpdateRootBankInstruction, MangoGroup, mngoMints, OracleConfig, PerpMarket, RootBank, uiToNative, zeroKey} from '@blockworks-foundation/mango-client';
+import {Cluster, Config, createTokenAccountInstructions, getOracleBySymbol, getPerpMarketByBaseSymbol, getSpotMarketByBaseSymbol, getTokenBySymbol, GroupConfig, makeCachePerpMarketsInstruction, makeCachePricesInstruction, makeCacheRootBankInstruction, makeUpdateRootBankInstruction, MangoCache, MangoGroup, mngoMints, OracleConfig, PerpMarket, RootBank, uiToNative, zeroKey} from '@blockworks-foundation/mango-client';
 import * as fs from 'fs';
 import {Account, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction} from '@solana/web3.js';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Market } from '@project-serum/serum';
-import { deserializeIxsAndSigners, IMangoDEXOrderCancelParams, IMangoDEXOrderPlaceParams, IMangoLenderDepositParams, IMangoLenderWithdrawParams, ISerumDEXMarketInitParams, orderType, side } from 'dbricks-lib';
+import { deserializeIxsAndSigners, IMangoDEXOrderCancelParams, IMangoDEXOrderPlaceParams, IMangoLenderDepositParams, IMangoLenderWithdrawParams, ISerumDEXMarketInitParams, ixsAndSigners, orderType, side } from 'dbricks-lib';
 import MangoClient from '../../src/mango/client/mango.client';
 import app from '../../src/app';
 import { loadKpSync } from '../../src/common/util/common.util';
 import { TESTING_KP_PATH, SERUM_PROG_ID, MANGO_PROG_ID } from '../../src/config/config';
+import { saveReqResToJSON } from '../../docs/docs.generator';
 
 require('dotenv').config();
 
 export default class MangoTester extends MangoClient {
-  MANGO_CONFIG_PATH: string = '/home/dboures/dev/dbricks/dbricks-server/e2e/mango/mangoConfig.json';
-
-  config: Config
-
   groupName: string = 'localnet.1';
 
   baseMint!: Token;
@@ -43,7 +40,7 @@ export default class MangoTester extends MangoClient {
 
   mngoMintPk!: PublicKey
 
-  validInterval: number = 100; // the interval where caches are no longer valid -- see
+  validInterval: number = 100; // the interval where caches are no longer valid (UNIX timestamp)
 
   // These params typically differ across currencies (and Spot vs Perp) based on risk
   // Since this is just for simple testing, it's ok to reuse them for everything
@@ -63,7 +60,6 @@ export default class MangoTester extends MangoClient {
     super();
     this.user1Kp = loadKpSync(TESTING_KP_PATH);
     this.user1PayerAccount = new Account(this.user1Kp.secretKey);
-    this.config = this.readConfig(this.MANGO_CONFIG_PATH);
   }
 
   get user1Pk() {
@@ -74,24 +70,21 @@ export default class MangoTester extends MangoClient {
     return this.user2Kp.publicKey;
   }
 
-  async getCache() {
+  async getCache(): Promise<MangoCache> {
     return this.group.loadCache(this.connection);
   }
 
-  getTokenIndex(mintPk: PublicKey) {
+  getTokenIndex(mintPk: PublicKey): number {
     return this.group.getTokenIndex(mintPk);
   }
 
-  // TODO : dedupe
-  readConfig(configPath: string) {
-    return new Config(JSON.parse(fs.readFileSync(configPath, 'utf-8')));
-  }
-
-  writeConfig(configPath: string, config: Config) {
+  writeConfig(configPath: string, config: Config): void {
     fs.writeFileSync(configPath, JSON.stringify(config.toJson(), null, 2));
   }
 
-  async setupLocalForTests() {
+  // --------------------------------------- preparators
+
+  async setupLocalForTests(): Promise<void> {
     // Setup Tokens, Mints, and Serum Markets
     await this.prepAccs();
     await this.prepMarket();
@@ -119,7 +112,7 @@ export default class MangoTester extends MangoClient {
     console.log('config saved');
   }
 
-  async prepAccs() {
+  async prepAccs(): Promise<void> {
     // token mints
     this.baseMint = await this._createMint(this.user1Kp);
     this.quoteMint = await this._createMint(this.user1Kp);
@@ -130,61 +123,36 @@ export default class MangoTester extends MangoClient {
     await this._fundTokenAcc(this.quoteMint, this.user1Pk, this.quoteUser1Pk, 100000);
 
     // user 2 - we give them base
-    //todo temp workaround until figure out airdrops on localnet
     await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
     this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.user2Pk);
     this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.user2Pk);
     await this._fundTokenAcc(this.baseMint, this.user1Pk, this.baseUser2Pk, 100000);
   }
 
-  async prepMarket() {
+  async prepMarket(): Promise<void> {
     const [tx1, tx2] = await this.requestInitMarketIx();
     tx1.signers.unshift(this.user1Kp);
     tx2.signers.unshift(this.user1Kp);
     await this._prepareAndSendTx(tx1);
     await this._prepareAndSendTx(tx2);
+    this.marketKp = tx1.signers[1] as Keypair;
   }
 
-  async requestInitMarketIx() {
-    const res = await request(app).post('/serum/markets/').send({
-      baseMintPk: this.baseMint.publicKey.toBase58(),
-      quoteMintPk: this.quoteMint.publicKey.toBase58(),
-      lotSize: '1',
-      tickSize: '1',
-      ownerPk: this.user1Pk.toBase58(),
-    } as ISerumDEXMarketInitParams);
-
-    const ixsAndSigners = deserializeIxsAndSigners(res.body);
-
-    // the 1st keypair returned is always the marketKp
-    this.marketKp = ixsAndSigners[0].signers[0] as Keypair;
-    console.log('New market Pk is', this.marketKp.publicKey.toBase58());
-
-    return ixsAndSigners;
-  }
-
-  async initializeFeeVault() {
-    const feesVaultAccount = new Account();
-    const insuranceVaultAccountInstructions = await createTokenAccountInstructions(
-      this.connection,
-      this.user1PayerAccount.publicKey,
-      feesVaultAccount.publicKey,
-      this.quoteMint.publicKey,
-      TOKEN_PROGRAM_ID, // owner should be token program
+  async initializeFeeVault(): Promise<PublicKey> {
+    const [createInsuranceVaultIxsandSigners, feeVaultPk] = await this.prepCreateTokenAccTx(
+      this.user1Kp.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
     );
 
     const createAccountsTransaction = new Transaction();
-    createAccountsTransaction.add(...insuranceVaultAccountInstructions);
-
-    const signers = [
-      feesVaultAccount,
-    ];
-    await this.connection.sendTransaction(createAccountsTransaction, [this.user1Kp, ...signers]);
+    createAccountsTransaction.add(...createInsuranceVaultIxsandSigners.instructions);
+    await this.connection.sendTransaction(
+      createAccountsTransaction, [this.user1Kp, ...createInsuranceVaultIxsandSigners.signers],
+    );
     console.log('Fees vault initialized');
-    return feesVaultAccount.publicKey;
+    return feeVaultPk;
   }
 
-  async createMangoGroup() {
+  async createMangoGroup(): Promise<PublicKey> {
     const feesVaultPk = await this.initializeFeeVault();
     const cluster = 'localnet' as Cluster;
 
@@ -230,7 +198,7 @@ export default class MangoTester extends MangoClient {
     return groupPk;
   }
 
-  async addPriceOracle(mangoGroupPk: PublicKey, symbol: string) {
+  async addPriceOracle(mangoGroupPk: PublicKey, symbol: string): Promise<void> {
     await this.nativeClient.addStubOracle(mangoGroupPk, this.user1PayerAccount);
     const group = await this.nativeClient.getMangoGroup(mangoGroupPk);
     const groupConfig = this.config.groups[0];
@@ -239,9 +207,9 @@ export default class MangoTester extends MangoClient {
       symbol,
       publicKey: group.oracles[group.numOracles - 1],
     };
-    const _oracle = getOracleBySymbol(groupConfig, symbol);
-    if (_oracle) {
-      Object.assign(_oracle, oracle);
+    const foundOracle = getOracleBySymbol(groupConfig, symbol);
+    if (foundOracle) {
+      Object.assign(foundOracle, oracle);
     } else {
       groupConfig.oracles.push(oracle);
     }
@@ -281,7 +249,7 @@ export default class MangoTester extends MangoClient {
     baseSymbol: string,
     spotMarket: PublicKey,
     baseMint: PublicKey,
-  ) {
+  ): Promise<void> {
     const groupConfig = this.config.groups[0];
 
     let group = await this.nativeClient.getMangoGroup(groupConfig.publicKey);
@@ -454,23 +422,197 @@ export default class MangoTester extends MangoClient {
   //       );
   //     }),
   //   );
-  
+
   //   processUpdateCache(mangoGroup);
   //   processKeeperTransactions(mangoGroup, perpMarkets);
-  
+
   //   if (consumeEvents) {
   //     processConsumeEvents(mangoGroup, perpMarkets);
   //   }
   // }
 
-  async keeperUpdateAll() {
+  // --------------------------------------- requesters
+
+  async requestDepositTxn(mintPk: PublicKey, amount: string, userKp: Keypair)
+  : Promise<ixsAndSigners[]> {
+    const route = '/mango/deposit';
+    const params: IMangoLenderDepositParams = {
+      mintPk: mintPk.toBase58(),
+      quantity: amount,
+      ownerPk: userKp.publicKey.toBase58(),
+      mangoAccNr: '0',
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'mango.deposit',
+      'mango',
+      'POST',
+      route,
+      params,
+      res.body,
+    );
+    return deserializeIxsAndSigners(res.body);
+  }
+
+  async requestWithdrawTxn(mintPk: PublicKey, amount: string, userKp: Keypair, isBorrow: boolean)
+  : Promise<ixsAndSigners[]> {
+    const route = '/mango/withdraw';
+    const params: IMangoLenderWithdrawParams = {
+      mintPk: mintPk.toBase58(),
+      quantity: amount,
+      isBorrow,
+      ownerPk: userKp.publicKey.toBase58(),
+      mangoAccNr: '0',
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'mango.withdraw',
+      'mango',
+      'POST',
+      route,
+      params,
+      res.body,
+    );
+    return deserializeIxsAndSigners(res.body);
+  }
+
+  async requestPlaceSpotOrderTxn(
+    marketPk: PublicKey,
+    side: side,
+    price: string,
+    size: string,
+    orderType: orderType,
+    userKp: Keypair,
+  ): Promise<ixsAndSigners[]> {
+    const route = '/mango/spot/place';
+    const params: IMangoDEXOrderPlaceParams = {
+      marketPk: marketPk.toBase58(),
+      side,
+      price,
+      size,
+      orderType,
+      ownerPk: userKp.publicKey.toBase58(),
+      mangoAccNr: '0',
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'mango.spot.place',
+      'mango',
+      'POST',
+      route,
+      params,
+      res.body,
+    );
+    return deserializeIxsAndSigners(res.body);
+  }
+
+  async requestCancelSpotOrderTxn(
+    marketPk: PublicKey,
+    orderId: string,
+    userKp: Keypair,
+  ): Promise<ixsAndSigners[]> {
+    const route = '/mango/spot/cancel';
+    const params: IMangoDEXOrderCancelParams = {
+      marketPk: marketPk.toBase58(),
+      orderId,
+      ownerPk: userKp.publicKey.toBase58(),
+      mangoAccNr: '0',
+    };
+    const res = await request(app).post(route).send(params).expect(200);
+    saveReqResToJSON(
+      'mango.spot.cancel',
+      'mango',
+      'POST',
+      route,
+      params,
+      res.body,
+    );
+
+    return deserializeIxsAndSigners(res.body);
+  }
+
+  async requestInitMarketIx() {
+    const route = '/serum/markets/';
+    const params: ISerumDEXMarketInitParams = {
+      baseMintPk: this.baseMint.publicKey.toBase58(),
+      quoteMintPk: this.quoteMint.publicKey.toBase58(),
+      lotSize: '1',
+      tickSize: '1',
+      ownerPk: this.user1Kp.publicKey.toBase58(),
+    };
+    const res = await request(app).post(route).send(params);
+    return deserializeIxsAndSigners(res.body);
+  }
+
+  // --------------------------------------- helpers
+
+  async deposit(mintPk: PublicKey, amount: string, userKp: Keypair) {
+    await this.keeperUpdateAll();
+    const tx = (await this.requestDepositTxn(
+      mintPk,
+      amount,
+      userKp,
+    ))[0];
+    tx.signers.unshift(userKp);
+    await this._prepareAndSendTx(tx);
+  }
+
+  async withdraw(mintPk: PublicKey, amount: string, userKp: Keypair, isBorrow: boolean) {
+    await this.keeperUpdateAll();
+    const tx = (await this.requestWithdrawTxn(
+      mintPk,
+      amount,
+      userKp,
+      isBorrow,
+    ))[0];
+    tx.signers.unshift(userKp);
+    await this._prepareAndSendTx(tx);
+  }
+
+  async placeSpotOrder(
+    marketPk: PublicKey,
+    side: side,
+    price: string,
+    size: string,
+    orderType: orderType,
+    userKp: Keypair,
+  ) {
+    await this.keeperUpdateAll();
+    const tx = (await this.requestPlaceSpotOrderTxn(
+      marketPk,
+      side,
+      price,
+      size,
+      orderType,
+      userKp,
+    ))[0];
+    tx.signers.unshift(userKp);
+    await this._prepareAndSendTx(tx);
+  }
+
+  async cancelSpotOrder( // TODO: fix, what else needed to update?
+    marketPk: PublicKey,
+    orderId: string,
+    userKp: Keypair,
+  ) {
+    await this.keeperUpdateAll();
+    const tx = (await this.requestCancelSpotOrderTxn(
+      marketPk,
+      orderId,
+      userKp,
+    ))[0];
+    tx.signers.unshift(userKp);
+    await this._prepareAndSendTx(tx);
+  }
+
+  async keeperUpdateAll(): Promise<void> {
     await Promise.all(
       [this.keeperCrankCache(this.group), this.keeperCrankTransactions(this.group, []),
       ],
     );
   }
-  
-  async keeperCrankCache(mangoGroup: MangoGroup) {
+
+  async keeperCrankCache(mangoGroup: MangoGroup): Promise<void> {
     let lastRootBankCacheUpdate = 0;
     // const updateCacheInterval = 1000;
     const updateRootBankCacheInterval = 5000;
@@ -615,72 +757,37 @@ export default class MangoTester extends MangoClient {
       .toNumber();
   }
 
-  async depositTxn(mintPk: PublicKey, amount: string, userKp: Keypair) {
-    await this.keeperUpdateAll();
-    const res = await request(app).post('/mango/deposit').send({
-      mintPk: mintPk.toBase58(),
-      quantity: amount,
-      ownerPk: userKp.publicKey.toBase58(),
-      mangoAccNr: '0',
-    } as IMangoLenderDepositParams).expect(200);
+  // async serumCrank () {
 
-    await this.signAndSend(res, userKp);
-  }
+  // }
 
-  async withdrawTxn(mintPk: PublicKey, amount: string, userKp: Keypair, isBorrow: boolean) {
-    await this.keeperUpdateAll();
-    const res = await request(app).post('/mango/withdraw').send({
-      mintPk: mintPk.toBase58(),
-      quantity: amount,
-      isBorrow,
-      ownerPk: userKp.publicKey.toBase58(),
-      mangoAccNr: '0',
-    } as IMangoLenderWithdrawParams).expect(200);
+  // async consumeEvents(market: Market, ownerKp: Keypair) {
+  //   const openOrders = await market.findOpenOrdersAccountsForOwner(
+  //     this.connection,
+  //     ownerKp.publicKey,
+  //   );
+  //   console.log(openOrders.length);
+  //   const consumeEventsIx = market.makeConsumeEventsInstruction(
+  //     openOrders.map((oo) => oo.publicKey), 100,
+  //   );
+  //   await this._prepareAndSendTx({
+  //     instructions: [consumeEventsIx],
+  //     signers: [ownerKp],
+  //   });
+  // }
 
-    await this.signAndSend(res, userKp);
-  }
-
-  async placeSpotOrderTxn(
-    marketPk: PublicKey,
-    side: side,
-    price: string,
-    size: string,
-    orderType: orderType,
-    userKp: Keypair,
-  ) {
-    await this.keeperUpdateAll();
-    const res = await request(app).post('/mango/spot/place').send({
-      marketPk: marketPk.toBase58(),
-      side,
-      price,
-      size,
-      orderType,
-      ownerPk: userKp.publicKey.toBase58(),
-      mangoAccNr: '0',
-    } as IMangoDEXOrderPlaceParams).expect(200);
-
-    await this.signAndSend(res, userKp);
-  }
-
-  async placeCancelOrderTxn(
-    marketPk: PublicKey,
-    orderId: string,
-    userKp: Keypair,
-  ) {
-    await this.keeperUpdateAll();
-    const res = await request(app).post('/mango/spot/cancel').send({
-      marketPk: marketPk.toBase58(),
-      orderId,
-      ownerPk: userKp.publicKey.toBase58(),
-      mangoAccNr: '0',
-    } as IMangoDEXOrderCancelParams).expect(200);
-
-    await this.signAndSend(res, userKp);
-  }
-
-  async signAndSend(res: request.Response, signerKp: Keypair) {
-    const tx = deserializeIxsAndSigners(res.body)[0];
-    tx.signers.unshift(signerKp);
-    await this._prepareAndSendTx(tx);
-  }
+  // async matchOrders(market: Market, ownerKp: Keypair) {
+  //   const openOrders = await market.findOpenOrdersAccountsForOwner(
+  //     this.connection,
+  //     ownerKp.publicKey,
+  //   );
+  //   console.log(openOrders.length);
+  //   const consumeEventsIx = market.makeConsumeEventsInstruction(
+  //     openOrders.map((oo) => oo.publicKey), 100,
+  //   );
+  //   await this._prepareAndSendTx({
+  //     instructions: [consumeEventsIx],
+  //     signers: [ownerKp],
+  //   });
+  // }
 }
