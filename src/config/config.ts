@@ -20,7 +20,6 @@ export let MANGO_PROG_ID: PublicKey;
 export let CONNECTION_URL: string;
 /* eslint-enable */
 
-// todo adjust for local testing
 export const TESTING_KEYPAIR_PATH = process.env.KEYPAIR_PATH ?? '';
 
 if (NETWORK === 'mainnet') {
@@ -34,11 +33,6 @@ if (NETWORK === 'mainnet') {
   MANGO_PROG_ID = new PublicKey('4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA');
   CONNECTION_URL = 'https://api.devnet.solana.com';
 } else if (NETWORK === 'localnet') {
-  // todo adjust for local testing:
-  //  1)git clone the respective programs
-  //  2)cargo build-bpf,
-  //  3)solana program deploy [path]
-  //  4)paste the IDs below
   SERUM_PROG_ID = new PublicKey(process.env.LOCAL_SERUM_PROG_ID!);
   SABER_PROG_ID = new PublicKey(process.env.LOCAL_SABER_PROG_ID!);
   MANGO_PROG_ID = new PublicKey(process.env.LOCAL_MANGO_PROG_ID!);
