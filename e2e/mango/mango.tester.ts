@@ -83,8 +83,8 @@ export default class MangoTester extends MangoClient {
 
   async setupLocalForTests(): Promise<void> {
     // Setup Tokens, Mints, and Serum Markets
-    await this.prepAccounts();
-    await this.prepMarket();
+    await this.prepareAccounts();
+    await this.prepareMarket();
     this.mngoMintPubkey = (await this._createMint(this.user1Keypair)).publicKey;
     // Setup MangoGroup
     const mangoGroupPubkey = await this.createMangoGroup();
@@ -109,7 +109,7 @@ export default class MangoTester extends MangoClient {
     console.log('config saved');
   }
 
-  async prepAccounts(): Promise<void> {
+  async prepareAccounts(): Promise<void> {
     // token mints
     this.baseMint = await this._createMint(this.user1Keypair);
     this.quoteMint = await this._createMint(this.user1Keypair);
@@ -126,7 +126,7 @@ export default class MangoTester extends MangoClient {
     await this._fundTokenAccount(this.baseMint, this.user1Pubkey, this.baseUser2Pubkey, 100000);
   }
 
-  async prepMarket(): Promise<void> {
+  async prepareMarket(): Promise<void> {
     const [transaction1, transaction2] = await this.requestInitMarketInstruction();
     transaction1.signers.unshift(this.user1Keypair);
     transaction2.signers.unshift(this.user1Keypair);
@@ -136,7 +136,7 @@ export default class MangoTester extends MangoClient {
   }
 
   async initializeFeeVault(): Promise<PublicKey> {
-    const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepCreateTokenAccountTransaction(
+    const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepareCreateTokenAccountTransaction(
       this.user1Keypair.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
     );
 
@@ -439,16 +439,16 @@ export default class MangoTester extends MangoClient {
       ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'mango.deposit',
       'mango',
       'POST',
       route,
       params,
-      res.body,
+      response.body,
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestWithdrawTransactionn(mintPubkey: PublicKey, amount: string, userKeypair: Keypair, isBorrow: boolean)
@@ -461,16 +461,16 @@ export default class MangoTester extends MangoClient {
       ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'mango.withdraw',
       'mango',
       'POST',
       route,
       params,
-      res.body,
+      response.body,
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestPlaceSpotOrderTransactionn(
@@ -491,16 +491,16 @@ export default class MangoTester extends MangoClient {
       ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'mango.spot.place',
       'mango',
       'POST',
       route,
       params,
-      res.body,
+      response.body,
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestCancelSpotOrderTransactionn(
@@ -515,17 +515,17 @@ export default class MangoTester extends MangoClient {
       ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'mango.spot.cancel',
       'mango',
       'POST',
       route,
       params,
-      res.body,
+      response.body,
     );
 
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestInitMarketInstruction() {
@@ -537,8 +537,8 @@ export default class MangoTester extends MangoClient {
       tickSize: '1',
       ownerPubkey: this.user1Keypair.publicKey.toBase58(),
     };
-    const res = await request(app).post(route).send(params);
-    return deserializeInstructionsAndSigners(res.body);
+    const response = await request(app).post(route).send(params);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   // --------------------------------------- helpers

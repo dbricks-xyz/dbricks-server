@@ -43,7 +43,7 @@ export default class SerumTester extends SerumClient {
 
   // --------------------------------------- preparators
 
-  async prepAccounts(fundingAmount: number) {
+  async prepareAccounts(fundingAmount: number) {
     // token mints
     this.baseMint = await this._createMint(this.user1Keypair);
     this.quoteMint = await this._createMint(this.user1Keypair);
@@ -60,7 +60,7 @@ export default class SerumTester extends SerumClient {
     await this._fundTokenAccount(this.baseMint, this.user1Keypair.publicKey, this.baseUser2Pubkey, fundingAmount);
   }
 
-  async prepMarket() {
+  async prepareMarket() {
     const [transaction1, transaction2] = await this.requestInitMarketInstruction();
     transaction1.signers.unshift(this.user1Keypair);
     transaction2.signers.unshift(this.user1Keypair);
@@ -83,16 +83,16 @@ export default class SerumTester extends SerumClient {
       tickSize: '1',
       ownerPubkey: this.user1Keypair.publicKey.toBase58(),
     };
-    const res = await request(app).post(route).send(params);
+    const response = await request(app).post(route).send(params);
     saveRequestResponseToJSON(
       'serum.markets.init',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestPlaceOrderInstruction(
@@ -111,16 +111,16 @@ export default class SerumTester extends SerumClient {
       orderType,
       ownerPubkey,
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'serum.orders.place',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestSettleInstruction(
@@ -131,16 +131,16 @@ export default class SerumTester extends SerumClient {
       marketPubkey: this.marketKeypair.publicKey.toBase58(),
       ownerPubkey,
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'serum.markets.settle',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestCancelOrderInstruction(orderId: string, ownerPubkey: string) {
@@ -150,16 +150,16 @@ export default class SerumTester extends SerumClient {
       orderId,
       ownerPubkey,
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'serum.orders.cancel',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   // --------------------------------------- helpers

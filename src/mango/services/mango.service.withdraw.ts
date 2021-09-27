@@ -11,7 +11,7 @@ export default class MangoWithdrawService extends MangoClient implements IMangoL
     const {rootBank, nodeBank, vault} = bankVaultInfo;
     const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
-    const transaction = await this.prepWithdrawTransaction(
+    const transaction = await this.prepareWithdrawTransaction(
       mangoAccount,
       params.ownerPubkey,
       rootBank,

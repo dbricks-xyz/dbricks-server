@@ -11,8 +11,8 @@ import { IMangoLenderWithdrawParamsParsed } from '../interfaces/lender/mango.int
 import { IMangoDEXOrderPlaceParamsParsed, IMangoDEXOrderCancelParamsParsed } from '../interfaces/dex/mango.interfaces.dex.order';
 import { IMangoDEXMarketSettleParamsParsed } from '../interfaces/dex/mango.interfaces.dex.market';
 
-export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsParsed {
-  const body: IMangoLenderDepositParams = req.body;
+export function deserializeDeposit(request: e.Request): IMangoLenderDepositParamsParsed {
+  const body: IMangoLenderDepositParams = request.body;
   return {
     mintPubkey: deserializePubkey(body.mintPubkey),
     quantity: parseFloat(body.quantity),
@@ -21,8 +21,8 @@ export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsPar
   };
 }
 
-export function deserializeWithdraw(req: e.Request): IMangoLenderWithdrawParamsParsed {
-  const body: IMangoLenderWithdrawParams = req.body;
+export function deserializeWithdraw(request: e.Request): IMangoLenderWithdrawParamsParsed {
+  const body: IMangoLenderWithdrawParams = request.body;
   return {
     mintPubkey: deserializePubkey(body.mintPubkey),
     quantity: parseFloat(body.quantity),
@@ -32,8 +32,8 @@ export function deserializeWithdraw(req: e.Request): IMangoLenderWithdrawParamsP
   };
 }
 
-export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParsed {
-  const body: IMangoDEXOrderPlaceParams = req.body;
+export function deserializePlace(request: e.Request): IMangoDEXOrderPlaceParamsParsed {
+  const body: IMangoDEXOrderPlaceParams = request.body;
   return {
     marketPubkey: deserializePubkey(body.marketPubkey),
     side: body.side,
@@ -45,8 +45,8 @@ export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParse
   };
 }
 
-export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsParsed {
-  const body: IMangoDEXOrderCancelParams = req.body;
+export function deserializeCancel(request: e.Request): IMangoDEXOrderCancelParamsParsed {
+  const body: IMangoDEXOrderCancelParams = request.body;
   return {
     marketPubkey: deserializePubkey(body.marketPubkey),
     orderId: new BN(body.orderId, 16), // comes as string, hex,
@@ -55,8 +55,8 @@ export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsPar
   };
 }
 
-export function deserializeSettle(req: e.Request): IMangoDEXMarketSettleParamsParsed {
-  const body: IMangoDEXMarketSettleParams = req.body;
+export function deserializeSettle(request: e.Request): IMangoDEXMarketSettleParamsParsed {
+  const body: IMangoDEXMarketSettleParams = request.body;
   return {
     marketPubkey: deserializePubkey(body.marketPubkey),
     ownerPubkey: deserializePubkey(body.ownerPubkey),

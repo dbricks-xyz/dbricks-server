@@ -4,7 +4,7 @@ import debug from 'debug';
 const log: debug.IDebugger = debug('app:serum-middleware');
 
 class SerumMiddleware {
-  async validateStuff(req: e.Request, res: e.Response, next: e.NextFunction) {
+  async validateStuff(request: e.Request, response: e.Response, next: e.NextFunction) {
     // todo does any necessary validation before passing to controller
     log('Checks successfully passed');
     next();

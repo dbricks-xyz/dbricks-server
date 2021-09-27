@@ -109,7 +109,7 @@ export default class SolClient {
    * https://github.com/solana-labs/solana-program-library/blob/master/token/js/client/token.js#L446
    * This prepares the TRANSACTION and returns it, instead of sending it.
    */
-  async prepCreateTokenAccountTransaction(
+  async prepareCreateTokenAccountTransaction(
     payerPubkey: PublicKey,
     mintPubkey: PublicKey,
     ownerPubkey?: PublicKey,
@@ -155,7 +155,7 @@ export default class SolClient {
 
     if (tokenAccounts.length === 0) {
       log(`Creating token account for mint ${mintPubkey.toBase58()}`);
-      [instructionsAndSigners, tokenAccountPubkey] = await this.prepCreateTokenAccountTransaction(ownerPubkey, mintPubkey);
+      [instructionsAndSigners, tokenAccountPubkey] = await this.prepareCreateTokenAccountTransaction(ownerPubkey, mintPubkey);
     } else {
       tokenAccountPubkey = tokenAccounts[0].pubkey;
     }

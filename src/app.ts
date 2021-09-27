@@ -41,8 +41,8 @@ routes.push(new SerumRoutes(app));
 routes.push(new MangoRoutes(app));
 
 // test route
-app.get('/ping', (req: e.Request, res: e.Response) => {
-  res.status(200).send('pong');
+app.get('/ping', (request: e.Request, response: e.Response) => {
+  response.status(200).send('pong');
 });
 
 export default app;

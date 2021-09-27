@@ -17,7 +17,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     }
     const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
-    const transaction = await this.prepPlaceSpotOrderTransaction(
+    const transaction = await this.preparePlaceSpotOrderTransaction(
       this.group,
       mangoAccount,
       this.group.mangoCache,
@@ -51,7 +51,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     const orders = await spotMarket.loadOrdersForOwner(this.connection, openOrdersPubkey);
     const order = orders.find((o) => o.orderId.toString() === params.orderId!.toString()) as Order;
 
-    const transaction = await this.prepCancelSpotOrderTransaction(
+    const transaction = await this.prepareCancelSpotOrderTransaction(
       mangoAccount,
       params.ownerPubkey,
       spotMarket,
@@ -65,7 +65,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     const perpMarket = await this.loadPerpMarket(params.marketPubkey);
     const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
-    const transaction = await this.prepPlacePerpOrderTransaction(
+    const transaction = await this.preparePlacePerpOrderTransaction(
       mangoAccount,
       this.group.mangoCache,
       perpMarket,
@@ -80,7 +80,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
 
   // todo needs to be able to cancel all orders (see serum)
   async cancelPerp(params: IMangoDEXOrderCancelParamsParsed): Promise<instructionsAndSigners[]> {
-    await this.loadGroup(); // Group is used in prepCancelPerpOrderTransaction
+    await this.loadGroup(); // Group is used in prepareCancelPerpOrderTransaction
     const perpMarket = await this.loadPerpMarket(params.marketPubkey);
     const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
@@ -94,7 +94,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
       throw new Error(`Could not find perp order: ${params.orderId!.toString()}`);
     }
 
-    const transaction = await this.prepCancelPerpOrderTransaction(
+    const transaction = await this.prepareCancelPerpOrderTransaction(
       mangoAccount,
       params.ownerPubkey,
       perpMarket,

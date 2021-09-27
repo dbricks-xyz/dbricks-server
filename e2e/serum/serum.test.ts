@@ -9,8 +9,8 @@ describe('Serum', () => {
   // √ tests settle order 1)no settle acc (user1), 2)xisting settle acc(user2)
   it('Inits market + places/settles a trade', async () => {
     const tester = new SerumTester();
-    await tester.prepAccounts(fundingAmount);
-    await tester.prepMarket();
+    await tester.prepareAccounts(fundingAmount);
+    await tester.prepareMarket();
 
     // place orders from both users
     await tester.placeLimitOrder(tester.user1Keypair, 'buy', amount, price);
@@ -35,8 +35,8 @@ describe('Serum', () => {
   // √ tests cancelling an order with a non-existent id
   it('Inits market + places/cancels a trade', async () => {
     const tester = new SerumTester();
-    await tester.prepAccounts(fundingAmount);
-    await tester.prepMarket();
+    await tester.prepareAccounts(fundingAmount);
+    await tester.prepareMarket();
 
     // place 1 order
     await tester.placeLimitOrder(tester.user1Keypair, 'buy', amount, price);
