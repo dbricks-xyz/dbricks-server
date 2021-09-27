@@ -31,7 +31,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
-  //todo needs to be able to cancel all orders (see serum)
+  // todo needs to be able to cancel all orders (see serum)
   async cancelSpot(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     const markets = await this.loadSpotMarkets();
     const spotMarket = markets.find(
@@ -60,7 +60,6 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
-  //todo needs to be able to cancel all orders (see serum)
   async placePerp(params: IMangoDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Necessary to load mangoCache
     const perpMarket = await this.loadPerpMarket(params.marketPk);
@@ -79,6 +78,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     return [tx];
   }
 
+  // todo needs to be able to cancel all orders (see serum)
   async cancelPerp(params: IMangoDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
     await this.loadGroup(); // Group is used in prepCancelPerpOrderTx
     const perpMarket = await this.loadPerpMarket(params.marketPk);

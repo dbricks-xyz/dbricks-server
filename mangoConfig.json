@@ -1,0 +1,59 @@
+{
+  "cluster_urls": {
+    "localnet": "http://127.0.0.1:8899"
+  },
+  "groups": [
+    {
+      "cluster": "localnet",
+      "name": "localnet.1",
+      "publicKey": "5GrMRvXS6VQsNgR7r2mSnS7sWRUEVsk7otRpHruJhR3Q",
+      "quoteSymbol": "QUOTE",
+      "mangoProgramId": "EFUJ77cT4eFczspUS11K8BMbmmVxdQLk1pF8dhXk3Ri4",
+      "serumProgramId": "5xmw9VJtx2FKyad2DL15i7yeZasm38NaL3JZiT3sm4ZT",
+      "tokens": [
+        {
+          "symbol": "QUOTE",
+          "mintKey": "3xfU34sFxVUWm7HZuQj1sfpQoHJMymwsHPe72b4VZrNN",
+          "decimals": 0,
+          "rootKey": "BFALaGryECHxzoKfoS3xLYrgL6KrMF6ZMsEjtxgCtJmx",
+          "nodeKeys": [
+            "CG5uZYTXAjnv32ZbbJmTkoXvdcvzKHFnZDU2KvRtiDSc"
+          ]
+        },
+        {
+          "symbol": "BASE",
+          "mintKey": "vDwY7cRFqMEasQg2RY8ysgoW7r9w17EHcKAeezJein6",
+          "decimals": 0,
+          "rootKey": "24cR3nPbAiNmV79YU3fnirDFe7G1J9n49tG3Cy3ZbBBh",
+          "nodeKeys": [
+            "iEzFaHAQtcf6oHyi4vawzr9ychTB7eHhrMDxThnzfLc"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "QUOTE",
+          "publicKey": "88bSNWYSNYETfStqcRsdsKdPmH3NKkLVVrvKRjEeM3XR"
+        },
+        {
+          "symbol": "BASE",
+          "publicKey": "24iYdGwfZXXLm1aXGUr76NU66c57jQjnuy2m91buoihV"
+        }
+      ],
+      "perpMarkets": [],
+      "spotMarkets": [
+        {
+          "name": "BASE/QUOTE",
+          "publicKey": "5YVAVdXhRNVCtF9XyYmKCD2ytc71xFZDUCgsgVJ1xHC3",
+          "baseSymbol": "BASE",
+          "baseDecimals": 0,
+          "quoteDecimals": 0,
+          "marketIndex": 1,
+          "bidsKey": "98L7jBbhWs7nxYW6Xrd9DEUmyNEd8Dj2Wd8chviKtkvP",
+          "asksKey": "6dPWFgshWReD5RTCgUQskYHmuNUrA63NUF4iv8ttVS91",
+          "eventsKey": "D8ZbRux6PDZVM4wdSU6LcXJXpDgGgYovBJ38Q9RgfNp5"
+        }
+      ]
+    }
+  ]
+}

@@ -27,7 +27,8 @@
         "no-shadow": "off",
         "no-unused-vars": "off",
         "class-methods-use-this": "off",
-        "no-underscore-dangle": "off"
+        "no-underscore-dangle": "off",
+        "no-use-before-define": "off"
       }
     }
   ]
