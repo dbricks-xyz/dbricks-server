@@ -26,7 +26,7 @@ export default class SerumClient extends SolClient {
     log('Initialized Serum client');
   }
 
-  async prepInitMarketTransaction(
+  async prepareInitMarketTransaction(
     marketPubkey: PublicKey,
     requestQueuePubkey: PublicKey,
     eventQueuePubkey: PublicKey,
@@ -72,7 +72,7 @@ export default class SerumClient extends SolClient {
     };
   }
 
-  async prepPlaceOrderTransaction(
+  async preparePlaceOrderTransaction(
     market: Market,
     side: side,
     price: number,
@@ -96,7 +96,7 @@ export default class SerumClient extends SolClient {
     }
   }
 
-  async prepCancelOrderTransaction(
+  async prepareCancelOrderTransaction(
     market: Market,
     ownerPubkey: PublicKey,
     orderId?: BN,
@@ -153,7 +153,7 @@ export default class SerumClient extends SolClient {
     }
   }
 
-  async prepSettleFundsTransaction(
+  async prepareSettleFundsTransaction(
     market: Market,
     ownerPubkey: PublicKey,
     ownerBasePubkey: PublicKey,
@@ -273,7 +273,7 @@ export default class SerumClient extends SolClient {
 
   // --------------------------------------- helpers (active)
 
-  async prepCreateStateAccountsInstruction(
+  async prepareCreateStateAccountsInstruction(
     stateAccountPubkey: PublicKey,
     space: number,
     ownerPubkey: PublicKey,
@@ -287,7 +287,7 @@ export default class SerumClient extends SolClient {
     });
   }
 
-  async prepStateAccountsForNewMarket(
+  async prepareStateAccountsForNewMarket(
     ownerPubkey: PublicKey, // wallet owner
   ): Promise<instructionsAndSigners> {
     // do we just throw these away? seems to be the case in their Serum DEX UI
@@ -299,19 +299,19 @@ export default class SerumClient extends SolClient {
     const asksKeypair = new Keypair();
 
     // length taken from here - https://github.com/project-serum/serum-dex/blob/master/dex/crank/src/lib.rs#L1286
-    const marketInstruction = await this.prepCreateStateAccountsInstruction(
+    const marketInstruction = await this.prepareCreateStateAccountsInstruction(
       marketKeypair.publicKey, 376 + 12, ownerPubkey,
     );
-    const requestQueueInstruction = await this.prepCreateStateAccountsInstruction(
+    const requestQueueInstruction = await this.prepareCreateStateAccountsInstruction(
       requestQueueKeypair.publicKey, 640 + 12, ownerPubkey,
     );
-    const eventQueueInstruction = await this.prepCreateStateAccountsInstruction(
+    const eventQueueInstruction = await this.prepareCreateStateAccountsInstruction(
       eventQueueKeypair.publicKey, 1048576 + 12, ownerPubkey,
     );
-    const bidsInstruction = await this.prepCreateStateAccountsInstruction(
+    const bidsInstruction = await this.prepareCreateStateAccountsInstruction(
       bidsKeypair.publicKey, 65536 + 12, ownerPubkey,
     );
-    const asksInstruction = await this.prepCreateStateAccountsInstruction(
+    const asksInstruction = await this.prepareCreateStateAccountsInstruction(
       asksKeypair.publicKey, 65536 + 12, ownerPubkey,
     );
 
@@ -321,7 +321,7 @@ export default class SerumClient extends SolClient {
     }
   }
 
-  async prepVaultAccounts(
+  async prepareVaultAccounts(
     vaultOwnerPubkey: PublicKey,
     baseMint: PublicKey,
     quoteMint: PublicKey,

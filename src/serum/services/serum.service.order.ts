@@ -17,7 +17,7 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
       params.side,
       params.ownerPubkey,
     );
-    const placeInstructionsAndSigners = await this.prepPlaceOrderTransaction(
+    const placeInstructionsAndSigners = await this.preparePlaceOrderTransaction(
       market,
       params.side,
       params.price,
@@ -32,7 +32,7 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
 
   async cancel(params: ISerumDEXOrderCancelParamsParsed): Promise<instructionsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPubkey);
-    const instructionsAndSigners = await this.prepCancelOrderTransaction(
+    const instructionsAndSigners = await this.prepareCancelOrderTransaction(
       market,
       params.ownerPubkey,
       params.orderId,

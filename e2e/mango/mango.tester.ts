@@ -83,8 +83,8 @@ export default class MangoTester extends MangoClient {
 
   async setupLocalForTests(): Promise<void> {
     // Setup Tokens, Mints, and Serum Markets
-    await this.prepAccounts();
-    await this.prepMarket();
+    await this.prepareAccounts();
+    await this.prepareMarket();
     this.mngoMintPubkey = (await this._createMint(this.user1Keypair)).publicKey;
     // Setup MangoGroup
     const mangoGroupPubkey = await this.createMangoGroup();
@@ -109,7 +109,7 @@ export default class MangoTester extends MangoClient {
     console.log('config saved');
   }
 
-  async prepAccounts(): Promise<void> {
+  async prepareAccounts(): Promise<void> {
     // token mints
     this.baseMint = await this._createMint(this.user1Keypair);
     this.quoteMint = await this._createMint(this.user1Keypair);
@@ -126,7 +126,7 @@ export default class MangoTester extends MangoClient {
     await this._fundTokenAccount(this.baseMint, this.user1Pubkey, this.baseUser2Pubkey, 100000);
   }
 
-  async prepMarket(): Promise<void> {
+  async prepareMarket(): Promise<void> {
     const [transaction1, transaction2] = await this.requestInitMarketInstruction();
     transaction1.signers.unshift(this.user1Keypair);
     transaction2.signers.unshift(this.user1Keypair);
@@ -136,7 +136,7 @@ export default class MangoTester extends MangoClient {
   }
 
   async initializeFeeVault(): Promise<PublicKey> {
-    const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepCreateTokenAccountTransaction(
+    const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepareCreateTokenAccountTransaction(
       this.user1Keypair.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
     );
 

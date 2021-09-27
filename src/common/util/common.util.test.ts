@@ -16,7 +16,9 @@ describe('Util', () => {
     const testingKeypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
     const stateAccountKeypair = new Keypair();
     const srm = new SerumClient();
-    const instruction = await srm.prepCreateStateAccountsInstruction(stateAccountKeypair.publicKey, 123, testingKeypair.publicKey);
+    const instruction = await srm.prepareCreateStateAccountsInstruction(
+      stateAccountKeypair.publicKey, 123, testingKeypair.publicKey
+    );
     const iAndS1: instructionsAndSigners = {
       instructions: [instruction],
       signers: [testingKeypair, stateAccountKeypair]
@@ -47,7 +49,6 @@ describe('Util', () => {
       signers: [1 as any, 2 as any, 3 as any],
     }
     const actual = mergeInstructionsAndSigners(x, y);
-    console.log(actual);
     expect(actual).toEqual(expected);
   })
 

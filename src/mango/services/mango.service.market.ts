@@ -11,7 +11,7 @@ export default class MangoMarketService extends MangoClient implements IMangoDEX
     const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
     const markets = await this.loadSpotMarkets();
 
-    const transaction = await this.prepSettleSpotTransaction(
+    const transaction = await this.prepareSettleSpotTransaction(
       mangoAccount,
       markets,
       params.ownerPubkey,
@@ -30,7 +30,7 @@ export default class MangoMarketService extends MangoClient implements IMangoDEX
       throw new Error('Error finding rootBankAccount for mangoGroup');
     }
 
-    const transaction = await this.prepSettlePerpTransaction(
+    const transaction = await this.prepareSettlePerpTransaction(
       mangoCache,
       mangoAccount,
       perpMarket,

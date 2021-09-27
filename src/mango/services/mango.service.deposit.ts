@@ -11,7 +11,7 @@ export default class MangoDepositService extends MangoClient implements IMangoLe
     const tokenAccount = (await this.getTokenAccountsForOwner(params.ownerPubkey, params.mintPubkey))[0];
     const { rootBank, nodeBank, vault } = bankVaultInfo;
 
-    const transaction = await this.prepDepositTransaction(
+    const transaction = await this.prepareDepositTransaction(
       params.ownerPubkey,
       rootBank,
       nodeBank,

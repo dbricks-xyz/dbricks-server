@@ -43,7 +43,7 @@ export default class SerumTester extends SerumClient {
 
   // --------------------------------------- preparators
 
-  async prepAccounts(fundingAmount: number) {
+  async prepareAccounts(fundingAmount: number) {
     // token mints
     this.baseMint = await this._createMint(this.user1Keypair);
     this.quoteMint = await this._createMint(this.user1Keypair);
@@ -60,7 +60,7 @@ export default class SerumTester extends SerumClient {
     await this._fundTokenAccount(this.baseMint, this.user1Keypair.publicKey, this.baseUser2Pubkey, fundingAmount);
   }
 
-  async prepMarket() {
+  async prepareMarket() {
     const [transaction1, transaction2] = await this.requestInitMarketInstruction();
     transaction1.signers.unshift(this.user1Keypair);
     transaction2.signers.unshift(this.user1Keypair);
