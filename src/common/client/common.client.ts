@@ -9,8 +9,8 @@ import {
 } from '@solana/web3.js';
 import debug from 'debug';
 import {AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,} from '@solana/spl-token';
-import {COMMITTMENT, CONNECTION_URL, TESTING_KP_PATH} from '../../config/config';
-import {loadKpSync, sleep} from '../util/common.util';
+import {COMMITTMENT, CONNECTION_URL, TESTING_KEYPAIR_PATH} from '../../config/config';
+import {loadKeypairSync, sleep} from '../util/common.util';
 import {instructionsAndSigners} from "dbricks-lib";
 
 const log: debug.IDebugger = debug('app:sol-client');
@@ -88,7 +88,7 @@ export default class SolClient {
 
   async deserializeToken(mintPubkey: PublicKey): Promise<Token> {
     // todo TESTING_KP_PATH should not be used here
-    const tempKeypair = loadKpSync(TESTING_KP_PATH);
+    const tempKeypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
     return new Token(this.connection, mintPubkey, TOKEN_PROGRAM_ID, tempKeypair);
   }
 
@@ -177,11 +177,11 @@ export default class SolClient {
     return sig;
   }
 
-  async _createMint(ownerKp: Keypair): Promise<Token> {
+  async _createMint(ownerKeypair: Keypair): Promise<Token> {
     return Token.createMint(
       this.connection,
-      ownerKp as any,
-      ownerKp.publicKey,
+      ownerKeypair as any,
+      ownerKeypair.publicKey,
       null,
       0,
       TOKEN_PROGRAM_ID,

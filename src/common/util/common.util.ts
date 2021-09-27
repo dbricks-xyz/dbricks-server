@@ -4,7 +4,7 @@ import {PublicKey} from '@solana/web3.js';
 import {NETWORK, SERUM_PROG_ID} from "../../config/config";
 import {instructionsAndSigners} from "dbricks-lib";
 
-export function loadKpSync(path: string): Keypair {
+export function loadKeypairSync(path: string): Keypair {
   const secretKey = JSON.parse(fs.readFileSync(path, 'utf8'));
   return Keypair.fromSecretKey(Uint8Array.from(secretKey));
 }

@@ -20,7 +20,7 @@ describe('Mango', () => {
     expect(beforeMangoAccts.length === 0);
 
     // deposit and create an account
-    await tester.deposit(tester.baseMint.publicKey, '1', tester.user2Kp);
+    await tester.deposit(tester.baseMint.publicKey, '1', tester.user2Keypair);
 
     // verify that there is a mangoAccount with 1 coin in it
     const amount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
@@ -36,7 +36,7 @@ describe('Mango', () => {
     expect(beforeDepositAmount).toBeLessThanOrEqual(1);
 
     // deposit
-    await tester.deposit(tester.baseMint.publicKey, '1000', tester.user2Kp);
+    await tester.deposit(tester.baseMint.publicKey, '1000', tester.user2Keypair);
 
     // verify that there is a mangoAccount with 1 coin in it
     const afterDepositAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
@@ -54,7 +54,7 @@ describe('Mango', () => {
     expect(beforeWithdrawAmount).toBeLessThanOrEqual(1001);
 
     // withdraw
-    await tester.withdraw(tester.baseMint.publicKey, '10', tester.user2Kp, false);
+    await tester.withdraw(tester.baseMint.publicKey, '10', tester.user2Keypair, false);
 
     // verify withdrawal
     const afterWithdrawAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
@@ -68,7 +68,7 @@ describe('Mango', () => {
 describe('Mango', () => {
   it('Can borrow QUOTE with BASE as collateral', async () => {
     // user 1 deposits so that there is something to borrow
-    await tester.deposit(tester.quoteMint.publicKey, '1000', tester.user1Kp);
+    await tester.deposit(tester.quoteMint.publicKey, '1000', tester.user1Keypair);
 
     const user1QuoteAmount = await tester.getMangoTokenBalance(tester.user1Pubkey, 0, 15);
     expect(user1QuoteAmount).toBeLessThanOrEqual(1000);
@@ -80,7 +80,7 @@ describe('Mango', () => {
     expect(user2BaseAmount).toBeGreaterThanOrEqual(990.999);
 
     // user 2 borrows 10 QUOTE via withdraw
-    await tester.withdraw(tester.quoteMint.publicKey, '10', tester.user2Kp, true);
+    await tester.withdraw(tester.quoteMint.publicKey, '10', tester.user2Keypair, true);
 
     // verify borrow, should have 10 QUOTE in wallet, and still 991 QUOTE in Mango
     const user2QuoteAcc = await tester.getTokenAccountsForOwner(

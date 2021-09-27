@@ -292,32 +292,32 @@ export default class SerumClient extends SolClient {
   ): Promise<instructionsAndSigners> {
     // do we just throw these away? seems to be the case in their Serum DEX UI
     // https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L475
-    const marketKp = new Keypair();
-    const reqQKp = new Keypair();
-    const eventQKp = new Keypair();
-    const bidsKp = new Keypair();
-    const asksKp = new Keypair();
+    const marketKeypair = new Keypair();
+    const reqQKeypair = new Keypair();
+    const eventQKeypair = new Keypair();
+    const bidsKeypair = new Keypair();
+    const asksKeypair = new Keypair();
 
     // length taken from here - https://github.com/project-serum/serum-dex/blob/master/dex/crank/src/lib.rs#L1286
     const marketInstruction = await this.prepCreateStateAccInstruction(
-      marketKp.publicKey, 376 + 12, ownerPubkey,
+      marketKeypair.publicKey, 376 + 12, ownerPubkey,
     );
     const reqQInstruction = await this.prepCreateStateAccInstruction(
-      reqQKp.publicKey, 640 + 12, ownerPubkey,
+      reqQKeypair.publicKey, 640 + 12, ownerPubkey,
     );
     const eventQInstruction = await this.prepCreateStateAccInstruction(
-      eventQKp.publicKey, 1048576 + 12, ownerPubkey,
+      eventQKeypair.publicKey, 1048576 + 12, ownerPubkey,
     );
     const bidsInstruction = await this.prepCreateStateAccInstruction(
-      bidsKp.publicKey, 65536 + 12, ownerPubkey,
+      bidsKeypair.publicKey, 65536 + 12, ownerPubkey,
     );
     const asksInstruction = await this.prepCreateStateAccInstruction(
-      asksKp.publicKey, 65536 + 12, ownerPubkey,
+      asksKeypair.publicKey, 65536 + 12, ownerPubkey,
     );
 
     return {
       instructions: [marketInstruction, reqQInstruction, eventQInstruction, bidsInstruction, asksInstruction],
-      signers: [marketKp, reqQKp, eventQKp, bidsKp, asksKp],
+      signers: [marketKeypair, reqQKeypair, eventQKeypair, bidsKeypair, asksKeypair],
     }
   }
 
@@ -327,55 +327,55 @@ export default class SerumClient extends SolClient {
     quoteMint: PublicKey,
     ownerPubkey: PublicKey, // wallet owner
   ): Promise<instructionsAndSigners> {
-    const baseVaultKp = new Keypair();
-    const quoteVaultKp = new Keypair();
+    const baseVaultKeypair = new Keypair();
+    const quoteVaultKeypair = new Keypair();
 
     // as per https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L519
     const instructions = [
       SystemProgram.createAccount({
         fromPubkey: ownerPubkey,
-        newAccountPubkey: baseVaultKp.publicKey,
+        newAccountPubkey: baseVaultKeypair.publicKey,
         lamports: await this.connection.getMinimumBalanceForRentExemption(165),
         space: 165,
         programId: TokenInstructions.TOKEN_PROGRAM_ID,
       }),
       SystemProgram.createAccount({
         fromPubkey: ownerPubkey,
-        newAccountPubkey: quoteVaultKp.publicKey,
+        newAccountPubkey: quoteVaultKeypair.publicKey,
         lamports: await this.connection.getMinimumBalanceForRentExemption(165),
         space: 165,
         programId: TokenInstructions.TOKEN_PROGRAM_ID,
       }),
       TokenInstructions.initializeAccount({
-        account: baseVaultKp.publicKey,
+        account: baseVaultKeypair.publicKey,
         mint: baseMint,
         owner: vaultOwnerPubkey,
       }),
       TokenInstructions.initializeAccount({
-        account: quoteVaultKp.publicKey,
+        account: quoteVaultKeypair.publicKey,
         mint: quoteMint,
         owner: vaultOwnerPubkey,
       }),
     ];
     return {
       instructions,
-      signers: [baseVaultKp, quoteVaultKp],
+      signers: [baseVaultKeypair, quoteVaultKeypair],
     }
   }
 
   // --------------------------------------- testing only
 
-  async _consumeEvents(market: Market, ownerKp: Keypair) {
+  async _consumeEvents(market: Market, ownerKeypair: Keypair) {
     const openOrders = await market.findOpenOrdersAccountsForOwner(
       this.connection,
-      ownerKp.publicKey,
+      ownerKeypair.publicKey,
     );
     const consumeEventsInstruction = market.makeConsumeEventsInstruction(
       openOrders.map((oo) => oo.publicKey), 100,
     );
     await this._prepareAndSendTransaction({
       instructions: [consumeEventsInstruction],
-      signers: [ownerKp],
+      signers: [ownerKeypair],
     });
   }
 }

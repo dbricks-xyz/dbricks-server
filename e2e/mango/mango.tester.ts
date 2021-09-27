@@ -9,8 +9,8 @@ import { Market } from '@project-serum/serum';
 import { deserializeInstructionsAndSigners, IMangoDEXOrderCancelParams, IMangoDEXOrderPlaceParams, IMangoLenderDepositParams, IMangoLenderWithdrawParams, ISerumDEXMarketInitParams, instructionsAndSigners, orderType, side } from 'dbricks-lib';
 import MangoClient from '../../src/mango/client/mango.client';
 import app from '../../src/app';
-import { loadKpSync } from '../../src/common/util/common.util';
-import { TESTING_KP_PATH, SERUM_PROG_ID, MANGO_PROG_ID } from '../../src/config/config';
+import { loadKeypairSync } from '../../src/common/util/common.util';
+import { TESTING_KEYPAIR_PATH, SERUM_PROG_ID, MANGO_PROG_ID } from '../../src/config/config';
 import { saveReqResToJSON } from '../../docs/docs.generator';
 
 require('dotenv').config();
@@ -22,11 +22,11 @@ export default class MangoTester extends MangoClient {
 
   quoteMint!: Token;
 
-  marketKp!: Keypair;
+  marketKeypair!: Keypair;
 
-  user1Kp: Keypair;
+  user1Keypair: Keypair;
 
-  user2Kp: Keypair = new Keypair();
+  user2Keypair: Keypair = new Keypair();
 
   baseUser1Pubkey!: PublicKey;
 
@@ -56,15 +56,15 @@ export default class MangoTester extends MangoClient {
 
   constructor() {
     super();
-    this.user1Kp = loadKpSync(TESTING_KP_PATH);
+    this.user1Keypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
   }
 
   get user1Pubkey() {
-    return this.user1Kp.publicKey;
+    return this.user1Keypair.publicKey;
   }
 
   get user2Pubkey() {
-    return this.user2Kp.publicKey;
+    return this.user2Keypair.publicKey;
   }
 
   async getCache(): Promise<MangoCache> {
@@ -85,7 +85,7 @@ export default class MangoTester extends MangoClient {
     // Setup Tokens, Mints, and Serum Markets
     await this.prepAccounts();
     await this.prepMarket();
-    this.mngoMintPubkey = (await this._createMint(this.user1Kp)).publicKey;
+    this.mngoMintPubkey = (await this._createMint(this.user1Keypair)).publicKey;
     // Setup MangoGroup
     const mangoGroupPubkey = await this.createMangoGroup();
 
@@ -98,7 +98,7 @@ export default class MangoTester extends MangoClient {
     await this.setOraclePrice('BASE', 1);
 
     // add spot market
-    await this.addSpotMarket('BASE', this.marketKp.publicKey, this.baseMint.publicKey);
+    await this.addSpotMarket('BASE', this.marketKeypair.publicKey, this.baseMint.publicKey);
 
     // enable perp market
     // await this.addPerpMarket('BASE');
@@ -111,8 +111,8 @@ export default class MangoTester extends MangoClient {
 
   async prepAccounts(): Promise<void> {
     // token mints
-    this.baseMint = await this._createMint(this.user1Kp);
-    this.quoteMint = await this._createMint(this.user1Kp);
+    this.baseMint = await this._createMint(this.user1Keypair);
+    this.quoteMint = await this._createMint(this.user1Keypair);
 
     // user 1 - we give them quote
     this.baseUser1Pubkey = await this._createTokenAcc(this.baseMint, this.user1Pubkey);
@@ -120,7 +120,7 @@ export default class MangoTester extends MangoClient {
     await this._fundTokenAcc(this.quoteMint, this.user1Pubkey, this.quoteUser1Pubkey, 100000);
 
     // user 2 - we give them base
-    await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
+    await this._transferLamports(this.user1Keypair, this.user2Keypair.publicKey, LAMPORTS_PER_SOL);
     this.baseUser2Pubkey = await this._createTokenAcc(this.baseMint, this.user2Pubkey);
     this.quoteUser2Pubkey = await this._createTokenAcc(this.quoteMint, this.user2Pubkey);
     await this._fundTokenAcc(this.baseMint, this.user1Pubkey, this.baseUser2Pubkey, 100000);
@@ -128,22 +128,22 @@ export default class MangoTester extends MangoClient {
 
   async prepMarket(): Promise<void> {
     const [transaction1, transaction2] = await this.requestInitMarketInstruction();
-    transaction1.signers.unshift(this.user1Kp);
-    transaction2.signers.unshift(this.user1Kp);
+    transaction1.signers.unshift(this.user1Keypair);
+    transaction2.signers.unshift(this.user1Keypair);
     await this._prepareAndSendTransaction(transaction1);
     await this._prepareAndSendTransaction(transaction2);
-    this.marketKp = transaction1.signers[1] as Keypair;
+    this.marketKeypair = transaction1.signers[1] as Keypair;
   }
 
   async initializeFeeVault(): Promise<PublicKey> {
     const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepCreateTokenAccTransaction(
-      this.user1Kp.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
+      this.user1Keypair.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
     );
 
     const createAccountsTransaction = new Transaction();
     createAccountsTransaction.add(...createInsuranceVaultInstructionsandSigners.instructions);
     await this.connection.sendTransaction(
-      createAccountsTransaction, [this.user1Kp, ...createInsuranceVaultInstructionsandSigners.signers],
+      createAccountsTransaction, [this.user1Keypair, ...createInsuranceVaultInstructionsandSigners.signers],
     );
     console.log('Fees vault initialized');
     return feeVaultPubkey;
@@ -162,7 +162,7 @@ export default class MangoTester extends MangoClient {
       this.optimalUtil,
       this.optimalRate,
       this.maxRate,
-      this.user1Kp as unknown as Account,
+      this.user1Keypair as unknown as Account,
     );
     console.log('Mango Group initialized');
     const group = await this.nativeClient.getMangoGroup(groupPubkey);
@@ -196,7 +196,7 @@ export default class MangoTester extends MangoClient {
   }
 
   async addPriceOracle(mangoGroupPubkey: PublicKey, symbol: string): Promise<void> {
-    await this.nativeClient.addStubOracle(mangoGroupPubkey, this.user1Kp as unknown as Account);
+    await this.nativeClient.addStubOracle(mangoGroupPubkey, this.user1Keypair as unknown as Account);
     const group = await this.nativeClient.getMangoGroup(mangoGroupPubkey);
     const groupConfig = this.config.groups[0];
 
@@ -220,7 +220,7 @@ export default class MangoTester extends MangoClient {
     await this.nativeClient.setStubOracle(
       groupConfig.publicKey,
       oracle.publicKey,
-      this.user1Kp as unknown as Account,
+      this.user1Keypair as unknown as Account,
       price,
     );
   }
@@ -229,14 +229,14 @@ export default class MangoTester extends MangoClient {
   //   await this.loadGroup();
   //   const cache = await this.getCache();
   //   await this.nativeClient.cachePrices(
-  //     this.group.publicKey, cache.publicKey, this.group.oracles, this.user1Kp as unknown as Account,
+  //     this.group.publicKey, cache.publicKey, this.group.oracles, this.user1Keypair as unknown as Account,
   //   );
 
   //   const rootBanks = (await this.group.loadRootBanks(this.connection))
   //     .filter((bank) => bank !== undefined) as RootBank[];
   //   const bankPubkeys = rootBanks.map((bank) => bank.publicKey);
   //   await this.nativeClient.cacheRootBanks(
-  //     this.group.publicKey, cache.publicKey, bankPubkeys, this.user1Kp as unknown as Account,
+  //     this.group.publicKey, cache.publicKey, bankPubkeys, this.user1Keypair as unknown as Account,
   //   );
 
   //   await this.nativeClient.updateRootBank(this.group)
@@ -257,7 +257,7 @@ export default class MangoTester extends MangoClient {
       oracleDesc.publicKey,
       spotMarket,
       baseMint,
-      this.user1Kp as unknown as Account,
+      this.user1Keypair as unknown as Account,
       this.maintLeverage,
       this.initLeverage,
       this.liquidationFee,
@@ -354,7 +354,7 @@ export default class MangoTester extends MangoClient {
   //     group,
   //     oracleDesc.publicKey,
   //     this.mngoMintPubkey,
-  //     this.user1Kp as unknown as Account,
+  //     this.user1Keypair as unknown as Account,
   //     this.maintLeverage,
   //     this.initLeverage,
   //     this.liquidationFee,
@@ -430,13 +430,13 @@ export default class MangoTester extends MangoClient {
 
   // --------------------------------------- requesters
 
-  async requestDepositTransactionn(mintPubkey: PublicKey, amount: string, userKp: Keypair)
+  async requestDepositTransactionn(mintPubkey: PublicKey, amount: string, userKeypair: Keypair)
   : Promise<instructionsAndSigners[]> {
     const route = '/mango/deposit';
     const params: IMangoLenderDepositParams = {
       mintPubkey: mintPubkey.toBase58(),
       quantity: amount,
-      ownerPubkey: userKp.publicKey.toBase58(),
+      ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
@@ -451,14 +451,14 @@ export default class MangoTester extends MangoClient {
     return deserializeInstructionsAndSigners(res.body);
   }
 
-  async requestWithdrawTransactionn(mintPubkey: PublicKey, amount: string, userKp: Keypair, isBorrow: boolean)
+  async requestWithdrawTransactionn(mintPubkey: PublicKey, amount: string, userKeypair: Keypair, isBorrow: boolean)
   : Promise<instructionsAndSigners[]> {
     const route = '/mango/withdraw';
     const params: IMangoLenderWithdrawParams = {
       mintPubkey: mintPubkey.toBase58(),
       quantity: amount,
       isBorrow,
-      ownerPubkey: userKp.publicKey.toBase58(),
+      ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
@@ -479,7 +479,7 @@ export default class MangoTester extends MangoClient {
     price: string,
     size: string,
     orderType: orderType,
-    userKp: Keypair,
+    userKeypair: Keypair,
   ): Promise<instructionsAndSigners[]> {
     const route = '/mango/spot/place';
     const params: IMangoDEXOrderPlaceParams = {
@@ -488,7 +488,7 @@ export default class MangoTester extends MangoClient {
       price,
       size,
       orderType,
-      ownerPubkey: userKp.publicKey.toBase58(),
+      ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
@@ -506,13 +506,13 @@ export default class MangoTester extends MangoClient {
   async requestCancelSpotOrderTransactionn(
     marketPubkey: PublicKey,
     orderId: string,
-    userKp: Keypair,
+    userKeypair: Keypair,
   ): Promise<instructionsAndSigners[]> {
     const route = '/mango/spot/cancel';
     const params: IMangoDEXOrderCancelParams = {
       marketPubkey: marketPubkey.toBase58(),
       orderId,
-      ownerPubkey: userKp.publicKey.toBase58(),
+      ownerPubkey: userKeypair.publicKey.toBase58(),
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
@@ -535,7 +535,7 @@ export default class MangoTester extends MangoClient {
       quoteMintPubkey: this.quoteMint.publicKey.toBase58(),
       lotSize: '1',
       tickSize: '1',
-      ownerPubkey: this.user1Kp.publicKey.toBase58(),
+      ownerPubkey: this.user1Keypair.publicKey.toBase58(),
     };
     const res = await request(app).post(route).send(params);
     return deserializeInstructionsAndSigners(res.body);
@@ -543,26 +543,26 @@ export default class MangoTester extends MangoClient {
 
   // --------------------------------------- helpers
 
-  async deposit(mintPubkey: PublicKey, amount: string, userKp: Keypair) {
+  async deposit(mintPubkey: PublicKey, amount: string, userKeypair: Keypair) {
     await this.keeperUpdateAll();
     const transaction = (await this.requestDepositTransactionn(
       mintPubkey,
       amount,
-      userKp,
+      userKeypair,
     ))[0];
-    transaction.signers.unshift(userKp);
+    transaction.signers.unshift(userKeypair);
     await this._prepareAndSendTransaction(transaction);
   }
 
-  async withdraw(mintPubkey: PublicKey, amount: string, userKp: Keypair, isBorrow: boolean) {
+  async withdraw(mintPubkey: PublicKey, amount: string, userKeypair: Keypair, isBorrow: boolean) {
     await this.keeperUpdateAll();
     const transaction = (await this.requestWithdrawTransactionn(
       mintPubkey,
       amount,
-      userKp,
+      userKeypair,
       isBorrow,
     ))[0];
-    transaction.signers.unshift(userKp);
+    transaction.signers.unshift(userKeypair);
     await this._prepareAndSendTransaction(transaction);
   }
 
@@ -572,7 +572,7 @@ export default class MangoTester extends MangoClient {
     price: string,
     size: string,
     orderType: orderType,
-    userKp: Keypair,
+    userKeypair: Keypair,
   ) {
     await this.keeperUpdateAll();
     const transaction = (await this.requestPlaceSpotOrderTransactionn(
@@ -581,24 +581,24 @@ export default class MangoTester extends MangoClient {
       price,
       size,
       orderType,
-      userKp,
+      userKeypair,
     ))[0];
-    transaction.signers.unshift(userKp);
+    transaction.signers.unshift(userKeypair);
     await this._prepareAndSendTransaction(transaction);
   }
 
   async cancelSpotOrder( // TODO: finstruction, what else needed to update?
     marketPubkey: PublicKey,
     orderId: string,
-    userKp: Keypair,
+    userKeypair: Keypair,
   ) {
     await this.keeperUpdateAll();
     const transaction = (await this.requestCancelSpotOrderTransactionn(
       marketPubkey,
       orderId,
-      userKp,
+      userKeypair,
     ))[0];
-    transaction.signers.unshift(userKp);
+    transaction.signers.unshift(userKeypair);
     await this._prepareAndSendTransaction(transaction);
   }
 
@@ -665,7 +665,7 @@ export default class MangoTester extends MangoClient {
         );
         if (cacheTransaction.instructions.length > 0) {
           promises.push(
-            this.nativeClient.sendTransaction(cacheTransaction, this.user1Kp as unknown as Account,
+            this.nativeClient.sendTransaction(cacheTransaction, this.user1Keypair as unknown as Account,
               []),
           );
         }
@@ -726,7 +726,7 @@ export default class MangoTester extends MangoClient {
         if (updateRootBankTransaction.instructions.length > 0) {
           promises.push(
             this.nativeClient.sendTransaction(
-              updateRootBankTransaction, this.user1Kp as unknown as Account, [],
+              updateRootBankTransaction, this.user1Keypair as unknown as Account, [],
             ),
           );
         }
@@ -758,10 +758,10 @@ export default class MangoTester extends MangoClient {
 
   // }
 
-  // async consumeEvents(market: Market, ownerKp: Keypair) {
+  // async consumeEvents(market: Market, ownerKeypair: Keypair) {
   //   const openOrders = await market.findOpenOrdersAccountsForOwner(
   //     this.connection,
-  //     ownerKp.publicKey,
+  //     ownerKeypair.publicKey,
   //   );
   //   console.log(openOrders.length);
   //   const consumeEventsInstruction = market.makeConsumeEventsInstruction(
@@ -769,14 +769,14 @@ export default class MangoTester extends MangoClient {
   //   );
   //   await this._prepareAndSendTransaction({
   //     instructions: [consumeEventsInstruction],
-  //     signers: [ownerKp],
+  //     signers: [ownerKeypair],
   //   });
   // }
 
-  // async matchOrders(market: Market, ownerKp: Keypair) {
+  // async matchOrders(market: Market, ownerKeypair: Keypair) {
   //   const openOrders = await market.findOpenOrdersAccountsForOwner(
   //     this.connection,
-  //     ownerKp.publicKey,
+  //     ownerKeypair.publicKey,
   //   );
   //   console.log(openOrders.length);
   //   const consumeEventsInstruction = market.makeConsumeEventsInstruction(
@@ -784,7 +784,7 @@ export default class MangoTester extends MangoClient {
   //   );
   //   await this._prepareAndSendTransaction({
   //     instructions: [consumeEventsInstruction],
-  //     signers: [ownerKp],
+  //     signers: [ownerKeypair],
   //   });
   // }
 }

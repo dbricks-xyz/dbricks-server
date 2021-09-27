@@ -1,7 +1,7 @@
 import {Keypair, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
 import {Token} from '@solana/spl-token';
-import {loadKpSync} from '../../src/common/util/common.util';
-import {TESTING_KP_PATH} from '../../src/config/config';
+import {loadKeypairSync} from '../../src/common/util/common.util';
+import {TESTING_KEYPAIR_PATH} from '../../src/config/config';
 import request from 'supertest';
 import app from "../../src/app";
 import {
@@ -22,13 +22,13 @@ export default class SerumTester extends SerumClient {
 
   quoteMint!: Token;
 
-  marketKp!: Keypair;
+  marketKeypair!: Keypair;
 
   market!: Market;
 
-  user1Kp: Keypair;
+  user1Keypair: Keypair;
 
-  user2Kp: Keypair = new Keypair();
+  user2Keypair: Keypair = new Keypair();
 
   quoteUser1Pubkey!: PublicKey;
 
@@ -38,38 +38,38 @@ export default class SerumTester extends SerumClient {
 
   constructor() {
     super()
-    this.user1Kp = loadKpSync(TESTING_KP_PATH);
+    this.user1Keypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
   }
 
   // --------------------------------------- preparators
 
   async prepAccounts(fundingAmount: number) {
     // token mints
-    this.baseMint = await this._createMint(this.user1Kp);
-    this.quoteMint = await this._createMint(this.user1Kp);
+    this.baseMint = await this._createMint(this.user1Keypair);
+    this.quoteMint = await this._createMint(this.user1Keypair);
 
     // user 1 - we give them quote
     // NOTE: we intentionally are NOT creating the base account for user 1. The BE should take care of that.
-    this.quoteUser1Pubkey = await this._createTokenAcc(this.quoteMint, this.user1Kp.publicKey);
-    await this._fundTokenAcc(this.quoteMint, this.user1Kp.publicKey, this.quoteUser1Pubkey, fundingAmount);
+    this.quoteUser1Pubkey = await this._createTokenAcc(this.quoteMint, this.user1Keypair.publicKey);
+    await this._fundTokenAcc(this.quoteMint, this.user1Keypair.publicKey, this.quoteUser1Pubkey, fundingAmount);
 
     // user 2 - we give them base
-    await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
-    this.baseUser2Pubkey = await this._createTokenAcc(this.baseMint, this.user2Kp.publicKey);
-    this.quoteUser2Pubkey = await this._createTokenAcc(this.quoteMint, this.user2Kp.publicKey);
-    await this._fundTokenAcc(this.baseMint, this.user1Kp.publicKey, this.baseUser2Pubkey, fundingAmount);
+    await this._transferLamports(this.user1Keypair, this.user2Keypair.publicKey, LAMPORTS_PER_SOL);
+    this.baseUser2Pubkey = await this._createTokenAcc(this.baseMint, this.user2Keypair.publicKey);
+    this.quoteUser2Pubkey = await this._createTokenAcc(this.quoteMint, this.user2Keypair.publicKey);
+    await this._fundTokenAcc(this.baseMint, this.user1Keypair.publicKey, this.baseUser2Pubkey, fundingAmount);
   }
 
   async prepMarket() {
     const [transaction1, transaction2] = await this.requestInitMarketInstruction();
-    transaction1.signers.unshift(this.user1Kp);
-    transaction2.signers.unshift(this.user1Kp);
+    transaction1.signers.unshift(this.user1Keypair);
+    transaction2.signers.unshift(this.user1Keypair);
     await this._prepareAndSendTransaction(transaction1);
     await this._prepareAndSendTransaction(transaction2);
     //the 1st keypair returned is always the marketKp
-    this.marketKp = transaction1.signers[1] as Keypair;
-    console.log('New market Pubkey is', this.marketKp.publicKey.toBase58());
-    this.market = await this.loadSerumMarket(this.marketKp.publicKey);
+    this.marketKeypair = transaction1.signers[1] as Keypair;
+    console.log('New market Pubkey is', this.marketKeypair.publicKey.toBase58());
+    this.market = await this.loadSerumMarket(this.marketKeypair.publicKey);
   }
 
   // --------------------------------------- requesters
@@ -81,7 +81,7 @@ export default class SerumTester extends SerumClient {
       quoteMintPubkey: this.quoteMint.publicKey.toBase58(),
       lotSize: '1',
       tickSize: '1',
-      ownerPubkey: this.user1Kp.publicKey.toBase58(),
+      ownerPubkey: this.user1Keypair.publicKey.toBase58(),
     };
     const res = await request(app).post(route).send(params);
     saveReqResToJSON(
@@ -104,7 +104,7 @@ export default class SerumTester extends SerumClient {
   ) {
     const route = '/serum/orders';
     const params: ISerumDEXOrderPlaceParams = {
-      marketPubkey: this.marketKp.publicKey.toBase58(),
+      marketPubkey: this.marketKeypair.publicKey.toBase58(),
       side,
       price,
       size,
@@ -128,7 +128,7 @@ export default class SerumTester extends SerumClient {
   ) {
     const route = '/serum/markets/settle';
     const params: ISerumDEXMarketSettleParams = {
-      marketPubkey: this.marketKp.publicKey.toBase58(),
+      marketPubkey: this.marketKeypair.publicKey.toBase58(),
       ownerPubkey,
     };
     const res = await request(app).post(route).send(params).expect(200);
@@ -146,7 +146,7 @@ export default class SerumTester extends SerumClient {
   async requestCancelOrderInstruction(orderId: string, ownerPubkey: string) {
     const route = '/serum/orders/cancel';
     const params: ISerumDEXOrderCancelParams = {
-      marketPubkey: this.marketKp.publicKey.toBase58(),
+      marketPubkey: this.marketKeypair.publicKey.toBase58(),
       orderId,
       ownerPubkey,
     };
@@ -181,7 +181,7 @@ export default class SerumTester extends SerumClient {
       orderId,
       user.publicKey.toBase58(),
     ))[0];
-    cancelTransaction.signers.unshift(this.user1Kp);
+    cancelTransaction.signers.unshift(this.user1Keypair);
     await this._prepareAndSendTransaction(cancelTransaction);
   }
 

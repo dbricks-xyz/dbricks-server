@@ -1,25 +1,25 @@
 import {
-  loadKpSync,
+  loadKeypairSync,
   mergeInstructionsAndSigners,
   tryGetMintName, tryGetMintPubkey,
   tryGetSerumMarketName,
   tryGetSerumMarketPubkey
 } from "./common.util";
 import {instructionsAndSigners} from "dbricks-lib";
-import {TESTING_KP_PATH} from "../../config/config";
+import {TESTING_KEYPAIR_PATH} from "../../config/config";
 import SerumClient from "../../serum/client/serum.client";
 import {Keypair, PublicKey} from "@solana/web3.js";
 
 describe('Util', () => {
   it('merges instructionsAndSigners (actual instructions)', async () => {
     // I need some real instructions, this looks like the simplest route
-    const testingKp = loadKpSync(TESTING_KP_PATH);
-    const stateAccKp = new Keypair();
+    const testingKeypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
+    const stateAccKeypair = new Keypair();
     const srm = new SerumClient();
-    const instruction = await srm.prepCreateStateAccInstruction(stateAccKp.publicKey, 123, testingKp.publicKey);
+    const instruction = await srm.prepCreateStateAccInstruction(stateAccKeypair.publicKey, 123, testingKeypair.publicKey);
     const iAndS1: instructionsAndSigners = {
       instructions: [instruction],
-      signers: [testingKp, stateAccKp]
+      signers: [testingKeypair, stateAccKeypair]
     }
     const iAndS2: instructionsAndSigners = {...iAndS1};
     const iAndS3: instructionsAndSigners = {...iAndS1};
