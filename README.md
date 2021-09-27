@@ -42,7 +42,7 @@ Currently:
     - `Protocol3Service3` = etc
 
 # Testing
-
+ 
 Currently:
 - unit tests go in the same folder as the file they're testing (see `src/common/util/util.test` for example)
 - e2e tests go in the top level folder - will have both protocol-specific e2e and cross-protocol there
