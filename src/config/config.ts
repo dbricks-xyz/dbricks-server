@@ -39,9 +39,9 @@ if (NETWORK === 'mainnet') {
   //  2)cargo build-bpf,
   //  3)solana program deploy [path]
   //  4)paste the IDs below
-  SERUM_PROG_ID = new PublicKey('DVieqxNimmtbZpZTw2sZiSAohNJuHLywGaMs47RAW97Z');
+  SERUM_PROG_ID = new PublicKey('5xmw9VJtx2FKyad2DL15i7yeZasm38NaL3JZiT3sm4ZT');
   SABER_PROG_ID = new PublicKey('DVieqxNimmtbZpZTw2sZiSAohNJuHLywGaMs47RAW97Z');
-  MANGO_PROG_ID = new PublicKey('DVieqxNimmtbZpZTw2sZiSAohNJuHLywGaMs47RAW97Z');
+  MANGO_PROG_ID = new PublicKey('EFUJ77cT4eFczspUS11K8BMbmmVxdQLk1pF8dhXk3Ri4');
   CONNECTION_URL = 'http://localhost:8899';
 } else {
   throw new Error(`Network unrecognized. Should be mainnet/devnet/localnet. Currently: ${NETWORK}`);

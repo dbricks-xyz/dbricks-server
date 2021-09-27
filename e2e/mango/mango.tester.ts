@@ -36,8 +36,6 @@ export default class MangoTester extends MangoClient {
 
   quoteUser2Pk!: PublicKey;
 
-  user1PayerAccount: Account
-
   mngoMintPk!: PublicKey
 
   validInterval: number = 100; // the interval where caches are no longer valid (UNIX timestamp)
@@ -59,7 +57,6 @@ export default class MangoTester extends MangoClient {
   constructor() {
     super();
     this.user1Kp = loadKpSync(TESTING_KP_PATH);
-    this.user1PayerAccount = new Account(this.user1Kp.secretKey);
   }
 
   get user1Pk() {
@@ -165,7 +162,7 @@ export default class MangoTester extends MangoClient {
       this.optimalUtil,
       this.optimalRate,
       this.maxRate,
-      this.user1PayerAccount,
+      this.user1Kp as unknown as Account,
     );
     console.log('Mango Group initialized');
     const group = await this.nativeClient.getMangoGroup(groupPk);
@@ -199,7 +196,7 @@ export default class MangoTester extends MangoClient {
   }
 
   async addPriceOracle(mangoGroupPk: PublicKey, symbol: string): Promise<void> {
-    await this.nativeClient.addStubOracle(mangoGroupPk, this.user1PayerAccount);
+    await this.nativeClient.addStubOracle(mangoGroupPk, this.user1Kp as unknown as Account);
     const group = await this.nativeClient.getMangoGroup(mangoGroupPk);
     const groupConfig = this.config.groups[0];
 
@@ -223,7 +220,7 @@ export default class MangoTester extends MangoClient {
     await this.nativeClient.setStubOracle(
       groupConfig.publicKey,
       oracle.publicKey,
-      this.user1PayerAccount,
+      this.user1Kp as unknown as Account,
       price,
     );
   }
@@ -232,14 +229,14 @@ export default class MangoTester extends MangoClient {
   //   await this.loadGroup();
   //   const cache = await this.getCache();
   //   await this.nativeClient.cachePrices(
-  //     this.group.publicKey, cache.publicKey, this.group.oracles, this.user1PayerAccount,
+  //     this.group.publicKey, cache.publicKey, this.group.oracles, this.user1Kp as unknown as Account,
   //   );
 
   //   const rootBanks = (await this.group.loadRootBanks(this.connection))
   //     .filter((bank) => bank !== undefined) as RootBank[];
   //   const bankPks = rootBanks.map((bank) => bank.publicKey);
   //   await this.nativeClient.cacheRootBanks(
-  //     this.group.publicKey, cache.publicKey, bankPks, this.user1PayerAccount,
+  //     this.group.publicKey, cache.publicKey, bankPks, this.user1Kp as unknown as Account,
   //   );
 
   //   await this.nativeClient.updateRootBank(this.group)
@@ -260,7 +257,7 @@ export default class MangoTester extends MangoClient {
       oracleDesc.publicKey,
       spotMarket,
       baseMint,
-      this.user1PayerAccount,
+      this.user1Kp as unknown as Account,
       this.maintLeverage,
       this.initLeverage,
       this.liquidationFee,
@@ -357,7 +354,7 @@ export default class MangoTester extends MangoClient {
   //     group,
   //     oracleDesc.publicKey,
   //     this.mngoMintPk,
-  //     this.user1PayerAccount,
+  //     this.user1Kp as unknown as Account,
   //     this.maintLeverage,
   //     this.initLeverage,
   //     this.liquidationFee,
@@ -668,7 +665,7 @@ export default class MangoTester extends MangoClient {
         );
         if (cacheTransaction.instructions.length > 0) {
           promises.push(
-            this.nativeClient.sendTransaction(cacheTransaction, this.user1PayerAccount,
+            this.nativeClient.sendTransaction(cacheTransaction, this.user1Kp as unknown as Account,
               []),
           );
         }
@@ -729,7 +726,7 @@ export default class MangoTester extends MangoClient {
         if (updateRootBankTransaction.instructions.length > 0) {
           promises.push(
             this.nativeClient.sendTransaction(
-              updateRootBankTransaction, this.user1PayerAccount, [],
+              updateRootBankTransaction, this.user1Kp as unknown as Account, [],
             ),
           );
         }
@@ -745,7 +742,7 @@ export default class MangoTester extends MangoClient {
     }
   }
 
-  async getTokenAmount(userPk: PublicKey, accIndex: number, tokenIndex: number) {
+  async getMangoTokenBalance(userPk: PublicKey, accIndex: number, tokenIndex: number) {
     await this.loadGroup();
     const mangoAccs = await this.loadUserAccounts(userPk);
     const cache = await this.getCache();

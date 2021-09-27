@@ -104,282 +104,6 @@ export default class MangoClient extends SolClient {
     log('Initialized Mango client');
   }
 
-  readConfig(): Config {
-    return new Config(JSON.parse(fs.readFileSync(this.MANGO_CONFIG_PATH, 'utf-8')));
-  }
-
-  async loadGroup(): Promise<void> {
-    const groupPk = this.config.groups.find(
-      (group) => group.name === this.groupName,
-    )?.publicKey;
-    if (!groupPk) {
-      throw new Error('Error finding Mango group');
-    }
-    const mangoGroup = await this.nativeClient.getMangoGroup(
-      new PublicKey(groupPk),
-    );
-    await mangoGroup.loadRootBanks(this.connection);
-    await Promise.all(
-      mangoGroup.rootBankAccounts.map((rootBank) => rootBank?.loadNodeBanks(this.connection)),
-    ); // load each nodeBank for all rootBanks
-    this.group = mangoGroup;
-  }
-
-  async loadUserAccounts(ownerPk: PublicKey): Promise<MangoAccount[]> {
-    if (!this.group) {
-      await this.loadGroup();
-    }
-    try {
-      return this.nativeClient.getMangoAccountsForOwner(
-        this.group,
-        ownerPk,
-        true,
-      );
-    } catch (err) {
-      log('Could not load Mango margin accounts', err);
-      return [];
-    }
-  }
-
-  async loadMangoAccForOwner(
-    ownerPk: PublicKey,
-    mangoAccNr: number,
-  ): Promise<MangoAccount> {
-    const loadedMangoAcc = (await this.loadUserAccounts(
-      ownerPk,
-    ))[mangoAccNr];
-    return this.nativeClient.getMangoAccount(loadedMangoAcc.publicKey, SERUM_PROG_ID);
-  }
-
-  async loadBankVaultInformation(
-    mintPk: PublicKey,
-  ): Promise<BankVaultInformation> {
-    if (!this.group) {
-      await this.loadGroup();
-    }
-    const tokenIndex = this.group.getTokenIndex(mintPk);
-    const {rootBank} = this.group.tokens[tokenIndex];
-    const nodeBank = this.group.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].publicKey;
-    const vault = this.group.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].vault;
-    if (!rootBank || !nodeBank || !vault) {
-      throw new Error('Error loading Mango vault accounts');
-    }
-
-    return {
-      rootBank,
-      nodeBank,
-      vault,
-    };
-  }
-
-  async getAllMarketInfos(): Promise<{
-    allMarketConfigs: MarketConfig[];
-    allMarketAccountInfos: {
-        accountInfo: {
-            data: any;
-        };
-    }[];
-    mangoGroupConfig: GroupConfig;
-}> {
-    if (!this.group) {
-      await this.loadGroup();
-    }
-    const mangoGroupConfig = this.getMangoGroupConfig();
-    const allMarketConfigs = getAllMarkets(mangoGroupConfig);
-    const allMarketPks = allMarketConfigs.map((m) => m.publicKey);
-
-    let allMarketAccountInfos: { accountInfo: { data: any; }; }[];
-    try {
-      const resp = await Promise.all([
-        getMultipleAccounts(this.connection, allMarketPks),
-        this.group.loadCache(this.connection),
-        this.group.loadRootBanks(this.connection),
-      ]);
-      allMarketAccountInfos = resp[0];
-    } catch {
-      throw new Error('Failed to load markets');
-    }
-    return {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig};
-  }
-
-  async loadSpotMarkets(): Promise<Market[]> {
-    const {
-      allMarketConfigs, allMarketAccountInfos, mangoGroupConfig,
-    } = await this.getAllMarketInfos();
-    const spotMarkets = allMarketConfigs.filter((config) => config.kind == 'spot').map((config, i) => {
-      const decoded = Market.getLayout(MANGO_PROG_ID).decode(
-        allMarketAccountInfos[i].accountInfo.data,
-      );
-      return new Market(
-        decoded,
-        config.baseDecimals,
-        config.quoteDecimals,
-        undefined,
-        mangoGroupConfig.serumProgramId,
-      );
-    });
-    return spotMarkets;
-  }
-
-  getMangoGroupConfig(): GroupConfig {
-    const mangoGroupConfig = this.config.getGroup(
-      this.cluster,
-      this.groupName,
-    );
-    if (!mangoGroupConfig) {
-      throw new Error('Error loading Mango Group Configuration');
-    }
-    return mangoGroupConfig;
-  }
-
-  async loadSpotMarket(marketPk: PublicKey) {
-    const mangoGroupConfig = this.getMangoGroupConfig();
-    const spotMarketConfig = mangoGroupConfig.spotMarkets.find(
-      (p) => p.publicKey.toBase58() === marketPk.toBase58(),
-    );
-    if (!spotMarketConfig) {
-      throw new Error(`Could not find spot market ${marketPk.toBase58()}`);
-    }
-    return Market.load(
-      this.connection,
-      spotMarketConfig.publicKey,
-      {
-        skipPreflight: true,
-        commitment: COMMITTMENT,
-      },
-      SERUM_PROG_ID,
-    );
-  }
-
-  async loadPerpMarket(marketPk: PublicKey) {
-    const mangoGroupConfig = this.getMangoGroupConfig();
-    const perpMarketConfig = mangoGroupConfig.perpMarkets.find(
-      (p) => p.publicKey.toBase58() === marketPk.toBase58(),
-    );
-    if (!perpMarketConfig) {
-      throw new Error(`Could not find perp market ${marketPk.toBase58()}`);
-    }
-    return this.nativeClient.getPerpMarket(
-      perpMarketConfig.publicKey,
-      perpMarketConfig.baseDecimals,
-      perpMarketConfig.quoteDecimals,
-    );
-  }
-
-  async prepWrappedSolCreateAccountIx(
-    ownerPk: PublicKey,
-    quantity?: number,
-  ): Promise<[Keypair, ixsAndSigners]> {
-    const wrappedSolAccount = new Keypair();
-    const ixsAndSigners: ixsAndSigners = {
-      instructions: [],
-      signers: [],
-    };
-    let lamports: number;
-    if (quantity) {
-      // depositTxn
-      lamports = Math.round(quantity * LAMPORTS_PER_SOL) + 1e7;
-    } else {
-      // withdrawTxn
-      lamports = await this.connection.getMinimumBalanceForRentExemption(
-        165,
-        COMMITTMENT,
-      );
-    }
-    ixsAndSigners.instructions.push(
-      SystemProgram.createAccount({
-        fromPubkey: ownerPk,
-        newAccountPubkey: wrappedSolAccount.publicKey,
-        lamports,
-        space: 165,
-        programId: TOKEN_PROGRAM_ID,
-      }),
-    );
-
-    ixsAndSigners.instructions.push(
-      initializeAccount({
-        account: wrappedSolAccount.publicKey,
-        mint: WRAPPED_SOL_MINT,
-        owner: ownerPk,
-      }),
-    );
-
-    ixsAndSigners.signers.push(wrappedSolAccount);
-
-    return [wrappedSolAccount, ixsAndSigners];
-  }
-
-  prepWrappedSolCloseAccountIx(
-    ownerPk: PublicKey,
-    wrappedSolAccount: Keypair,
-  ): ixsAndSigners {
-    const ixsAndSigners: ixsAndSigners = {
-      instructions: [],
-      signers: [],
-    };
-    ixsAndSigners.instructions.push(
-      closeAccount({
-        source: wrappedSolAccount.publicKey,
-        destination: ownerPk,
-        owner: ownerPk,
-      }),
-    );
-    return ixsAndSigners;
-  }
-
-  async prepSpotSettleFundsIx(
-    mangoGroup: MangoGroup, mangoAcc: MangoAccount, spotMarket: Market, ownerPk: PublicKey
-  ): Promise<ixsAndSigners> {
-    const ixsAndSigners: ixsAndSigners = {
-      instructions: [],
-      signers: [],
-    };
-    const dexSigner = await PublicKey.createProgramAddress(
-      [
-        spotMarket.publicKey.toBuffer(),
-        spotMarket['_decoded'].vaultSignerNonce.toArrayLike(Buffer, 'le', 8),
-      ],
-      spotMarket.programId,
-    );
-
-    const marketIndex = mangoGroup.getSpotMarketIndex(spotMarket.publicKey);
-    if (!mangoGroup.rootBankAccounts.length) {
-      await mangoGroup.loadRootBanks(this.connection);
-    }
-    const baseRootBank = mangoGroup.rootBankAccounts[marketIndex];
-    const quoteRootBank = mangoGroup.rootBankAccounts[QUOTE_INDEX];
-    const baseNodeBank = baseRootBank?.nodeBankAccounts[0];
-    const quoteNodeBank = quoteRootBank?.nodeBankAccounts[0];
-
-    if (!baseNodeBank || !quoteNodeBank) {
-      throw new Error('Invalid or missing node banks');
-    }
-
-    const settleIx = makeSettleFundsInstruction(
-      MANGO_PROG_ID,
-      mangoGroup.publicKey,
-      mangoGroup.mangoCache,
-      ownerPk,
-      mangoAcc.publicKey,
-      spotMarket.programId,
-      spotMarket.publicKey,
-      mangoAcc.spotOpenOrders[marketIndex],
-      mangoGroup.signerKey,
-      spotMarket['_decoded'].baseVault,
-      spotMarket['_decoded'].quoteVault,
-      mangoGroup.tokens[marketIndex].rootBank,
-      baseNodeBank.publicKey,
-      mangoGroup.tokens[QUOTE_INDEX].rootBank,
-      quoteNodeBank.publicKey,
-      baseNodeBank.vault,
-      quoteNodeBank.vault,
-      dexSigner,
-    );
-
-    ixsAndSigners.instructions.push(settleIx);
-    return ixsAndSigners;
-  }
-
   async prepDepositTx(
     ownerPk: PublicKey,
     rootBank: PublicKey,
@@ -941,6 +665,286 @@ export default class MangoClient extends SolClient {
       }
     }
 
+    return ixsAndSigners;
+  }
+
+  // --------------------------------------- helpers (passive)
+
+  readConfig(): Config {
+    return new Config(JSON.parse(fs.readFileSync(this.MANGO_CONFIG_PATH, 'utf-8')));
+  }
+
+  async loadGroup(): Promise<void> {
+    const groupPk = this.config.groups.find(
+      (group) => group.name === this.groupName,
+    )?.publicKey;
+    if (!groupPk) {
+      throw new Error('Error finding Mango group');
+    }
+    const mangoGroup = await this.nativeClient.getMangoGroup(
+      new PublicKey(groupPk),
+    );
+    await mangoGroup.loadRootBanks(this.connection);
+    await Promise.all(
+      mangoGroup.rootBankAccounts.map((rootBank) => rootBank?.loadNodeBanks(this.connection)),
+    ); // load each nodeBank for all rootBanks
+    this.group = mangoGroup;
+  }
+
+  async loadUserAccounts(ownerPk: PublicKey): Promise<MangoAccount[]> {
+    if (!this.group) {
+      await this.loadGroup();
+    }
+    try {
+      return this.nativeClient.getMangoAccountsForOwner(
+        this.group,
+        ownerPk,
+        true,
+      );
+    } catch (err) {
+      log('Could not load Mango margin accounts', err);
+      return [];
+    }
+  }
+
+  async loadMangoAccForOwner(
+    ownerPk: PublicKey,
+    mangoAccNr: number,
+  ): Promise<MangoAccount> {
+    const loadedMangoAcc = (await this.loadUserAccounts(
+      ownerPk,
+    ))[mangoAccNr];
+    return this.nativeClient.getMangoAccount(loadedMangoAcc.publicKey, SERUM_PROG_ID);
+  }
+
+  async loadBankVaultInformation(
+    mintPk: PublicKey,
+  ): Promise<BankVaultInformation> {
+    if (!this.group) {
+      await this.loadGroup();
+    }
+    const tokenIndex = this.group.getTokenIndex(mintPk);
+    const {rootBank} = this.group.tokens[tokenIndex];
+    const nodeBank = this.group.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].publicKey;
+    const vault = this.group.rootBankAccounts[tokenIndex]?.nodeBankAccounts[0].vault;
+    if (!rootBank || !nodeBank || !vault) {
+      throw new Error('Error loading Mango vault accounts');
+    }
+
+    return {
+      rootBank,
+      nodeBank,
+      vault,
+    };
+  }
+
+  async getAllMarketInfos(): Promise<{
+    allMarketConfigs: MarketConfig[];
+    allMarketAccountInfos: {
+        accountInfo: {
+            data: any;
+        };
+    }[];
+    mangoGroupConfig: GroupConfig;
+}> {
+    if (!this.group) {
+      await this.loadGroup();
+    }
+    const mangoGroupConfig = this.getMangoGroupConfig();
+    const allMarketConfigs = getAllMarkets(mangoGroupConfig);
+    const allMarketPks = allMarketConfigs.map((m) => m.publicKey);
+
+    let allMarketAccountInfos: { accountInfo: { data: any; }; }[];
+    try {
+      const resp = await Promise.all([
+        getMultipleAccounts(this.connection, allMarketPks),
+        this.group.loadCache(this.connection),
+        this.group.loadRootBanks(this.connection),
+      ]);
+      allMarketAccountInfos = resp[0];
+    } catch {
+      throw new Error('Failed to load markets');
+    }
+    return {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig};
+  }
+
+  async loadSpotMarkets(): Promise<Market[]> {
+    const {
+      allMarketConfigs, allMarketAccountInfos, mangoGroupConfig,
+    } = await this.getAllMarketInfos();
+    const spotMarkets = allMarketConfigs.filter((config) => config.kind == 'spot').map((config, i) => {
+      const decoded = Market.getLayout(MANGO_PROG_ID).decode(
+        allMarketAccountInfos[i].accountInfo.data,
+      );
+      return new Market(
+        decoded,
+        config.baseDecimals,
+        config.quoteDecimals,
+        undefined,
+        mangoGroupConfig.serumProgramId,
+      );
+    });
+    return spotMarkets;
+  }
+
+  async loadSpotMarket(marketPk: PublicKey) {
+    const mangoGroupConfig = this.getMangoGroupConfig();
+    const spotMarketConfig = mangoGroupConfig.spotMarkets.find(
+      (p) => p.publicKey.toBase58() === marketPk.toBase58(),
+    );
+    if (!spotMarketConfig) {
+      throw new Error(`Could not find spot market ${marketPk.toBase58()}`);
+    }
+    return Market.load(
+      this.connection,
+      spotMarketConfig.publicKey,
+      {
+        skipPreflight: true,
+        commitment: COMMITTMENT,
+      },
+      SERUM_PROG_ID,
+    );
+  }
+
+  getMangoGroupConfig(): GroupConfig {
+    const mangoGroupConfig = this.config.getGroup(
+      this.cluster,
+      this.groupName,
+    );
+    if (!mangoGroupConfig) {
+      throw new Error('Error loading Mango Group Configuration');
+    }
+    return mangoGroupConfig;
+  }
+
+  async loadPerpMarket(marketPk: PublicKey) {
+    const mangoGroupConfig = this.getMangoGroupConfig();
+    const perpMarketConfig = mangoGroupConfig.perpMarkets.find(
+      (p) => p.publicKey.toBase58() === marketPk.toBase58(),
+    );
+    if (!perpMarketConfig) {
+      throw new Error(`Could not find perp market ${marketPk.toBase58()}`);
+    }
+    return this.nativeClient.getPerpMarket(
+      perpMarketConfig.publicKey,
+      perpMarketConfig.baseDecimals,
+      perpMarketConfig.quoteDecimals,
+    );
+  }
+
+  // --------------------------------------- helpers (active)
+
+  async prepWrappedSolCreateAccountIx(
+    ownerPk: PublicKey,
+    quantity?: number,
+  ): Promise<[Keypair, ixsAndSigners]> {
+    const wrappedSolAccount = new Keypair();
+    const ixsAndSigners: ixsAndSigners = {
+      instructions: [],
+      signers: [],
+    };
+    let lamports: number;
+    if (quantity) {
+      // depositTxn
+      lamports = Math.round(quantity * LAMPORTS_PER_SOL) + 1e7;
+    } else {
+      // withdrawTxn
+      lamports = await this.connection.getMinimumBalanceForRentExemption(
+        165,
+        COMMITTMENT,
+      );
+    }
+    ixsAndSigners.instructions.push(
+      SystemProgram.createAccount({
+        fromPubkey: ownerPk,
+        newAccountPubkey: wrappedSolAccount.publicKey,
+        lamports,
+        space: 165,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+    );
+
+    ixsAndSigners.instructions.push(
+      initializeAccount({
+        account: wrappedSolAccount.publicKey,
+        mint: WRAPPED_SOL_MINT,
+        owner: ownerPk,
+      }),
+    );
+
+    ixsAndSigners.signers.push(wrappedSolAccount);
+
+    return [wrappedSolAccount, ixsAndSigners];
+  }
+
+  prepWrappedSolCloseAccountIx(
+    ownerPk: PublicKey,
+    wrappedSolAccount: Keypair,
+  ): ixsAndSigners {
+    const ixsAndSigners: ixsAndSigners = {
+      instructions: [],
+      signers: [],
+    };
+    ixsAndSigners.instructions.push(
+      closeAccount({
+        source: wrappedSolAccount.publicKey,
+        destination: ownerPk,
+        owner: ownerPk,
+      }),
+    );
+    return ixsAndSigners;
+  }
+
+  async prepSpotSettleFundsIx(
+    mangoGroup: MangoGroup, mangoAcc: MangoAccount, spotMarket: Market, ownerPk: PublicKey
+  ): Promise<ixsAndSigners> {
+    const ixsAndSigners: ixsAndSigners = {
+      instructions: [],
+      signers: [],
+    };
+    const dexSigner = await PublicKey.createProgramAddress(
+      [
+        spotMarket.publicKey.toBuffer(),
+        spotMarket['_decoded'].vaultSignerNonce.toArrayLike(Buffer, 'le', 8),
+      ],
+      spotMarket.programId,
+    );
+
+    const marketIndex = mangoGroup.getSpotMarketIndex(spotMarket.publicKey);
+    if (!mangoGroup.rootBankAccounts.length) {
+      await mangoGroup.loadRootBanks(this.connection);
+    }
+    const baseRootBank = mangoGroup.rootBankAccounts[marketIndex];
+    const quoteRootBank = mangoGroup.rootBankAccounts[QUOTE_INDEX];
+    const baseNodeBank = baseRootBank?.nodeBankAccounts[0];
+    const quoteNodeBank = quoteRootBank?.nodeBankAccounts[0];
+
+    if (!baseNodeBank || !quoteNodeBank) {
+      throw new Error('Invalid or missing node banks');
+    }
+
+    const settleIx = makeSettleFundsInstruction(
+      MANGO_PROG_ID,
+      mangoGroup.publicKey,
+      mangoGroup.mangoCache,
+      ownerPk,
+      mangoAcc.publicKey,
+      spotMarket.programId,
+      spotMarket.publicKey,
+      mangoAcc.spotOpenOrders[marketIndex],
+      mangoGroup.signerKey,
+      spotMarket['_decoded'].baseVault,
+      spotMarket['_decoded'].quoteVault,
+      mangoGroup.tokens[marketIndex].rootBank,
+      baseNodeBank.publicKey,
+      mangoGroup.tokens[QUOTE_INDEX].rootBank,
+      quoteNodeBank.publicKey,
+      baseNodeBank.vault,
+      quoteNodeBank.vault,
+      dexSigner,
+    );
+
+    ixsAndSigners.instructions.push(settleIx);
     return ixsAndSigners;
   }
 
