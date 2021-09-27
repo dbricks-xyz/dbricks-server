@@ -13,7 +13,7 @@ import {
   side,
   orderType,
 } from "dbricks-lib";
-import {saveReqResToJSON} from "../../docs/docs.generator";
+import {saveRequestResponseToJSON} from "../../docs/docs.generator";
 import SerumClient from "../../src/serum/client/serum.client";
 import {Market} from "@project-serum/serum";
 
@@ -84,7 +84,7 @@ export default class SerumTester extends SerumClient {
       ownerPubkey: this.user1Keypair.publicKey.toBase58(),
     };
     const res = await request(app).post(route).send(params);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'serum.markets.init',
       'serum',
       'POST',
@@ -112,7 +112,7 @@ export default class SerumTester extends SerumClient {
       ownerPubkey,
     };
     const res = await request(app).post(route).send(params).expect(200);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'serum.orders.place',
       'serum',
       'POST',
@@ -132,7 +132,7 @@ export default class SerumTester extends SerumClient {
       ownerPubkey,
     };
     const res = await request(app).post(route).send(params).expect(200);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'serum.markets.settle',
       'serum',
       'POST',
@@ -151,7 +151,7 @@ export default class SerumTester extends SerumClient {
       ownerPubkey,
     };
     const res = await request(app).post(route).send(params).expect(200);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'serum.orders.cancel',
       'serum',
       'POST',

@@ -11,7 +11,7 @@ import MangoClient from '../../src/mango/client/mango.client';
 import app from '../../src/app';
 import { loadKeypairSync } from '../../src/common/util/common.util';
 import { TESTING_KEYPAIR_PATH, SERUM_PROG_ID, MANGO_PROG_ID } from '../../src/config/config';
-import { saveReqResToJSON } from '../../docs/docs.generator';
+import { saveRequestResponseToJSON } from '../../docs/docs.generator';
 
 require('dotenv').config();
 
@@ -440,7 +440,7 @@ export default class MangoTester extends MangoClient {
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'mango.deposit',
       'mango',
       'POST',
@@ -462,7 +462,7 @@ export default class MangoTester extends MangoClient {
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'mango.withdraw',
       'mango',
       'POST',
@@ -492,7 +492,7 @@ export default class MangoTester extends MangoClient {
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'mango.spot.place',
       'mango',
       'POST',
@@ -516,7 +516,7 @@ export default class MangoTester extends MangoClient {
       mangoAccountNumber: '0',
     };
     const res = await request(app).post(route).send(params).expect(200);
-    saveReqResToJSON(
+    saveRequestResponseToJSON(
       'mango.spot.cancel',
       'mango',
       'POST',

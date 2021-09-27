@@ -1,7 +1,7 @@
 import {Method} from "axios";
 import fs from "fs";
 
-export function saveReqResToJSON(
+export function saveRequestResponseToJSON(
   name: string,
   dirName: string,
   method: Method,
