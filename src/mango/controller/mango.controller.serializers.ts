@@ -1,7 +1,7 @@
 import e from 'express';
 import BN from 'bn.js';
 import {
-  deserializePk, IMangoDEXMarketSettleParams,
+  deserializePubkey, IMangoDEXMarketSettleParams,
   IMangoDEXOrderCancelParams,
   IMangoDEXOrderPlaceParams,
   IMangoLenderDepositParams, IMangoLenderWithdrawParams
@@ -14,52 +14,52 @@ import { IMangoDEXMarketSettleParamsParsed } from '../interfaces/dex/mango.inter
 export function deserializeDeposit(req: e.Request): IMangoLenderDepositParamsParsed {
   const body: IMangoLenderDepositParams = req.body;
   return {
-    mintPk: deserializePk(body.mintPk),
+    mintPubkey: deserializePubkey(body.mintPubkey),
     quantity: parseFloat(body.quantity),
-    ownerPk: deserializePk(body.ownerPk),
-    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
+    mangoAccountNumber: body.mangoAccountNumber ? parseFloat(body.mangoAccountNumber) : 0,
   };
 }
 
 export function deserializeWithdraw(req: e.Request): IMangoLenderWithdrawParamsParsed {
   const body: IMangoLenderWithdrawParams = req.body;
   return {
-    mintPk: deserializePk(body.mintPk),
+    mintPubkey: deserializePubkey(body.mintPubkey),
     quantity: parseFloat(body.quantity),
     isBorrow: body.isBorrow,
-    ownerPk: deserializePk(body.ownerPk),
-    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
+    mangoAccountNumber: body.mangoAccountNumber ? parseFloat(body.mangoAccountNumber) : 0,
   };
 }
 
 export function deserializePlace(req: e.Request): IMangoDEXOrderPlaceParamsParsed {
   const body: IMangoDEXOrderPlaceParams = req.body;
   return {
-    marketPk: deserializePk(body.marketPk),
+    marketPubkey: deserializePubkey(body.marketPubkey),
     side: body.side,
     price: parseFloat(body.price),
     size: parseFloat(body.size),
     orderType: body.orderType,
-    ownerPk: deserializePk(body.ownerPk),
-    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
+    mangoAccountNumber: body.mangoAccountNumber ? parseFloat(body.mangoAccountNumber) : 0,
   };
 }
 
 export function deserializeCancel(req: e.Request): IMangoDEXOrderCancelParamsParsed {
   const body: IMangoDEXOrderCancelParams = req.body;
   return {
-    marketPk: deserializePk(body.marketPk),
+    marketPubkey: deserializePubkey(body.marketPubkey),
     orderId: new BN(body.orderId, 16), // comes as string, hex,
-    ownerPk: deserializePk(body.ownerPk),
-    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
+    mangoAccountNumber: body.mangoAccountNumber ? parseFloat(body.mangoAccountNumber) : 0,
   };
 }
 
 export function deserializeSettle(req: e.Request): IMangoDEXMarketSettleParamsParsed {
   const body: IMangoDEXMarketSettleParams = req.body;
   return {
-    marketPk: deserializePk(body.marketPk),
-    ownerPk: deserializePk(body.ownerPk),
-    mangoAccNr: body.mangoAccNr ? parseFloat(body.mangoAccNr) : 0,
+    marketPubkey: deserializePubkey(body.marketPubkey),
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
+    mangoAccountNumber: body.mangoAccountNumber ? parseFloat(body.mangoAccountNumber) : 0,
   };
 }

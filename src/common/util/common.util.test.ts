@@ -1,52 +1,52 @@
 import {
-  loadKpSync,
-  mergeIxsAndSigners,
-  tryGetMintName, tryGetMintPk,
+  loadKeypairSync,
+  mergeInstructionsAndSigners,
+  tryGetMintName, tryGetMintPubkey,
   tryGetSerumMarketName,
-  tryGetSerumMarketPk
+  tryGetSerumMarketPubkey
 } from "./common.util";
-import {ixsAndSigners} from "dbricks-lib";
-import {TESTING_KP_PATH} from "../../config/config";
+import {instructionsAndSigners} from "dbricks-lib";
+import {TESTING_KEYPAIR_PATH} from "../../config/config";
 import SerumClient from "../../serum/client/serum.client";
 import {Keypair, PublicKey} from "@solana/web3.js";
 
 describe('Util', () => {
-  it('merges ixsAndSigners (actual ixs)', async () => {
+  it('merges instructionsAndSigners (actual instructions)', async () => {
     // I need some real instructions, this looks like the simplest route
-    const testingKp = loadKpSync(TESTING_KP_PATH);
-    const stateAccKp = new Keypair();
+    const testingKeypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
+    const stateAccountKeypair = new Keypair();
     const srm = new SerumClient();
-    const ix = await srm.prepCreateStateAccIx(stateAccKp.publicKey, 123, testingKp.publicKey);
-    const iAndS1: ixsAndSigners = {
-      instructions: [ix],
-      signers: [testingKp, stateAccKp]
+    const instruction = await srm.prepCreateStateAccountsInstruction(stateAccountKeypair.publicKey, 123, testingKeypair.publicKey);
+    const iAndS1: instructionsAndSigners = {
+      instructions: [instruction],
+      signers: [testingKeypair, stateAccountKeypair]
     }
-    const iAndS2: ixsAndSigners = {...iAndS1};
-    const iAndS3: ixsAndSigners = {...iAndS1};
+    const iAndS2: instructionsAndSigners = {...iAndS1};
+    const iAndS3: instructionsAndSigners = {...iAndS1};
 
-    const expected: ixsAndSigners = {
+    const expected: instructionsAndSigners = {
       instructions: [...iAndS1.instructions, ...iAndS2.instructions, ...iAndS3.instructions],
       signers: [...iAndS1.signers],
     }
-    let actual = mergeIxsAndSigners(iAndS1, iAndS2);
-    actual = mergeIxsAndSigners(actual, iAndS3);
+    let actual = mergeInstructionsAndSigners(iAndS1, iAndS2);
+    actual = mergeInstructionsAndSigners(actual, iAndS3);
     expect(actual).toEqual(expected);
   })
 
-  it('merges ixsAndSigners (numbers)', () => {
-    const x: ixsAndSigners = {
+  it('merges instructionsAndSigners (numbers)', () => {
+    const x: instructionsAndSigners = {
       instructions: [1 as any, 2 as any],
       signers: [1 as any, 2 as any],
     }
-    const y: ixsAndSigners = {
+    const y: instructionsAndSigners = {
       instructions: [2 as any, 3 as any],
       signers: [2 as any, 3 as any],
     }
-    const expected: ixsAndSigners = {
+    const expected: instructionsAndSigners = {
       instructions: [1 as any, 2 as any, 2 as any, 3 as any],
       signers: [1 as any, 2 as any, 3 as any],
     }
-    const actual = mergeIxsAndSigners(x, y);
+    const actual = mergeInstructionsAndSigners(x, y);
     console.log(actual);
     expect(actual).toEqual(expected);
   })
@@ -66,16 +66,16 @@ describe('Util', () => {
   })
 
   it('gets serum market pk', () => {
-    const name = tryGetSerumMarketPk("USDT/USDC");
+    const name = tryGetSerumMarketPubkey("USDT/USDC");
     expect(name?.toBase58()).toEqual("77quYg4MGneUdjgXCunt9GgM1usmrxKY31twEy3WHwcS");
-    const name2 = tryGetSerumMarketPk("doesnt_exist");
+    const name2 = tryGetSerumMarketPubkey("doesnt_exist");
     expect(name2).toEqual(undefined);
   })
 
   it('gets mint pk', () => {
-    const name = tryGetMintPk("COPE");
+    const name = tryGetMintPubkey("COPE");
     expect(name?.toBase58()).toEqual("8HGyAAB1yoM1ttS7pXjHMa3dukTFGQggnFFH3hJZgzQh");
-    const name2 = tryGetMintPk("doesnt_exist");
+    const name2 = tryGetMintPubkey("doesnt_exist");
     expect(name2).toEqual(undefined);
   })
 })

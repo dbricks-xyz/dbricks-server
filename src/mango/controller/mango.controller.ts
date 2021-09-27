@@ -1,6 +1,6 @@
 import e from 'express';
 import debug from 'debug';
-import {serializeIxsAndSigners,} from 'dbricks-lib';
+import {serializeInstructionsAndSigners,} from 'dbricks-lib';
 import {
   deserializeCancel,
   deserializeDeposit,
@@ -20,9 +20,9 @@ class MangoController {
     const params = deserializeDeposit(req);
     const mangoDepositService = new MangoDepositService();
     Promise.resolve(mangoDepositService.deposit(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Deposit instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -31,9 +31,9 @@ class MangoController {
     const params = deserializeWithdraw(req);
     const mangoWithdrawService = new MangoWithdrawService();
     Promise.resolve(mangoWithdrawService.withdraw(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Withdraw instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -42,9 +42,9 @@ class MangoController {
     const params = deserializeSettle(req);
     const mangoMarketService = new MangoMarketService();
     Promise.resolve(mangoMarketService.settleSpot(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Settle spot orders instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -53,9 +53,9 @@ class MangoController {
     const params = deserializePlace(req);
     const mangoOrderService = new MangoOrderService();
     Promise.resolve(mangoOrderService.placeSpot(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Place spot order instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -64,9 +64,9 @@ class MangoController {
     const params = deserializeCancel(req);
     const mangoOrderService = new MangoOrderService();
     Promise.resolve(mangoOrderService.cancelSpot(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Cancel spot order instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -75,9 +75,9 @@ class MangoController {
     const params = deserializePlace(req);
     const mangoOrderService = new MangoOrderService();
     Promise.resolve(mangoOrderService.placePerp(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Place perp order instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -86,9 +86,9 @@ class MangoController {
     const params = deserializeCancel(req);
     const mangoOrderService = new MangoOrderService();
     Promise.resolve(mangoOrderService.cancelPerp(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Cancel perp order instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -97,9 +97,9 @@ class MangoController {
     const params = deserializeSettle(req);
     const mangoMarketService = new MangoMarketService();
     Promise.resolve(mangoMarketService.settlePerp(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Settle perp PnL instruction generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }

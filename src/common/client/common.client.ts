@@ -9,9 +9,9 @@ import {
 } from '@solana/web3.js';
 import debug from 'debug';
 import {AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,} from '@solana/spl-token';
-import {COMMITTMENT, CONNECTION_URL, TESTING_KP_PATH} from '../../config/config';
-import {loadKpSync, sleep} from '../util/common.util';
-import {ixsAndSigners} from "dbricks-lib";
+import {COMMITTMENT, CONNECTION_URL, TESTING_KEYPAIR_PATH} from '../../config/config';
+import {loadKeypairSync, sleep} from '../util/common.util';
+import {instructionsAndSigners} from "dbricks-lib";
 
 const log: debug.IDebugger = debug('app:sol-client');
 
@@ -38,8 +38,8 @@ export default class SolClient {
     log('Connection to cluster established:', CONNECTION_URL, version);
   }
 
-  async getTokenBalance(tokenAccPk: PublicKey): Promise<number> {
-    const balance = await this.connection.getTokenAccountBalance(tokenAccPk);
+  async getTokenBalance(tokenAccountPubkey: PublicKey): Promise<number> {
+    const balance = await this.connection.getTokenAccountBalance(tokenAccountPubkey);
     if (!balance.value.uiAmount) {
       return 0;
     }
@@ -50,23 +50,23 @@ export default class SolClient {
     return this.connection.getBalance(publicKey);
   }
 
-  async getTokenAccsForOwner(
-    ownerPk: PublicKey,
-    mintPk?: PublicKey,
+  async getTokenAccountsForOwner(
+    ownerPubkey: PublicKey,
+    mintPubkey?: PublicKey,
   ): Promise<FoundTokenAccount[]> {
-    let payerAccs;
-    if (mintPk) {
-      payerAccs = await this.connection.getParsedTokenAccountsByOwner(
-        ownerPk,
-        {programId: TOKEN_PROGRAM_ID, mint: mintPk},
+    let payerAccounts;
+    if (mintPubkey) {
+      payerAccounts = await this.connection.getParsedTokenAccountsByOwner(
+        ownerPubkey,
+        {programId: TOKEN_PROGRAM_ID, mint: mintPubkey},
       );
     } else {
-      payerAccs = await this.connection.getParsedTokenAccountsByOwner(
-        ownerPk,
+      payerAccounts = await this.connection.getParsedTokenAccountsByOwner(
+        ownerPubkey,
         {programId: TOKEN_PROGRAM_ID},
       );
     }
-    return payerAccs.value.map((a) => ({
+    return payerAccounts.value.map((a) => ({
       pubkey: a.pubkey,
       mint: new PublicKey(a.account.data.parsed.info.mint),
       owner: new PublicKey(a.account.data.parsed.info.owner),
@@ -86,19 +86,19 @@ export default class SolClient {
     );
   }
 
-  async deserializeToken(mintPk: PublicKey): Promise<Token> {
+  async deserializeToken(mintPubkey: PublicKey): Promise<Token> {
     // todo TESTING_KP_PATH should not be used here
-    const tempKp = loadKpSync(TESTING_KP_PATH);
-    return new Token(this.connection, mintPk, TOKEN_PROGRAM_ID, tempKp);
+    const tempKeypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
+    return new Token(this.connection, mintPubkey, TOKEN_PROGRAM_ID, tempKeypair);
   }
 
-  async deserializeTokenAcc(mintPk: PublicKey, tokenAccPk: PublicKey): Promise<AccountInfo> {
-    const t = await this.deserializeToken(mintPk);
-    return t.getAccountInfo(tokenAccPk);
+  async deserializeTokenAccount(mintPubkey: PublicKey, tokenAccountPubkey: PublicKey): Promise<AccountInfo> {
+    const t = await this.deserializeToken(mintPubkey);
+    return t.getAccountInfo(tokenAccountPubkey);
   }
 
-  async deserializeTokenMint(mintPk: PublicKey): Promise<MintInfo> {
-    const t = await this.deserializeToken(mintPk);
+  async deserializeTokenMint(mintPubkey: PublicKey): Promise<MintInfo> {
+    const t = await this.deserializeToken(mintPubkey);
     return t.getMintInfo();
   }
 
@@ -107,13 +107,13 @@ export default class SolClient {
   /**
    * Re-make of the official function from the SDK found here:
    * https://github.com/solana-labs/solana-program-library/blob/master/token/js/client/token.js#L446
-   * This prepares the TX and returns it, instead of sending it.
+   * This prepares the TRANSACTION and returns it, instead of sending it.
    */
-  async prepCreateTokenAccTx(
-    payerPk: PublicKey,
-    mintPk: PublicKey,
-    ownerPk?: PublicKey,
-  ): Promise<[ixsAndSigners, PublicKey]> {
+  async prepCreateTokenAccountTransaction(
+    payerPubkey: PublicKey,
+    mintPubkey: PublicKey,
+    ownerPubkey?: PublicKey,
+  ): Promise<[instructionsAndSigners, PublicKey]> {
     // Allocate memory for the account
     const balanceNeeded = await this.getMinBalanceRentForExemptAccount();
 
@@ -121,7 +121,7 @@ export default class SolClient {
     const transaction = new Transaction();
     transaction.add(
       SystemProgram.createAccount({
-        fromPubkey: payerPk,
+        fromPubkey: payerPubkey,
         newAccountPubkey: newAccount.publicKey,
         lamports: balanceNeeded,
         space: AccountLayout.span,
@@ -131,72 +131,72 @@ export default class SolClient {
     transaction.add(
       Token.createInitAccountInstruction(
         TOKEN_PROGRAM_ID,
-        mintPk,
+        mintPubkey,
         newAccount.publicKey,
-        ownerPk ?? payerPk,
+        ownerPubkey ?? payerPubkey,
       ),
     );
     return [{instructions: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
   }
 
-  async getOrCreateTokenAccByMint(
-    ownerPk: PublicKey,
-    mintPk: PublicKey,
-  ): Promise<[ixsAndSigners, PublicKey]> {
-    let ixsAndSigners: ixsAndSigners = {instructions: [], signers: []};
-    let tokenAccPk: PublicKey;
-    if (mintPk.toBase58() === 'So11111111111111111111111111111111111111112') {
-      return [ixsAndSigners, ownerPk];
+  async getOrCreateTokenAccountByMint(
+    ownerPubkey: PublicKey,
+    mintPubkey: PublicKey,
+  ): Promise<[instructionsAndSigners, PublicKey]> {
+    let instructionsAndSigners: instructionsAndSigners = {instructions: [], signers: []};
+    let tokenAccountPubkey: PublicKey;
+    if (mintPubkey.toBase58() === 'So11111111111111111111111111111111111111112') {
+      return [instructionsAndSigners, ownerPubkey];
     }
-    const tokenAccounts = (await this.connection.getTokenAccountsByOwner(ownerPk, {
-        mint: mintPk,
+    const tokenAccounts = (await this.connection.getTokenAccountsByOwner(ownerPubkey, {
+        mint: mintPubkey,
       }
     )).value;
 
     if (tokenAccounts.length === 0) {
-      log(`Creating token account for mint ${mintPk.toBase58()}`);
-      [ixsAndSigners, tokenAccPk] = await this.prepCreateTokenAccTx(ownerPk, mintPk);
+      log(`Creating token account for mint ${mintPubkey.toBase58()}`);
+      [instructionsAndSigners, tokenAccountPubkey] = await this.prepCreateTokenAccountTransaction(ownerPubkey, mintPubkey);
     } else {
-      tokenAccPk = tokenAccounts[0].pubkey;
+      tokenAccountPubkey = tokenAccounts[0].pubkey;
     }
-    log(`User's account for mint ${mintPk.toBase58()} is ${tokenAccPk.toBase58()}`);
+    log(`User's account for mint ${mintPubkey.toBase58()} is ${tokenAccountPubkey.toBase58()}`);
 
-    return [ixsAndSigners, tokenAccPk];
+    return [instructionsAndSigners, tokenAccountPubkey];
   }
 
   // --------------------------------------- testing only
 
-  async _prepareAndSendTx(ixsAndSigners: ixsAndSigners): Promise<string | undefined> {
-    if (ixsAndSigners.instructions.length === 0) {
+  async _prepareAndSendTransaction(instructionsAndSigners: instructionsAndSigners): Promise<string | undefined> {
+    if (instructionsAndSigners.instructions.length === 0) {
       log('No instructions provided, aborting.')
       return;
     }
-    const tx = new Transaction().add(...ixsAndSigners.instructions);
-    const sig = await sendAndConfirmTransaction(this.connection, tx, ixsAndSigners.signers);
-    console.log('Tx successful,', sig);
+    const transaction = new Transaction().add(...instructionsAndSigners.instructions);
+    const sig = await sendAndConfirmTransaction(this.connection, transaction, instructionsAndSigners.signers);
+    console.log('Transaction successful,', sig);
     return sig;
   }
 
-  async _createMint(ownerKp: Keypair): Promise<Token> {
+  async _createMint(ownerKeypair: Keypair): Promise<Token> {
     return Token.createMint(
       this.connection,
-      ownerKp as any,
-      ownerKp.publicKey,
+      ownerKeypair as any,
+      ownerKeypair.publicKey,
       null,
       0,
       TOKEN_PROGRAM_ID,
     );
   }
 
-  async _createTokenAcc(mint: Token, ownerPk: PublicKey): Promise<PublicKey> {
-    const newAcc = await mint.createAccount(ownerPk);
-    log('Created token account', newAcc.toBase58());
-    return newAcc;
+  async _createTokenAccount(mint: Token, ownerPubkey: PublicKey): Promise<PublicKey> {
+    const newAccount = await mint.createAccount(ownerPubkey);
+    log('Created token account', newAccount.toBase58());
+    return newAccount;
   }
 
-  async _fundTokenAcc(mint: Token, ownerPk: PublicKey, tokenAccPk: PublicKey, amount: number) {
-    await mint.mintTo(tokenAccPk, ownerPk, [], amount);
-    log(`Funded account ${tokenAccPk.toBase58()} with ${amount} tokens of mint ${mint.publicKey.toBase58()}`);
+  async _fundTokenAccount(mint: Token, ownerPubkey: PublicKey, tokenAccountPubkey: PublicKey, amount: number) {
+    await mint.mintTo(tokenAccountPubkey, ownerPubkey, [], amount);
+    log(`Funded account ${tokenAccountPubkey.toBase58()} with ${amount} tokens of mint ${mint.publicKey.toBase58()}`);
   }
 
   /**
@@ -222,18 +222,18 @@ export default class SolClient {
   }
 
   async _transferLamports(
-    fromKp: Keypair,
-    toPk: PublicKey,
+    fromKeypair: Keypair,
+    toPubkey: PublicKey,
     lamports: number
   ) {
-    const transferIx = SystemProgram.transfer({
-      fromPubkey: fromKp.publicKey,
-      toPubkey: toPk,
+    const transferInstruction = SystemProgram.transfer({
+      fromPubkey: fromKeypair.publicKey,
+      toPubkey: toPubkey,
       lamports,
     })
-    await this._prepareAndSendTx({
-      instructions: [transferIx],
-      signers: [fromKp]
+    await this._prepareAndSendTransaction({
+      instructions: [transferInstruction],
+      signers: [fromKeypair]
     })
   }
 }

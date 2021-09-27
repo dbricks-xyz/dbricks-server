@@ -21,7 +21,7 @@ export let CONNECTION_URL: string;
 /* eslint-enable */
 
 // todo adjust for local testing
-export const TESTING_KP_PATH = process.env.KP_PATH ?? '';
+export const TESTING_KEYPAIR_PATH = process.env.KEYPAIR_PATH ?? '';
 
 if (NETWORK === 'mainnet') {
   SERUM_PROG_ID = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin');
@@ -39,9 +39,9 @@ if (NETWORK === 'mainnet') {
   //  2)cargo build-bpf,
   //  3)solana program deploy [path]
   //  4)paste the IDs below
-  SERUM_PROG_ID = new PublicKey('5xmw9VJtx2FKyad2DL15i7yeZasm38NaL3JZiT3sm4ZT');
+  SERUM_PROG_ID = new PublicKey('DVieqxNimmtbZpZTw2sZiSAohNJuHLywGaMs47RAW97Z');
   SABER_PROG_ID = new PublicKey('DVieqxNimmtbZpZTw2sZiSAohNJuHLywGaMs47RAW97Z');
-  MANGO_PROG_ID = new PublicKey('EFUJ77cT4eFczspUS11K8BMbmmVxdQLk1pF8dhXk3Ri4');
+  MANGO_PROG_ID = new PublicKey('B9VhwgQUzrGPdPGkzHNxEfGtXzV7YxBPytjFAka5dsCZ');
   CONNECTION_URL = 'http://localhost:8899';
 } else {
   throw new Error(`Network unrecognized. Should be mainnet/devnet/localnet. Currently: ${NETWORK}`);

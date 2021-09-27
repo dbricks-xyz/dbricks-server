@@ -1,4 +1,4 @@
-import {ixsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from 'dbricks-lib';
 import {
   IMangoLenderWithdraw,
   IMangoLenderWithdrawParamsParsed,
@@ -6,20 +6,20 @@ import {
 import MangoClient from '../client/mango.client';
 
 export default class MangoWithdrawService extends MangoClient implements IMangoLenderWithdraw {
-  async withdraw(params: IMangoLenderWithdrawParamsParsed): Promise<ixsAndSigners[]> {
-    const bankVaultInfo = await this.loadBankVaultInformation(params.mintPk);
+  async withdraw(params: IMangoLenderWithdrawParamsParsed): Promise<instructionsAndSigners[]> {
+    const bankVaultInfo = await this.loadBankVaultInformation(params.mintPubkey);
     const {rootBank, nodeBank, vault} = bankVaultInfo;
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
+    const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
-    const tx = await this.prepWithdrawTx(
-      mangoAcc,
-      params.ownerPk,
+    const transaction = await this.prepWithdrawTransaction(
+      mangoAccount,
+      params.ownerPubkey,
       rootBank,
       nodeBank,
       vault,
       params.quantity,
       params.isBorrow,
     );
-    return [tx];
+    return [transaction];
   }
 }

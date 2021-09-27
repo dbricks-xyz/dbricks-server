@@ -1,13 +1,13 @@
 import { PublicKey } from '@solana/web3.js';
-import { ixsAndSigners } from 'dbricks-lib';
+import { instructionsAndSigners } from 'dbricks-lib';
 
 export interface IMangoLenderDeposit {
-  deposit: (params: IMangoLenderDepositParamsParsed) => Promise<ixsAndSigners[]>;
+  deposit: (params: IMangoLenderDepositParamsParsed) => Promise<instructionsAndSigners[]>;
 }
 
 export interface IMangoLenderDepositParamsParsed {
-  mintPk: PublicKey,
+  mintPubkey: PublicKey,
   quantity: number,
-  ownerPk: PublicKey,
-  mangoAccNr: number,
+  ownerPubkey: PublicKey,
+  mangoAccountNumber: number,
 }

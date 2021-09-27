@@ -1,6 +1,6 @@
 import e from 'express';
 import debug from 'debug';
-import {serializeIxsAndSigners} from 'dbricks-lib';
+import {serializeInstructionsAndSigners} from 'dbricks-lib';
 import SerumOrderService from '../services/serum.service.order';
 import SerumMarketService from '../services/serum.service.market';
 import {
@@ -19,9 +19,9 @@ class SerumController {
     const params = deserializePlaceOrder(req);
     const serumOrderService = new SerumOrderService();
     Promise.resolve(serumOrderService.place(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Order instruction/signers generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -30,13 +30,13 @@ class SerumController {
     const params = deserializeCancelOrder(req);
     const serumOrderService = new SerumOrderService();
     Promise.resolve(serumOrderService.cancel(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         if (params.orderId) {
           log(`Order ${params.orderId} successfully cancelled`);
         } else {
           log('All orders cancelled.')
         }
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -47,9 +47,9 @@ class SerumController {
     const params = deserializeInitMarket(req);
     const serumMarketService = new SerumMarketService();
     Promise.resolve(serumMarketService.init(params))
-      .then((ixsAndSigners) => {
-        log(`Market for ${params.baseMintPk}/${params.quoteMintPk} successfully initialized`);
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+      .then((instructionsAndSigners) => {
+        log(`Market for ${params.baseMintPubkey}/${params.quoteMintPubkey} successfully initialized`);
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
@@ -58,16 +58,16 @@ class SerumController {
     const params = deserializeSettleMarket(req);
     const serumMarketService = new SerumMarketService();
     Promise.resolve(serumMarketService.settle(params))
-      .then((ixsAndSigners) => {
+      .then((instructionsAndSigners) => {
         log('Settle instruction/signers generated');
-        res.status(200).send(serializeIxsAndSigners(ixsAndSigners));
+        res.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
   }
 
   async getMarketMints(req: e.Request, res: e.Response, next: e.NextFunction) {
     const serumMarketService = new SerumMarketService();
-    Promise.resolve(serumMarketService.getMarketMints(req.body.marketPk))
+    Promise.resolve(serumMarketService.getMarketMints(req.body.marketPubkey))
       .then(([base, quote]) => {
         log('Base/quote names generated');
         res.status(200).send([base, quote]);

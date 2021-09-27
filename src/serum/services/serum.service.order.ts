@@ -4,48 +4,48 @@ import {
   ISerumDEXOrderPlaceParamsParsed,
 } from '../interfaces/dex/serum.interfaces.dex.order';
 import SerumClient from '../client/serum.client';
-import {mergeIxsAndSigners} from "../../common/util/common.util";
-import {DBricksSDK, flattenedBrick, ixsAndSigners} from "dbricks-lib";
+import {mergeInstructionsAndSigners} from "../../common/util/common.util";
+import {DBricksSDK, flattenedBrick, instructionsAndSigners} from "dbricks-lib";
 import {COMMITTMENT, CONNECTION_URL} from "../../config/config";
 import {PublicKey} from "@solana/web3.js";
 
 export default class SerumOrderService extends SerumClient implements ISerumDEXOrder {
-  async place(params: ISerumDEXOrderPlaceParamsParsed): Promise<ixsAndSigners[]> {
-    const market = await this.loadSerumMarket(params.marketPk);
-    const [payerIxsAndSigners, payerPk] = await this.getPayerForMarket(
+  async place(params: ISerumDEXOrderPlaceParamsParsed): Promise<instructionsAndSigners[]> {
+    const market = await this.loadSerumMarket(params.marketPubkey);
+    const [payerInstructionsAndSigners, payerPubkey] = await this.getPayerForMarket(
       market,
       params.side,
-      params.ownerPk,
+      params.ownerPubkey,
     );
-    const placeIxsAndSigners = await this.prepPlaceOrderTx(
+    const placeInstructionsAndSigners = await this.prepPlaceOrderTransaction(
       market,
       params.side,
       params.price,
       params.size,
       params.orderType,
-      params.ownerPk,
-      payerPk,
+      params.ownerPubkey,
+      payerPubkey,
     );
-    const tx = mergeIxsAndSigners(payerIxsAndSigners, placeIxsAndSigners);
-    return [tx];
+    const transaction = mergeInstructionsAndSigners(payerInstructionsAndSigners, placeInstructionsAndSigners);
+    return [transaction];
   }
 
-  async cancel(params: ISerumDEXOrderCancelParamsParsed): Promise<ixsAndSigners[]> {
-    const market = await this.loadSerumMarket(params.marketPk);
-    const ixsAndSigners = await this.prepCancelOrderTx(
+  async cancel(params: ISerumDEXOrderCancelParamsParsed): Promise<instructionsAndSigners[]> {
+    const market = await this.loadSerumMarket(params.marketPubkey);
+    const instructionsAndSigners = await this.prepCancelOrderTransaction(
       market,
-      params.ownerPk,
+      params.ownerPubkey,
       params.orderId,
     );
-    //the next steps are needed in case there are too many orders to cancel in a single Tx
-    const flattenedBricks: flattenedBrick[] = ixsAndSigners.instructions.map(i => {
+    //the next steps are needed in case there are too many orders to cancel in a single Transaction
+    const flattenedBricks: flattenedBrick[] = instructionsAndSigners.instructions.map(i => {
       return {
         id: 0,
-        desc: '',
-        ixsAndSigners: {
+        description: '',
+        instructionsAndSigners: {
           instructions: [i],
           signers: []
-        } as ixsAndSigners
+        } as instructionsAndSigners
       }
     })
     const sizedBricks = await (new DBricksSDK(CONNECTION_URL, COMMITTMENT)).findOptimalBrickSize(
@@ -54,9 +54,9 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
     );
     return sizedBricks.map(brick => {
         return {
-          instructions: brick.tx.instructions,
+          instructions: brick.transaction.instructions,
           signers: [],
-        } as ixsAndSigners;
+        } as instructionsAndSigners;
     })
   }
 }

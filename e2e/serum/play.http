@@ -2,11 +2,11 @@ POST http://localhost:3000/serum/markets
 Content-Type: application/json
 
 {
-  "baseMintPk": "FwHC3CMb7Rsnhzo2UwmTYJFYv9pvk4ZshB5QuNDAVwLa",
-  "quoteMintPk": "ECpqPFuHdujKG3LUmsR7C6my2fYXhUV9RcuJSecMMrJ4",
+  "baseMintPubkey": "FwHC3CMb7Rsnhzo2UwmTYJFYv9pvk4ZshB5QuNDAVwLa",
+  "quoteMintPubkey": "ECpqPFuHdujKG3LUmsR7C6my2fYXhUV9RcuJSecMMrJ4",
   "lotSize": "1",
   "tickSize": "1",
-  "ownerPk": "75ErM1QcGjHiPMX7oLsf9meQdGSUs4ZrwS2X8tBpsZhA"
+  "ownerPubkey": "75ErM1QcGjHiPMX7oLsf9meQdGSUs4ZrwS2X8tBpsZhA"
 }
 
 ###
