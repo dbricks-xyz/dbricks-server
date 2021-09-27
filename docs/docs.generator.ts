@@ -6,16 +6,16 @@ export function saveRequestResponseToJSON(
   dirName: string,
   method: Method,
   route: string,
-  req: any,
-  res: any,
+  request: any,
+  response: any,
 ) {
-  const dedupedRes = dedupHighLevel(res);
+  const dedupedResponse = dedupHighLevel(response);
   const finalObj = {
     route: `${method} ${route}`,
-    req,
-    reqSchema: parseHighLevelType(req),
-    res: dedupedRes,
-    resSchema: parseHighLevelType(dedupedRes),
+    request,
+    requestSchema: parseHighLevelType(request),
+    response: dedupedResponse,
+    responseSchema: parseHighLevelType(dedupedResponse),
   }
 
   const dir = `docs/out/${dirName}`

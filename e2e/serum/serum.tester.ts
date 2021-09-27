@@ -83,16 +83,16 @@ export default class SerumTester extends SerumClient {
       tickSize: '1',
       ownerPubkey: this.user1Keypair.publicKey.toBase58(),
     };
-    const res = await request(app).post(route).send(params);
+    const response = await request(app).post(route).send(params);
     saveRequestResponseToJSON(
       'serum.markets.init',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestPlaceOrderInstruction(
@@ -111,16 +111,16 @@ export default class SerumTester extends SerumClient {
       orderType,
       ownerPubkey,
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'serum.orders.place',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestSettleInstruction(
@@ -131,16 +131,16 @@ export default class SerumTester extends SerumClient {
       marketPubkey: this.marketKeypair.publicKey.toBase58(),
       ownerPubkey,
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'serum.markets.settle',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   async requestCancelOrderInstruction(orderId: string, ownerPubkey: string) {
@@ -150,16 +150,16 @@ export default class SerumTester extends SerumClient {
       orderId,
       ownerPubkey,
     };
-    const res = await request(app).post(route).send(params).expect(200);
+    const response = await request(app).post(route).send(params).expect(200);
     saveRequestResponseToJSON(
       'serum.orders.cancel',
       'serum',
       'POST',
       route,
       params,
-      res.body
+      response.body
     );
-    return deserializeInstructionsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(response.body);
   }
 
   // --------------------------------------- helpers

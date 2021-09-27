@@ -16,8 +16,8 @@ import {
   ISerumDEXMarketSettleParamsParsed
 } from "../interfaces/dex/serum.interfaces.dex.market";
 
-export function deserializeCancelOrder(req: e.Request): ISerumDEXOrderCancelParamsParsed {
-  const body: ISerumDEXOrderCancelParams = req.body;
+export function deserializeCancelOrder(request: e.Request): ISerumDEXOrderCancelParamsParsed {
+  const body: ISerumDEXOrderCancelParams = request.body;
   return {
     marketPubkey: deserializePubkey(body.marketPubkey),
     orderId: body.orderId ? new BN(body.orderId, 16) : undefined, //comes as string, hex
@@ -25,8 +25,8 @@ export function deserializeCancelOrder(req: e.Request): ISerumDEXOrderCancelPara
   }
 }
 
-export function deserializePlaceOrder(req: e.Request): ISerumDEXOrderPlaceParamsParsed {
-  const body: ISerumDEXOrderPlaceParams = req.body;
+export function deserializePlaceOrder(request: e.Request): ISerumDEXOrderPlaceParamsParsed {
+  const body: ISerumDEXOrderPlaceParams = request.body;
   return {
     marketPubkey: deserializePubkey(body.marketPubkey),
     side: body.side,
@@ -38,8 +38,8 @@ export function deserializePlaceOrder(req: e.Request): ISerumDEXOrderPlaceParams
   }
 }
 
-export function deserializeInitMarket(req: e.Request): ISerumDEXMarketInitParamsParsed {
-  const body: ISerumDEXMarketInitParams = req.body;
+export function deserializeInitMarket(request: e.Request): ISerumDEXMarketInitParamsParsed {
+  const body: ISerumDEXMarketInitParams = request.body;
   return {
     baseMintPubkey: deserializePubkey(body.baseMintPubkey),
     quoteMintPubkey: deserializePubkey(body.quoteMintPubkey),
@@ -50,8 +50,8 @@ export function deserializeInitMarket(req: e.Request): ISerumDEXMarketInitParams
   }
 }
 
-export function deserializeSettleMarket(req: e.Request): ISerumDEXMarketSettleParamsParsed {
-  const body: ISerumDEXMarketSettleParams = req.body;
+export function deserializeSettleMarket(request: e.Request): ISerumDEXMarketSettleParamsParsed {
+  const body: ISerumDEXMarketSettleParams = request.body;
   return {
     marketPubkey: deserializePubkey(body.marketPubkey),
     ownerPubkey: deserializePubkey(body.ownerPubkey),

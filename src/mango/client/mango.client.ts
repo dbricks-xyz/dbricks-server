@@ -756,12 +756,12 @@ export default class MangoClient extends SolClient {
 
     let allMarketAccountInfos: { accountInfo: { data: any; }; }[];
     try {
-      const resp = await Promise.all([
+      const responses = await Promise.all([
         getMultipleAccounts(this.connection, allMarketPubkeys),
         this.group.loadCache(this.connection),
         this.group.loadRootBanks(this.connection),
       ]);
-      allMarketAccountInfos = resp[0];
+      allMarketAccountInfos = responses[0];
     } catch {
       throw new Error('Failed to load markets');
     }

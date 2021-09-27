@@ -28,8 +28,8 @@ export default class SerumClient extends SolClient {
 
   async prepInitMarketTransaction(
     marketPubkey: PublicKey,
-    reqQPubkey: PublicKey,
-    eventQPubkey: PublicKey,
+    requestQueuePubkey: PublicKey,
+    eventQueuePubkey: PublicKey,
     bidsPubkey: PublicKey,
     asksPubkey: PublicKey,
     baseVaultPubkey: PublicKey,
@@ -45,8 +45,8 @@ export default class SerumClient extends SolClient {
     const initMarketInstruction = DexInstructions.initializeMarket({
       // dex accounts
       market: marketPubkey,
-      requestQueue: reqQPubkey,
-      eventQueue: eventQPubkey,
+      requestQueue: requestQueuePubkey,
+      eventQueue: eventQueuePubkey,
       bids: bidsPubkey,
       asks: asksPubkey,
       // vaults
@@ -293,8 +293,8 @@ export default class SerumClient extends SolClient {
     // do we just throw these away? seems to be the case in their Serum DEX UI
     // https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L475
     const marketKeypair = new Keypair();
-    const reqQKeypair = new Keypair();
-    const eventQKeypair = new Keypair();
+    const requestQueueKeypair = new Keypair();
+    const eventQueueKeypair = new Keypair();
     const bidsKeypair = new Keypair();
     const asksKeypair = new Keypair();
 
@@ -302,11 +302,11 @@ export default class SerumClient extends SolClient {
     const marketInstruction = await this.prepCreateStateAccountsInstruction(
       marketKeypair.publicKey, 376 + 12, ownerPubkey,
     );
-    const reqQInstruction = await this.prepCreateStateAccountsInstruction(
-      reqQKeypair.publicKey, 640 + 12, ownerPubkey,
+    const requestQueueInstruction = await this.prepCreateStateAccountsInstruction(
+      requestQueueKeypair.publicKey, 640 + 12, ownerPubkey,
     );
-    const eventQInstruction = await this.prepCreateStateAccountsInstruction(
-      eventQKeypair.publicKey, 1048576 + 12, ownerPubkey,
+    const eventQueueInstruction = await this.prepCreateStateAccountsInstruction(
+      eventQueueKeypair.publicKey, 1048576 + 12, ownerPubkey,
     );
     const bidsInstruction = await this.prepCreateStateAccountsInstruction(
       bidsKeypair.publicKey, 65536 + 12, ownerPubkey,
@@ -316,8 +316,8 @@ export default class SerumClient extends SolClient {
     );
 
     return {
-      instructions: [marketInstruction, reqQInstruction, eventQInstruction, bidsInstruction, asksInstruction],
-      signers: [marketKeypair, reqQKeypair, eventQKeypair, bidsKeypair, asksKeypair],
+      instructions: [marketInstruction, requestQueueInstruction, eventQueueInstruction, bidsInstruction, asksInstruction],
+      signers: [marketKeypair, requestQueueKeypair, eventQueueKeypair, bidsKeypair, asksKeypair],
     }
   }
 
