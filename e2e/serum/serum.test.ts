@@ -9,7 +9,7 @@ describe('Serum', () => {
   // √ tests settle order 1)no settle acc (user1), 2)xisting settle acc(user2)
   it('Inits market + places/settles a trade', async () => {
     const tester = new SerumTester();
-    await tester.prepAccs(fundingAmount);
+    await tester.prepAccounts(fundingAmount);
     await tester.prepMarket();
 
     // place orders from both users
@@ -35,7 +35,7 @@ describe('Serum', () => {
   // √ tests cancelling an order with a non-existent id
   it('Inits market + places/cancels a trade', async () => {
     const tester = new SerumTester();
-    await tester.prepAccs(fundingAmount);
+    await tester.prepAccounts(fundingAmount);
     await tester.prepMarket();
 
     // place 1 order
@@ -59,7 +59,7 @@ describe('Serum', () => {
     await tester.verifyOpenOrdersCount(tester.user1Kp, 0);
     await tester.settleAndVerifyAmount(tester.user1Kp, tester.quoteMint.publicKey, fundingAmount);
 
-    // place 15 orders (too many to fit into a single tx - will have to be broken up)
+    // place 15 orders (too many to fit into a single transaction - will have to be broken up)
     for (let i = 0; i < 15; i += 1) {
       await tester.placeLimitOrder(tester.user1Kp, 'buy', amount / 10, price + i);
     }

@@ -1,23 +1,23 @@
 import {PublicKey,} from '@solana/web3.js';
 import BN from 'bn.js';
-import {ixsAndSigners, orderType, side} from "dbricks-lib";
+import {instructionsAndSigners, orderType, side} from "dbricks-lib";
 
 export interface ISerumDEXOrder {
-  place: (params: ISerumDEXOrderPlaceParamsParsed) => Promise<ixsAndSigners[]>;
-  cancel: (params: ISerumDEXOrderCancelParamsParsed) => Promise<ixsAndSigners[]>
+  place: (params: ISerumDEXOrderPlaceParamsParsed) => Promise<instructionsAndSigners[]>;
+  cancel: (params: ISerumDEXOrderCancelParamsParsed) => Promise<instructionsAndSigners[]>
 }
 
 export interface ISerumDEXOrderCancelParamsParsed {
-  marketPk: PublicKey,
+  marketPubkey: PublicKey,
   orderId?: BN,
-  ownerPk: PublicKey,
+  ownerPubkey: PublicKey,
 }
 
 export interface ISerumDEXOrderPlaceParamsParsed {
-  marketPk: PublicKey,
+  marketPubkey: PublicKey,
   side: side,
   price: number,
   size: number,
   orderType: orderType,
-  ownerPk: PublicKey,
+  ownerPubkey: PublicKey,
 }

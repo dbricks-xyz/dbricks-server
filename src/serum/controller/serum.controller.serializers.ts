@@ -1,6 +1,6 @@
 import e from "express";
 import {
-  deserializePk,
+  deserializePubkey,
   ISerumDEXMarketInitParams,
   ISerumDEXMarketSettleParams,
   ISerumDEXOrderCancelParams,
@@ -19,41 +19,41 @@ import {
 export function deserializeCancelOrder(req: e.Request): ISerumDEXOrderCancelParamsParsed {
   const body: ISerumDEXOrderCancelParams = req.body;
   return {
-    marketPk: deserializePk(body.marketPk),
+    marketPubkey: deserializePubkey(body.marketPubkey),
     orderId: body.orderId ? new BN(body.orderId, 16) : undefined, //comes as string, hex
-    ownerPk: deserializePk(body.ownerPk),
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
   }
 }
 
 export function deserializePlaceOrder(req: e.Request): ISerumDEXOrderPlaceParamsParsed {
   const body: ISerumDEXOrderPlaceParams = req.body;
   return {
-    marketPk: deserializePk(body.marketPk),
+    marketPubkey: deserializePubkey(body.marketPubkey),
     side: body.side,
     //serum's sdk takes these as numbers, so no point converting to BN
     price: parseFloat(body.price), //comes as string
     size: parseFloat(body.size), //comes as string
     orderType: body.orderType,
-    ownerPk: deserializePk(body.ownerPk),
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
   }
 }
 
 export function deserializeInitMarket(req: e.Request): ISerumDEXMarketInitParamsParsed {
   const body: ISerumDEXMarketInitParams = req.body;
   return {
-    baseMintPk: deserializePk(body.baseMintPk),
-    quoteMintPk: deserializePk(body.quoteMintPk),
+    baseMintPubkey: deserializePubkey(body.baseMintPubkey),
+    quoteMintPubkey: deserializePubkey(body.quoteMintPubkey),
     //converted to BN in calcBaseAndQuoteLotSizes()
     lotSize: parseFloat(body.lotSize), //comes as string
     tickSize: parseFloat(body.tickSize), //comes as string
-    ownerPk: deserializePk(body.ownerPk),
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
   }
 }
 
 export function deserializeSettleMarket(req: e.Request): ISerumDEXMarketSettleParamsParsed {
   const body: ISerumDEXMarketSettleParams = req.body;
   return {
-    marketPk: deserializePk(body.marketPk),
-    ownerPk: deserializePk(body.ownerPk),
+    marketPubkey: deserializePubkey(body.marketPubkey),
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
   }
 }

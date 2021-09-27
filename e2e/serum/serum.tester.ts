@@ -5,7 +5,7 @@ import {TESTING_KP_PATH} from '../../src/config/config';
 import request from 'supertest';
 import app from "../../src/app";
 import {
-  deserializeIxsAndSigners,
+  deserializeInstructionsAndSigners,
   ISerumDEXMarketInitParams,
   ISerumDEXMarketSettleParams,
   ISerumDEXOrderCancelParams,
@@ -43,7 +43,7 @@ export default class SerumTester extends SerumClient {
 
   // --------------------------------------- preparators
 
-  async prepAccs(fundingAmount: number) {
+  async prepAccounts(fundingAmount: number) {
     // token mints
     this.baseMint = await this._createMint(this.user1Kp);
     this.quoteMint = await this._createMint(this.user1Kp);
@@ -61,27 +61,27 @@ export default class SerumTester extends SerumClient {
   }
 
   async prepMarket() {
-    const [tx1, tx2] = await this.requestInitMarketIx();
-    tx1.signers.unshift(this.user1Kp);
-    tx2.signers.unshift(this.user1Kp);
-    await this._prepareAndSendTx(tx1);
-    await this._prepareAndSendTx(tx2);
+    const [transaction1, transaction2] = await this.requestInitMarketInstruction();
+    transaction1.signers.unshift(this.user1Kp);
+    transaction2.signers.unshift(this.user1Kp);
+    await this._prepareAndSendTransaction(transaction1);
+    await this._prepareAndSendTransaction(transaction2);
     //the 1st keypair returned is always the marketKp
-    this.marketKp = tx1.signers[1] as Keypair;
+    this.marketKp = transaction1.signers[1] as Keypair;
     console.log('New market Pk is', this.marketKp.publicKey.toBase58());
     this.market = await this.loadSerumMarket(this.marketKp.publicKey);
   }
 
   // --------------------------------------- requesters
 
-  async requestInitMarketIx() {
+  async requestInitMarketInstruction() {
     const route = '/serum/markets/';
     const params: ISerumDEXMarketInitParams = {
-      baseMintPk: this.baseMint.publicKey.toBase58(),
-      quoteMintPk: this.quoteMint.publicKey.toBase58(),
+      baseMintPubkey: this.baseMint.publicKey.toBase58(),
+      quoteMintPubkey: this.quoteMint.publicKey.toBase58(),
       lotSize: '1',
       tickSize: '1',
-      ownerPk: this.user1Kp.publicKey.toBase58(),
+      ownerPubkey: this.user1Kp.publicKey.toBase58(),
     };
     const res = await request(app).post(route).send(params);
     saveReqResToJSON(
@@ -92,24 +92,24 @@ export default class SerumTester extends SerumClient {
       params,
       res.body
     );
-    return deserializeIxsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(res.body);
   }
 
-  async requestPlaceOrderIx(
+  async requestPlaceOrderInstruction(
     side: side,
     price: string,
     size: string,
     orderType: orderType,
-    ownerPk: string,
+    ownerPubkey: string,
   ) {
     const route = '/serum/orders';
     const params: ISerumDEXOrderPlaceParams = {
-      marketPk: this.marketKp.publicKey.toBase58(),
+      marketPubkey: this.marketKp.publicKey.toBase58(),
       side,
       price,
       size,
       orderType,
-      ownerPk,
+      ownerPubkey,
     };
     const res = await request(app).post(route).send(params).expect(200);
     saveReqResToJSON(
@@ -120,16 +120,16 @@ export default class SerumTester extends SerumClient {
       params,
       res.body
     );
-    return deserializeIxsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(res.body);
   }
 
-  async requestSettleIx(
-    ownerPk: string,
+  async requestSettleInstruction(
+    ownerPubkey: string,
   ) {
     const route = '/serum/markets/settle';
     const params: ISerumDEXMarketSettleParams = {
-      marketPk: this.marketKp.publicKey.toBase58(),
-      ownerPk,
+      marketPubkey: this.marketKp.publicKey.toBase58(),
+      ownerPubkey,
     };
     const res = await request(app).post(route).send(params).expect(200);
     saveReqResToJSON(
@@ -140,15 +140,15 @@ export default class SerumTester extends SerumClient {
       params,
       res.body
     );
-    return deserializeIxsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(res.body);
   }
 
-  async requestCancelOrderIx(orderId: string, ownerPk: string) {
+  async requestCancelOrderInstruction(orderId: string, ownerPubkey: string) {
     const route = '/serum/orders/cancel';
     const params: ISerumDEXOrderCancelParams = {
-      marketPk: this.marketKp.publicKey.toBase58(),
+      marketPubkey: this.marketKp.publicKey.toBase58(),
       orderId,
-      ownerPk,
+      ownerPubkey,
     };
     const res = await request(app).post(route).send(params).expect(200);
     saveReqResToJSON(
@@ -159,30 +159,30 @@ export default class SerumTester extends SerumClient {
       params,
       res.body
     );
-    return deserializeIxsAndSigners(res.body);
+    return deserializeInstructionsAndSigners(res.body);
   }
 
   // --------------------------------------- helpers
 
   async placeLimitOrder(user: Keypair, side: side, amount: number, price: number) {
-    const tx = (await this.requestPlaceOrderIx(
+    const transaction = (await this.requestPlaceOrderInstruction(
       side,
       `${price}`,
       `${amount}`,
       'limit',
       user.publicKey.toBase58(),
     ))[0];
-    tx.signers.unshift(user);
-    await this._prepareAndSendTx(tx);
+    transaction.signers.unshift(user);
+    await this._prepareAndSendTransaction(transaction);
   }
 
   async cancelOrder(user: Keypair, orderId: string) {
-    const cancelTx = (await this.requestCancelOrderIx(
+    const cancelTransaction = (await this.requestCancelOrderInstruction(
       orderId,
       user.publicKey.toBase58(),
     ))[0];
-    cancelTx.signers.unshift(this.user1Kp);
-    await this._prepareAndSendTx(cancelTx);
+    cancelTransaction.signers.unshift(this.user1Kp);
+    await this._prepareAndSendTransaction(cancelTransaction);
   }
 
   async verifyOpenOrdersCount(user: Keypair, orderCount: number) {
@@ -194,11 +194,11 @@ export default class SerumTester extends SerumClient {
     // must consume events for settlement to work
     await this._consumeEvents(this.market, user);
     // settle
-    const settleTx = (await this.requestSettleIx(user.publicKey.toBase58()))[0];
-    settleTx.signers.unshift(user);
-    await this._prepareAndSendTx(settleTx);
+    const settleTransaction = (await this.requestSettleInstruction(user.publicKey.toBase58()))[0];
+    settleTransaction.signers.unshift(user);
+    await this._prepareAndSendTransaction(settleTransaction);
     // verify went through
-    const userTokenAccounts = await this.getTokenAccsForOwner(
+    const userTokenAccounts = await this.getTokenAccountsForOwner(
       user.publicKey,
       mint,
     );

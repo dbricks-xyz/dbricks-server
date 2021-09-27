@@ -1,20 +1,20 @@
 import {PublicKey} from '@solana/web3.js';
-import {ixsAndSigners} from "dbricks-lib";
+import {instructionsAndSigners} from "dbricks-lib";
 
 export interface ISerumDEXMarket {
-  init: (params: ISerumDEXMarketInitParamsParsed) => Promise<ixsAndSigners[]>
-  settle: (params: ISerumDEXMarketSettleParamsParsed) => Promise<ixsAndSigners[]>;
+  init: (params: ISerumDEXMarketInitParamsParsed) => Promise<instructionsAndSigners[]>
+  settle: (params: ISerumDEXMarketSettleParamsParsed) => Promise<instructionsAndSigners[]>;
 }
 
 export interface ISerumDEXMarketInitParamsParsed {
-  baseMintPk: PublicKey,
-  quoteMintPk: PublicKey,
+  baseMintPubkey: PublicKey,
+  quoteMintPubkey: PublicKey,
   lotSize: number,
   tickSize: number,
-  ownerPk: PublicKey,
+  ownerPubkey: PublicKey,
 }
 
 export interface ISerumDEXMarketSettleParamsParsed {
-  marketPk: PublicKey,
-  ownerPk: PublicKey
+  marketPubkey: PublicKey,
+  ownerPubkey: PublicKey
 }

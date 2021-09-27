@@ -1,4 +1,4 @@
-import {ixsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from 'dbricks-lib';
 import {QUOTE_INDEX} from '@blockworks-foundation/mango-client';
 import {
   IMangoDEXMarket,
@@ -7,22 +7,22 @@ import {
 import MangoClient from '../client/mango.client';
 
 export default class MangoMarketService extends MangoClient implements IMangoDEXMarket {
-  async settleSpot(params: IMangoDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
+  async settleSpot(params: IMangoDEXMarketSettleParamsParsed): Promise<instructionsAndSigners[]> {
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
     const markets = await this.loadSpotMarkets();
 
-    const tx = await this.prepSettleSpotTx(
+    const transaction = await this.prepSettleSpotTransaction(
       mangoAcc,
       markets,
-      params.ownerPk,
+      params.ownerPubkey,
     );
-    return [tx];
+    return [transaction];
   }
 
-  async settlePerp(params: IMangoDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
+  async settlePerp(params: IMangoDEXMarketSettleParamsParsed): Promise<instructionsAndSigners[]> {
     await this.loadGroup();
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPk, params.mangoAccNr);
-    const perpMarket = await this.loadPerpMarket(params.marketPk);
+    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
+    const perpMarket = await this.loadPerpMarket(params.marketPubkey);
     const marketIndex = this.group.getPerpMarketIndex(perpMarket.publicKey);
     const mangoCache = await this.group.loadCache(this.connection);
     const quoteRootBank = this.group.rootBankAccounts[QUOTE_INDEX];
@@ -30,13 +30,13 @@ export default class MangoMarketService extends MangoClient implements IMangoDEX
       throw new Error('Error finding rootBankAccount for mangoGroup');
     }
 
-    const tx = await this.prepSettlePerpTx(
+    const transaction = await this.prepSettlePerpTransaction(
       mangoCache,
       mangoAcc,
       perpMarket,
       quoteRootBank,
       mangoCache.priceCache[marketIndex].price,
     );
-    return [tx];
+    return [transaction];
   }
 }

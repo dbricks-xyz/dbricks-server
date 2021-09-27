@@ -1,4 +1,4 @@
-import {ixsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from 'dbricks-lib';
 import {
   IMangoLenderDeposit,
   IMangoLenderDepositParamsParsed,
@@ -6,20 +6,20 @@ import {
 import MangoClient from '../client/mango.client';
 
 export default class MangoDepositService extends MangoClient implements IMangoLenderDeposit {
-  async deposit(params: IMangoLenderDepositParamsParsed): Promise<ixsAndSigners[]> {
-    const bankVaultInfo = await this.loadBankVaultInformation(params.mintPk);
-    const tokenAcc = (await this.getTokenAccsForOwner(params.ownerPk, params.mintPk))[0];
+  async deposit(params: IMangoLenderDepositParamsParsed): Promise<instructionsAndSigners[]> {
+    const bankVaultInfo = await this.loadBankVaultInformation(params.mintPubkey);
+    const tokenAcc = (await this.getTokenAccountsForOwner(params.ownerPubkey, params.mintPubkey))[0];
     const { rootBank, nodeBank, vault } = bankVaultInfo;
 
-    const tx = await this.prepDepositTx(
-      params.ownerPk,
+    const transaction = await this.prepDepositTransaction(
+      params.ownerPubkey,
       rootBank,
       nodeBank,
       vault,
       tokenAcc.pubkey,
       params.quantity,
-      params.mangoAccNr,
+      params.mangoAccountNumber,
     );
-    return [tx];
+    return [transaction];
   }
 }

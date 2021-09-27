@@ -7,7 +7,7 @@ const log: debug.IDebugger = debug('app:serum-controller');
 class CommonController {
   async getMintName(req: e.Request, res: e.Response) {
     const tokenService = new TokenService();
-    const name = tokenService.getMintName(req.body.mintPk);
+    const name = tokenService.getMintName(req.body.mintPubkey);
     res.status(200).send(name);
   }
 

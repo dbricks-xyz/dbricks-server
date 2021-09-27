@@ -1,14 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
-import { ixsAndSigners } from 'dbricks-lib';
+import { instructionsAndSigners } from 'dbricks-lib';
 
 export interface IMangoLenderWithdraw {
-  withdraw: (params: IMangoLenderWithdrawParamsParsed) => Promise<ixsAndSigners[]>;
+  withdraw: (params: IMangoLenderWithdrawParamsParsed) => Promise<instructionsAndSigners[]>;
 }
 
 export interface IMangoLenderWithdrawParamsParsed {
-  mintPk: PublicKey,
+  mintPubkey: PublicKey,
   quantity: number,
   isBorrow: boolean,
-  ownerPk: PublicKey,
-  mangoAccNr: number,
+  ownerPubkey: PublicKey,
+  mangoAccountNumber: number,
 }

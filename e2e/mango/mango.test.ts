@@ -83,7 +83,7 @@ describe('Mango', () => {
     await tester.withdraw(tester.quoteMint.publicKey, '10', tester.user2Kp, true);
 
     // verify borrow, should have 10 QUOTE in wallet, and still 991 QUOTE in Mango
-    const user2QuoteAcc = await tester.getTokenAccsForOwner(
+    const user2QuoteAcc = await tester.getTokenAccountsForOwner(
       tester.user2Pk,
       tester.quoteMint.publicKey,
     );
@@ -97,8 +97,8 @@ describe('Mango', () => {
 // describe('Mango', () => {
 //   it('Can place orders', async () => {
 //     const mangoAcc = await tester.loadMangoAccForOwner(tester.user2Pk, 0);
-//     const openOrdersAccs = mangoAcc.spotOpenOrdersAccounts.filter((oo) => oo !== undefined);
-//     expect(openOrdersAccs.length).toBe(0);
+//     const openOrdersAccounts = mangoAcc.spotOpenOrdersAccounts.filter((oo) => oo !== undefined);
+//     expect(openOrdersAccounts.length).toBe(0);
 
 //     await tester.placeSpotOrder(tester.marketKp.publicKey, 'buy', '1', '5', 'limit', tester.user2Kp);
 //     // await tester.keeperUpdateAll(); // NECESSARY?
@@ -201,7 +201,7 @@ describe('Mango', () => {
   //   const market = await Market.load(tester.connection, tester.marketKp.publicKey, {}, SERUM_PROG_ID);
 
   //   const orderIdHexString = orders[0].toString('hex');
-  //   await tester.placeCancelOrderTxn(tester.marketKp.publicKey, orderIdHexString, tester.user2Kp);
+  //   await tester.placeCancelOrderTransactionn(tester.marketKp.publicKey, orderIdHexString, tester.user2Kp);
   //   await tester.keeperUpdateAll();
   //   // await tester._consumeEvents(market, tester.user2Kp);
   //   await tester.loadGroup();
@@ -222,6 +222,6 @@ describe('Mango', () => {
 
 
   // take other side and settle -> need to crank
-  // await tester.placeSpotOrderTxn(tester.marketKp.publicKey, 'buy', '1', '11', 'limit', tester.user2Kp);
+  // await tester.placeSpotOrderTransactionn(tester.marketKp.publicKey, 'buy', '1', '11', 'limit', tester.user2Kp);
 
   // same with perps??

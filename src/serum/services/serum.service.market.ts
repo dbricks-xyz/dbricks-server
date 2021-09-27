@@ -6,78 +6,78 @@ import {
   ISerumDEXMarketInitParamsParsed,
   ISerumDEXMarketSettleParamsParsed
 } from '../interfaces/dex/serum.interfaces.dex.market';
-import {ixsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from 'dbricks-lib';
 import SerumClient from '../client/serum.client';
 import {SERUM_PROG_ID} from '../../config/config';
-import {mergeIxsAndSigners} from "../../common/util/common.util";
+import {mergeInstructionsAndSigners} from "../../common/util/common.util";
 
 export default class SerumMarketService extends SerumClient implements ISerumDEXMarket {
-  async init(params: ISerumDEXMarketInitParamsParsed): Promise<ixsAndSigners[]> {
+  async init(params: ISerumDEXMarketInitParamsParsed): Promise<instructionsAndSigners[]> {
     // taken from here - https://github.com/project-serum/serum-dex-ui/blob/master/src/utils/send.tsx#L499
     const feeRateBps = new BN(0);
     const quoteDustThreshold = new BN(100);
 
-    const prepIxsAndSigners = await this.prepStateAccsForNewMarket(params.ownerPk);
-    const [vaultOwnerPk, vaultNonce] = await getVaultOwnerAndNonce(
-      prepIxsAndSigners.signers[0].publicKey,
+    const prepInstructionsAndSigners = await this.prepStateAccountsForNewMarket(params.ownerPubkey);
+    const [vaultOwnerPubkey, vaultNonce] = await getVaultOwnerAndNonce(
+      prepInstructionsAndSigners.signers[0].publicKey,
       SERUM_PROG_ID,
     );
-    const vaultIxsAndSigners = await this.prepVaultAccs(
-      vaultOwnerPk as PublicKey,
-      params.baseMintPk,
-      params.quoteMintPk,
-      params.ownerPk,
+    const vaultInstructionsAndSigners = await this.prepVaultAccounts(
+      vaultOwnerPubkey as PublicKey,
+      params.baseMintPubkey,
+      params.quoteMintPubkey,
+      params.ownerPubkey,
     );
     const [baseLotSize, quoteLotSize] = await this.calcBaseAndQuoteLotSizes(
       params.lotSize,
       params.tickSize,
-      params.baseMintPk,
-      params.quoteMintPk,
+      params.baseMintPubkey,
+      params.quoteMintPubkey,
     );
-    const initIxsAndSigners = await this.prepInitMarketTx(
-      prepIxsAndSigners.signers[0].publicKey,
-      prepIxsAndSigners.signers[1].publicKey,
-      prepIxsAndSigners.signers[2].publicKey,
-      prepIxsAndSigners.signers[3].publicKey,
-      prepIxsAndSigners.signers[4].publicKey,
-      vaultIxsAndSigners.signers[0].publicKey,
-      vaultIxsAndSigners.signers[1].publicKey,
-      params.baseMintPk,
-      params.quoteMintPk,
+    const initInstructionsAndSigners = await this.prepInitMarketTransaction(
+      prepInstructionsAndSigners.signers[0].publicKey,
+      prepInstructionsAndSigners.signers[1].publicKey,
+      prepInstructionsAndSigners.signers[2].publicKey,
+      prepInstructionsAndSigners.signers[3].publicKey,
+      prepInstructionsAndSigners.signers[4].publicKey,
+      vaultInstructionsAndSigners.signers[0].publicKey,
+      vaultInstructionsAndSigners.signers[1].publicKey,
+      params.baseMintPubkey,
+      params.quoteMintPubkey,
       baseLotSize,
       quoteLotSize,
       feeRateBps,
       vaultNonce as BN,
       quoteDustThreshold,
     );
-    const tx1 = prepIxsAndSigners;
-    const tx2 = mergeIxsAndSigners(vaultIxsAndSigners, initIxsAndSigners);
-    console.log('New market address will be:', tx1.signers[0].publicKey.toBase58());
-    return [tx1, tx2];
+    const transaction1 = prepInstructionsAndSigners;
+    const transaction2 = mergeInstructionsAndSigners(vaultInstructionsAndSigners, initInstructionsAndSigners);
+    console.log('New market address will be:', transaction1.signers[0].publicKey.toBase58());
+    return [transaction1, transaction2];
   }
 
-  async settle(params: ISerumDEXMarketSettleParamsParsed): Promise<ixsAndSigners[]> {
-    const market = await this.loadSerumMarket(params.marketPk);
+  async settle(params: ISerumDEXMarketSettleParamsParsed): Promise<instructionsAndSigners[]> {
+    const market = await this.loadSerumMarket(params.marketPubkey);
     const [
-      [ownerBaseIxsAndSigners, ownerBasePk],
-      [ownerQuoteIxsAndSigners, ownerQuotePk],
-    ] = await this.getBaseAndQuoteAccsFromMarket(
+      [ownerBaseInstructionsAndSigners, ownerBasePk],
+      [ownerQuoteInstructionsAndSigners, ownerQuotePk],
+    ] = await this.getBaseAndQuoteAccountsFromMarket(
       market,
-      params.ownerPk,
+      params.ownerPubkey,
     );
-    const settleIxsAndSigners = await this.prepSettleFundsTx(
+    const settleInstructionsAndSigners = await this.prepSettleFundsTransaction(
       market,
-      params.ownerPk,
+      params.ownerPubkey,
       ownerBasePk,
       ownerQuotePk,
     );
-    let tx = mergeIxsAndSigners(ownerBaseIxsAndSigners, ownerQuoteIxsAndSigners);
-    tx = mergeIxsAndSigners(tx, settleIxsAndSigners);
-    return [tx];
+    let transaction = mergeInstructionsAndSigners(ownerBaseInstructionsAndSigners, ownerQuoteInstructionsAndSigners);
+    transaction = mergeInstructionsAndSigners(transaction, settleInstructionsAndSigners);
+    return [transaction];
   }
 
-  async getMarketMints(marketPk: string): Promise<[string, string]> {
-    return this.getMarketMintsFromMarketPk(marketPk);
+  async getMarketMints(marketPubkey: string): Promise<[string, string]> {
+    return this.getMarketMintsFromMarketPubkey(marketPubkey);
   }
 
 }
