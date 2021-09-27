@@ -16,8 +16,8 @@ describe('Mango', () => {
 describe('Mango', () => {
   it('Can create a MangoAccount by depositing', async () => {
   // verify that user 2 has no mango accounts, and thus no deposits
-    const beforeMangoAccts = await tester.loadUserAccounts(tester.user2Pubkey);
-    expect(beforeMangoAccts.length === 0);
+    const beforeMangoAccounts = await tester.loadUserAccounts(tester.user2Pubkey);
+    expect(beforeMangoAccounts.length === 0);
 
     // deposit and create an account
     await tester.deposit(tester.baseMint.publicKey, '1', tester.user2Keypair);
@@ -83,11 +83,11 @@ describe('Mango', () => {
     await tester.withdraw(tester.quoteMint.publicKey, '10', tester.user2Keypair, true);
 
     // verify borrow, should have 10 QUOTE in wallet, and still 991 QUOTE in Mango
-    const user2QuoteAcc = await tester.getTokenAccountsForOwner(
+    const user2QuoteAccount = await tester.getTokenAccountsForOwner(
       tester.user2Pubkey,
       tester.quoteMint.publicKey,
     );
-    expect(user2QuoteAcc[0].amount === 10);
+    expect(user2QuoteAccount[0].amount === 10);
     const updatedUser2BaseAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(updatedUser2BaseAmount).toBeLessThanOrEqual(991);
     expect(updatedUser2BaseAmount).toBeGreaterThanOrEqual(990.999);

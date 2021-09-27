@@ -15,11 +15,11 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPubkey.toBase58()}`);
     }
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
+    const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
     const transaction = await this.prepPlaceSpotOrderTransaction(
       this.group,
-      mangoAcc,
+      mangoAccount,
       this.group.mangoCache,
       spotMarket,
       params.ownerPubkey,
@@ -40,19 +40,19 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!spotMarket) {
       throw new Error(`Failed to load spot market: ${params.marketPubkey.toBase58()}`);
     }
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
-    const openOrders = mangoAcc.spotOpenOrdersAccounts.find(
-      (acc) => acc?.market.toBase58() === params.marketPubkey.toBase58(),
+    const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
+    const openOrders = mangoAccount.spotOpenOrdersAccounts.find(
+      (account) => account?.market.toBase58() === params.marketPubkey.toBase58(),
     );
     if (!openOrders) {
-      throw new Error(`Could not find open orders from: ${mangoAcc.publicKey.toBase58()} for market: ${params.marketPubkey.toBase58()}`);
+      throw new Error(`Could not find open orders from: ${mangoAccount.publicKey.toBase58()} for market: ${params.marketPubkey.toBase58()}`);
     }
     const openOrdersPubkey = openOrders.owner;
     const orders = await spotMarket.loadOrdersForOwner(this.connection, openOrdersPubkey);
     const order = orders.find((o) => o.orderId.toString() === params.orderId!.toString()) as Order;
 
     const transaction = await this.prepCancelSpotOrderTransaction(
-      mangoAcc,
+      mangoAccount,
       params.ownerPubkey,
       spotMarket,
       order,
@@ -63,10 +63,10 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
   async placePerp(params: IMangoDEXOrderPlaceParamsParsed): Promise<instructionsAndSigners[]> {
     await this.loadGroup(); // Necessary to load mangoCache
     const perpMarket = await this.loadPerpMarket(params.marketPubkey);
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
+    const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
     const transaction = await this.prepPlacePerpOrderTransaction(
-      mangoAcc,
+      mangoAccount,
       this.group.mangoCache,
       perpMarket,
       params.ownerPubkey,
@@ -82,11 +82,11 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
   async cancelPerp(params: IMangoDEXOrderCancelParamsParsed): Promise<instructionsAndSigners[]> {
     await this.loadGroup(); // Group is used in prepCancelPerpOrderTransaction
     const perpMarket = await this.loadPerpMarket(params.marketPubkey);
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
+    const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
 
     const openOrders = await perpMarket.loadOrdersForAccount(
       this.connection,
-      mangoAcc,
+      mangoAccount,
     );
     console.log('oo are', openOrders.map(o => o.orderId.toString()));
     const order = openOrders.find((o) => o.orderId.toString() === params.orderId!.toString());
@@ -95,7 +95,7 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     }
 
     const transaction = await this.prepCancelPerpOrderTransaction(
-      mangoAcc,
+      mangoAccount,
       params.ownerPubkey,
       perpMarket,
       order,

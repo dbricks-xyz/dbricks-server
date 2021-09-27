@@ -50,14 +50,14 @@ export default class SerumTester extends SerumClient {
 
     // user 1 - we give them quote
     // NOTE: we intentionally are NOT creating the base account for user 1. The BE should take care of that.
-    this.quoteUser1Pubkey = await this._createTokenAcc(this.quoteMint, this.user1Keypair.publicKey);
-    await this._fundTokenAcc(this.quoteMint, this.user1Keypair.publicKey, this.quoteUser1Pubkey, fundingAmount);
+    this.quoteUser1Pubkey = await this._createTokenAccount(this.quoteMint, this.user1Keypair.publicKey);
+    await this._fundTokenAccount(this.quoteMint, this.user1Keypair.publicKey, this.quoteUser1Pubkey, fundingAmount);
 
     // user 2 - we give them base
     await this._transferLamports(this.user1Keypair, this.user2Keypair.publicKey, LAMPORTS_PER_SOL);
-    this.baseUser2Pubkey = await this._createTokenAcc(this.baseMint, this.user2Keypair.publicKey);
-    this.quoteUser2Pubkey = await this._createTokenAcc(this.quoteMint, this.user2Keypair.publicKey);
-    await this._fundTokenAcc(this.baseMint, this.user1Keypair.publicKey, this.baseUser2Pubkey, fundingAmount);
+    this.baseUser2Pubkey = await this._createTokenAccount(this.baseMint, this.user2Keypair.publicKey);
+    this.quoteUser2Pubkey = await this._createTokenAccount(this.quoteMint, this.user2Keypair.publicKey);
+    await this._fundTokenAccount(this.baseMint, this.user1Keypair.publicKey, this.baseUser2Pubkey, fundingAmount);
   }
 
   async prepMarket() {

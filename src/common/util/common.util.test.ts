@@ -14,12 +14,12 @@ describe('Util', () => {
   it('merges instructionsAndSigners (actual instructions)', async () => {
     // I need some real instructions, this looks like the simplest route
     const testingKeypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
-    const stateAccKeypair = new Keypair();
+    const stateAccountKeypair = new Keypair();
     const srm = new SerumClient();
-    const instruction = await srm.prepCreateStateAccInstruction(stateAccKeypair.publicKey, 123, testingKeypair.publicKey);
+    const instruction = await srm.prepCreateStateAccountsInstruction(stateAccountKeypair.publicKey, 123, testingKeypair.publicKey);
     const iAndS1: instructionsAndSigners = {
       instructions: [instruction],
-      signers: [testingKeypair, stateAccKeypair]
+      signers: [testingKeypair, stateAccountKeypair]
     }
     const iAndS2: instructionsAndSigners = {...iAndS1};
     const iAndS3: instructionsAndSigners = {...iAndS1};

@@ -8,7 +8,7 @@ import MangoClient from '../client/mango.client';
 export default class MangoDepositService extends MangoClient implements IMangoLenderDeposit {
   async deposit(params: IMangoLenderDepositParamsParsed): Promise<instructionsAndSigners[]> {
     const bankVaultInfo = await this.loadBankVaultInformation(params.mintPubkey);
-    const tokenAcc = (await this.getTokenAccountsForOwner(params.ownerPubkey, params.mintPubkey))[0];
+    const tokenAccount = (await this.getTokenAccountsForOwner(params.ownerPubkey, params.mintPubkey))[0];
     const { rootBank, nodeBank, vault } = bankVaultInfo;
 
     const transaction = await this.prepDepositTransaction(
@@ -16,7 +16,7 @@ export default class MangoDepositService extends MangoClient implements IMangoLe
       rootBank,
       nodeBank,
       vault,
-      tokenAcc.pubkey,
+      tokenAccount.pubkey,
       params.quantity,
       params.mangoAccountNumber,
     );

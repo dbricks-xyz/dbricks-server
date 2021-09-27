@@ -115,15 +115,15 @@ export default class MangoTester extends MangoClient {
     this.quoteMint = await this._createMint(this.user1Keypair);
 
     // user 1 - we give them quote
-    this.baseUser1Pubkey = await this._createTokenAcc(this.baseMint, this.user1Pubkey);
-    this.quoteUser1Pubkey = await this._createTokenAcc(this.quoteMint, this.user1Pubkey);
-    await this._fundTokenAcc(this.quoteMint, this.user1Pubkey, this.quoteUser1Pubkey, 100000);
+    this.baseUser1Pubkey = await this._createTokenAccount(this.baseMint, this.user1Pubkey);
+    this.quoteUser1Pubkey = await this._createTokenAccount(this.quoteMint, this.user1Pubkey);
+    await this._fundTokenAccount(this.quoteMint, this.user1Pubkey, this.quoteUser1Pubkey, 100000);
 
     // user 2 - we give them base
     await this._transferLamports(this.user1Keypair, this.user2Keypair.publicKey, LAMPORTS_PER_SOL);
-    this.baseUser2Pubkey = await this._createTokenAcc(this.baseMint, this.user2Pubkey);
-    this.quoteUser2Pubkey = await this._createTokenAcc(this.quoteMint, this.user2Pubkey);
-    await this._fundTokenAcc(this.baseMint, this.user1Pubkey, this.baseUser2Pubkey, 100000);
+    this.baseUser2Pubkey = await this._createTokenAccount(this.baseMint, this.user2Pubkey);
+    this.quoteUser2Pubkey = await this._createTokenAccount(this.quoteMint, this.user2Pubkey);
+    await this._fundTokenAccount(this.baseMint, this.user1Pubkey, this.baseUser2Pubkey, 100000);
   }
 
   async prepMarket(): Promise<void> {
@@ -136,7 +136,7 @@ export default class MangoTester extends MangoClient {
   }
 
   async initializeFeeVault(): Promise<PublicKey> {
-    const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepCreateTokenAccTransaction(
+    const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepCreateTokenAccountTransaction(
       this.user1Keypair.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
     );
 
@@ -742,11 +742,11 @@ export default class MangoTester extends MangoClient {
     }
   }
 
-  async getMangoTokenBalance(userPubkey: PublicKey, accIndex: number, tokenIndex: number) {
+  async getMangoTokenBalance(userPubkey: PublicKey, accountIndex: number, tokenIndex: number) {
     await this.loadGroup();
     const mangoAccounts = await this.loadUserAccounts(userPubkey);
     const cache = await this.getCache();
-    return mangoAccounts[accIndex]
+    return mangoAccounts[accountIndex]
       .getNativeDeposit(
         cache.rootBankCache[tokenIndex],
         tokenIndex,

@@ -8,11 +8,11 @@ import MangoClient from '../client/mango.client';
 
 export default class MangoMarketService extends MangoClient implements IMangoDEXMarket {
   async settleSpot(params: IMangoDEXMarketSettleParamsParsed): Promise<instructionsAndSigners[]> {
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
+    const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
     const markets = await this.loadSpotMarkets();
 
     const transaction = await this.prepSettleSpotTransaction(
-      mangoAcc,
+      mangoAccount,
       markets,
       params.ownerPubkey,
     );
@@ -21,7 +21,7 @@ export default class MangoMarketService extends MangoClient implements IMangoDEX
 
   async settlePerp(params: IMangoDEXMarketSettleParamsParsed): Promise<instructionsAndSigners[]> {
     await this.loadGroup();
-    const mangoAcc = await this.loadMangoAccForOwner(params.ownerPubkey, params.mangoAccountNumber);
+    const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
     const perpMarket = await this.loadPerpMarket(params.marketPubkey);
     const marketIndex = this.group.getPerpMarketIndex(perpMarket.publicKey);
     const mangoCache = await this.group.loadCache(this.connection);
@@ -32,7 +32,7 @@ export default class MangoMarketService extends MangoClient implements IMangoDEX
 
     const transaction = await this.prepSettlePerpTransaction(
       mangoCache,
-      mangoAcc,
+      mangoAccount,
       perpMarket,
       quoteRootBank,
       mangoCache.priceCache[marketIndex].price,

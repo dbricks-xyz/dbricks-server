@@ -92,7 +92,7 @@ export default class SolClient {
     return new Token(this.connection, mintPubkey, TOKEN_PROGRAM_ID, tempKeypair);
   }
 
-  async deserializeTokenAcc(mintPubkey: PublicKey, tokenAccountPubkey: PublicKey): Promise<AccountInfo> {
+  async deserializeTokenAccount(mintPubkey: PublicKey, tokenAccountPubkey: PublicKey): Promise<AccountInfo> {
     const t = await this.deserializeToken(mintPubkey);
     return t.getAccountInfo(tokenAccountPubkey);
   }
@@ -109,7 +109,7 @@ export default class SolClient {
    * https://github.com/solana-labs/solana-program-library/blob/master/token/js/client/token.js#L446
    * This prepares the TRANSACTION and returns it, instead of sending it.
    */
-  async prepCreateTokenAccTransaction(
+  async prepCreateTokenAccountTransaction(
     payerPubkey: PublicKey,
     mintPubkey: PublicKey,
     ownerPubkey?: PublicKey,
@@ -139,7 +139,7 @@ export default class SolClient {
     return [{instructions: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
   }
 
-  async getOrCreateTokenAccByMint(
+  async getOrCreateTokenAccountByMint(
     ownerPubkey: PublicKey,
     mintPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey]> {
@@ -155,7 +155,7 @@ export default class SolClient {
 
     if (tokenAccounts.length === 0) {
       log(`Creating token account for mint ${mintPubkey.toBase58()}`);
-      [instructionsAndSigners, tokenAccountPubkey] = await this.prepCreateTokenAccTransaction(ownerPubkey, mintPubkey);
+      [instructionsAndSigners, tokenAccountPubkey] = await this.prepCreateTokenAccountTransaction(ownerPubkey, mintPubkey);
     } else {
       tokenAccountPubkey = tokenAccounts[0].pubkey;
     }
@@ -188,13 +188,13 @@ export default class SolClient {
     );
   }
 
-  async _createTokenAcc(mint: Token, ownerPubkey: PublicKey): Promise<PublicKey> {
-    const newAcc = await mint.createAccount(ownerPubkey);
-    log('Created token account', newAcc.toBase58());
-    return newAcc;
+  async _createTokenAccount(mint: Token, ownerPubkey: PublicKey): Promise<PublicKey> {
+    const newAccount = await mint.createAccount(ownerPubkey);
+    log('Created token account', newAccount.toBase58());
+    return newAccount;
   }
 
-  async _fundTokenAcc(mint: Token, ownerPubkey: PublicKey, tokenAccountPubkey: PublicKey, amount: number) {
+  async _fundTokenAccount(mint: Token, ownerPubkey: PublicKey, tokenAccountPubkey: PublicKey, amount: number) {
     await mint.mintTo(tokenAccountPubkey, ownerPubkey, [], amount);
     log(`Funded account ${tokenAccountPubkey.toBase58()} with ${amount} tokens of mint ${mint.publicKey.toBase58()}`);
   }

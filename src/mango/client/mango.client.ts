@@ -109,7 +109,7 @@ export default class MangoClient extends SolClient {
     rootBank: PublicKey,
     nodeBank: PublicKey,
     vault: PublicKey,
-    tokenAcc: PublicKey,
+    tokenAccount: PublicKey,
     quantity: number,
     mangoAccountNumber:number,
   ): Promise<instructionsAndSigners> {
@@ -123,9 +123,9 @@ export default class MangoClient extends SolClient {
 
     let destinationPubkey: PublicKey;
     if (mangoAccounts.length === 0) { // Init Mango Account before deposit
-      const [newAccInstructionsAndSigners, newAccountPubkey] = await this.prepCreateMangoAccTransaction(ownerPubkey);
-      instructionsAndSigners.instructions.push(...newAccInstructionsAndSigners.instructions);
-      instructionsAndSigners.signers.push(...newAccInstructionsAndSigners.signers);
+      const [newAccountInstructionsAndSigners, newAccountPubkey] = await this.prepCreateMangoAccountTransaction(ownerPubkey);
+      instructionsAndSigners.instructions.push(...newAccountInstructionsAndSigners.instructions);
+      instructionsAndSigners.signers.push(...newAccountInstructionsAndSigners.signers);
       destinationPubkey = newAccountPubkey;
     } else {
       // TODO: UI should always pass a valid number, but what if it doesn't?
@@ -135,15 +135,15 @@ export default class MangoClient extends SolClient {
     let wrappedSolAccount: Keypair | null = null;
     if (
       tokenMint.equals(WRAPPED_SOL_MINT)
-      && tokenAcc.toBase58() === ownerPubkey.toBase58()
+      && tokenAccount.toBase58() === ownerPubkey.toBase58()
     ) {
-      const [newAcc, createMangoAccInstructionsAndSigners] = await this.prepWrappedSolCreateAccountInstruction(
+      const [newAccount, createMangoAccountInstructionsAndSigners] = await this.prepWrappedSolCreateAccountInstruction(
         ownerPubkey,
         quantity,
       );
-      wrappedSolAccount = newAcc;
-      instructionsAndSigners.instructions.push(...createMangoAccInstructionsAndSigners.instructions);
-      instructionsAndSigners.signers.push(...createMangoAccInstructionsAndSigners.signers);
+      wrappedSolAccount = newAccount;
+      instructionsAndSigners.instructions.push(...createMangoAccountInstructionsAndSigners.instructions);
+      instructionsAndSigners.signers.push(...createMangoAccountInstructionsAndSigners.signers);
     }
 
     const nativeQuantity = uiToNative(
@@ -160,7 +160,7 @@ export default class MangoClient extends SolClient {
       rootBank,
       nodeBank,
       vault,
-      wrappedSolAccount ? wrappedSolAccount.publicKey : tokenAcc,
+      wrappedSolAccount ? wrappedSolAccount.publicKey : tokenAccount,
       nativeQuantity,
     );
     instructionsAndSigners.instructions.push(depositInstruction);
@@ -192,7 +192,7 @@ export default class MangoClient extends SolClient {
     const tokenIndex = this.group.getRootBankIndex(rootBank);
     const tokenMint = this.group.tokens[tokenIndex].mint;
 
-    let tokenAcc = await Token.getAssociatedTokenAddress(
+    let tokenAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       tokenMint,
@@ -207,10 +207,10 @@ export default class MangoClient extends SolClient {
       wrappedSolAccount = newAcc;
       instructionsAndSigners.instructions.push(...createMangoAccInstructionsAndSigners.instructions);
       instructionsAndSigners.signers.push(...createMangoAccInstructionsAndSigners.signers);
-      tokenAcc = wrappedSolAccount.publicKey;
+      tokenAccount = wrappedSolAccount.publicKey;
     } else {
       const tokenAccExists = await this.connection.getAccountInfo(
-        tokenAcc,
+        tokenAccount,
         'recent',
       );
       if (!tokenAccExists) {
@@ -219,7 +219,7 @@ export default class MangoClient extends SolClient {
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             tokenMint,
-            tokenAcc,
+            tokenAccount,
             ownerPubkey,
             ownerPubkey,
           ),
@@ -241,7 +241,7 @@ export default class MangoClient extends SolClient {
       rootBank,
       nodeBank,
       vault,
-      tokenAcc,
+      tokenAccount,
       this.group.signerKey,
       mangoAccount.spotOpenOrders,
       nativeQuantity,
@@ -707,14 +707,14 @@ export default class MangoClient extends SolClient {
     }
   }
 
-  async loadMangoAccForOwner(
+  async loadMangoAccountForOwner(
     ownerPubkey: PublicKey,
     mangoAccountNumber: number,
   ): Promise<MangoAccount> {
-    const loadedMangoAcc = (await this.loadUserAccounts(
+    const loadedMangoAccount = (await this.loadUserAccounts(
       ownerPubkey,
     ))[mangoAccountNumber];
-    return this.nativeClient.getMangoAccount(loadedMangoAcc.publicKey, SERUM_PROG_ID);
+    return this.nativeClient.getMangoAccount(loadedMangoAccount.publicKey, SERUM_PROG_ID);
   }
 
   async loadBankVaultInformation(
@@ -948,10 +948,10 @@ export default class MangoClient extends SolClient {
     return instructionsAndSigners;
   }
 
-  async prepCreateMangoAccTransaction(
+  async prepCreateMangoAccountTransaction(
     ownerPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey]> {
-    const newMangoAcc = await createAccountInstruction(
+    const newMangoAccount = await createAccountInstruction(
       this.connection,
       ownerPubkey,
       MangoAccountLayout.span,
@@ -960,13 +960,13 @@ export default class MangoClient extends SolClient {
     const initMangoAccountInstruction = makeInitMangoAccountInstruction(
       MANGO_PROG_ID,
       this.group.publicKey,
-      newMangoAcc.account.publicKey,
+      newMangoAccount.account.publicKey,
       ownerPubkey,
     );
     const instructionsAndSigners: instructionsAndSigners = {
-      instructions: [newMangoAcc.instruction, initMangoAccountInstruction],
-      signers: [newMangoAcc.account],
+      instructions: [newMangoAccount.instruction, initMangoAccountInstruction],
+      signers: [newMangoAccount.account],
     };
-    return [instructionsAndSigners, newMangoAcc.account.publicKey];
+    return [instructionsAndSigners, newMangoAccount.account.publicKey];
   }
 }

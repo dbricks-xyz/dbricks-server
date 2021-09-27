@@ -204,11 +204,11 @@ export default class SerumClient extends SolClient {
     ownerPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey]> {
     if (side === 'buy') {
-      return this.getOrCreateTokenAccByMint(
+      return this.getOrCreateTokenAccountByMint(
         ownerPubkey, market.quoteMintAddress,
       );
     } else {
-      return this.getOrCreateTokenAccByMint(
+      return this.getOrCreateTokenAccountByMint(
         ownerPubkey, market.baseMintAddress,
       );
     }
@@ -218,10 +218,10 @@ export default class SerumClient extends SolClient {
     market: Market,
     ownerPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey][]> {
-    const [ownerBaseInstructionsAndSigners, ownerBasePubkey] = await this.getOrCreateTokenAccByMint(
+    const [ownerBaseInstructionsAndSigners, ownerBasePubkey] = await this.getOrCreateTokenAccountByMint(
       ownerPubkey, market.baseMintAddress,
     );
-    const [ownerQuoteInstructionsAndSigners, ownerQuotePubkey] = await this.getOrCreateTokenAccByMint(
+    const [ownerQuoteInstructionsAndSigners, ownerQuotePubkey] = await this.getOrCreateTokenAccountByMint(
       ownerPubkey, market.quoteMintAddress,
     );
     return [
@@ -273,15 +273,15 @@ export default class SerumClient extends SolClient {
 
   // --------------------------------------- helpers (active)
 
-  async prepCreateStateAccInstruction(
-    stateAccPubkey: PublicKey,
+  async prepCreateStateAccountsInstruction(
+    stateAccountPubkey: PublicKey,
     space: number,
     ownerPubkey: PublicKey,
   ): Promise<TransactionInstruction> {
     return SystemProgram.createAccount({
       programId: SERUM_PROG_ID,
       fromPubkey: ownerPubkey,
-      newAccountPubkey: stateAccPubkey,
+      newAccountPubkey: stateAccountPubkey,
       space,
       lamports: await this.connection.getMinimumBalanceForRentExemption(space),
     });
@@ -299,19 +299,19 @@ export default class SerumClient extends SolClient {
     const asksKeypair = new Keypair();
 
     // length taken from here - https://github.com/project-serum/serum-dex/blob/master/dex/crank/src/lib.rs#L1286
-    const marketInstruction = await this.prepCreateStateAccInstruction(
+    const marketInstruction = await this.prepCreateStateAccountsInstruction(
       marketKeypair.publicKey, 376 + 12, ownerPubkey,
     );
-    const reqQInstruction = await this.prepCreateStateAccInstruction(
+    const reqQInstruction = await this.prepCreateStateAccountsInstruction(
       reqQKeypair.publicKey, 640 + 12, ownerPubkey,
     );
-    const eventQInstruction = await this.prepCreateStateAccInstruction(
+    const eventQInstruction = await this.prepCreateStateAccountsInstruction(
       eventQKeypair.publicKey, 1048576 + 12, ownerPubkey,
     );
-    const bidsInstruction = await this.prepCreateStateAccInstruction(
+    const bidsInstruction = await this.prepCreateStateAccountsInstruction(
       bidsKeypair.publicKey, 65536 + 12, ownerPubkey,
     );
-    const asksInstruction = await this.prepCreateStateAccInstruction(
+    const asksInstruction = await this.prepCreateStateAccountsInstruction(
       asksKeypair.publicKey, 65536 + 12, ownerPubkey,
     );
 
