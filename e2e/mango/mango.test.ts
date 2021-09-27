@@ -16,14 +16,14 @@ describe('Mango', () => {
 describe('Mango', () => {
   it('Can create a MangoAccount by depositing', async () => {
   // verify that user 2 has no mango accounts, and thus no deposits
-    const beforeMangoAccts = await tester.loadUserAccounts(tester.user2Pk);
+    const beforeMangoAccts = await tester.loadUserAccounts(tester.user2Pubkey);
     expect(beforeMangoAccts.length === 0);
 
     // deposit and create an account
     await tester.deposit(tester.baseMint.publicKey, '1', tester.user2Kp);
 
     // verify that there is a mangoAccount with 1 coin in it
-    const amount = await tester.getMangoTokenBalance(tester.user2Pk, 0, 1);
+    const amount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(amount).toBeGreaterThanOrEqual(0.999999);
     expect(amount).toBeLessThanOrEqual(1);
   });
@@ -31,7 +31,7 @@ describe('Mango', () => {
 
 describe('Mango', () => {
   it('Can deposit into an existing MangoAccount', async () => {
-    const beforeDepositAmount = await tester.getMangoTokenBalance(tester.user2Pk, 0, 1);
+    const beforeDepositAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(beforeDepositAmount).toBeGreaterThanOrEqual(0.999999);
     expect(beforeDepositAmount).toBeLessThanOrEqual(1);
 
@@ -39,7 +39,7 @@ describe('Mango', () => {
     await tester.deposit(tester.baseMint.publicKey, '1000', tester.user2Kp);
 
     // verify that there is a mangoAccount with 1 coin in it
-    const afterDepositAmount = await tester.getMangoTokenBalance(tester.user2Pk, 0, 1);
+    const afterDepositAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(afterDepositAmount).toBeGreaterThanOrEqual(1000.999999);
     expect(afterDepositAmount).toBeLessThanOrEqual(1001);
     expect(afterDepositAmount - beforeDepositAmount).toBeGreaterThanOrEqual(999.999999);
@@ -49,7 +49,7 @@ describe('Mango', () => {
 
 describe('Mango', () => {
   it('Can withdraw from an existing MangoAccount', async () => {
-    const beforeWithdrawAmount = await tester.getMangoTokenBalance(tester.user2Pk, 0, 1);
+    const beforeWithdrawAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(beforeWithdrawAmount).toBeGreaterThanOrEqual(1000.999999);
     expect(beforeWithdrawAmount).toBeLessThanOrEqual(1001);
 
@@ -57,7 +57,7 @@ describe('Mango', () => {
     await tester.withdraw(tester.baseMint.publicKey, '10', tester.user2Kp, false);
 
     // verify withdrawal
-    const afterWithdrawAmount = await tester.getMangoTokenBalance(tester.user2Pk, 0, 1);
+    const afterWithdrawAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(afterWithdrawAmount).toBeLessThanOrEqual(991);
     expect(afterWithdrawAmount).toBeGreaterThanOrEqual(990.999);
     expect(afterWithdrawAmount - beforeWithdrawAmount).toBeLessThanOrEqual(-9.999999);
@@ -70,12 +70,12 @@ describe('Mango', () => {
     // user 1 deposits so that there is something to borrow
     await tester.deposit(tester.quoteMint.publicKey, '1000', tester.user1Kp);
 
-    const user1QuoteAmount = await tester.getMangoTokenBalance(tester.user1Pk, 0, 15);
+    const user1QuoteAmount = await tester.getMangoTokenBalance(tester.user1Pubkey, 0, 15);
     expect(user1QuoteAmount).toBeLessThanOrEqual(1000);
     expect(user1QuoteAmount).toBeGreaterThanOrEqual(999.999);
 
     // verify user 2 has 991 BASE tokens
-    const user2BaseAmount = await tester.getMangoTokenBalance(tester.user2Pk, 0, 1);
+    const user2BaseAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(user2BaseAmount).toBeLessThanOrEqual(991);
     expect(user2BaseAmount).toBeGreaterThanOrEqual(990.999);
 
@@ -84,11 +84,11 @@ describe('Mango', () => {
 
     // verify borrow, should have 10 QUOTE in wallet, and still 991 QUOTE in Mango
     const user2QuoteAcc = await tester.getTokenAccountsForOwner(
-      tester.user2Pk,
+      tester.user2Pubkey,
       tester.quoteMint.publicKey,
     );
     expect(user2QuoteAcc[0].amount === 10);
-    const updatedUser2BaseAmount = await tester.getMangoTokenBalance(tester.user2Pk, 0, 1);
+    const updatedUser2BaseAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
     expect(updatedUser2BaseAmount).toBeLessThanOrEqual(991);
     expect(updatedUser2BaseAmount).toBeGreaterThanOrEqual(990.999);
   });
@@ -96,7 +96,7 @@ describe('Mango', () => {
 
 // describe('Mango', () => {
 //   it('Can place orders', async () => {
-//     const mangoAcc = await tester.loadMangoAccForOwner(tester.user2Pk, 0);
+//     const mangoAcc = await tester.loadMangoAccForOwner(tester.user2Pubkey, 0);
 //     const openOrdersAccounts = mangoAcc.spotOpenOrdersAccounts.filter((oo) => oo !== undefined);
 //     expect(openOrdersAccounts.length).toBe(0);
 
@@ -186,7 +186,7 @@ describe('Mango', () => {
 
 
   // it('Can cancel a single order', async () => {
-  //   const mangoAcc = await tester.loadMangoAccForOwner(tester.user2Pk, 0);
+  //   const mangoAcc = await tester.loadMangoAccForOwner(tester.user2Pubkey, 0);
   //   console.log(mangoAcc.orders);
   //   const orders = mangoAcc.spotOpenOrdersAccounts[1]?.orders.filter((oo) => !oo.eq(ZERO_BN));
   //   expect(orders?.length).toBe(1);

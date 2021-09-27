@@ -28,13 +28,13 @@ export default class MangoTester extends MangoClient {
 
   user2Kp: Keypair = new Keypair();
 
-  baseUser1Pk!: PublicKey;
+  baseUser1Pubkey!: PublicKey;
 
-  quoteUser1Pk!: PublicKey;
+  quoteUser1Pubkey!: PublicKey;
 
-  baseUser2Pk!: PublicKey;
+  baseUser2Pubkey!: PublicKey;
 
-  quoteUser2Pk!: PublicKey;
+  quoteUser2Pubkey!: PublicKey;
 
   mngoMintPubkey!: PublicKey
 
@@ -59,11 +59,11 @@ export default class MangoTester extends MangoClient {
     this.user1Kp = loadKpSync(TESTING_KP_PATH);
   }
 
-  get user1Pk() {
+  get user1Pubkey() {
     return this.user1Kp.publicKey;
   }
 
-  get user2Pk() {
+  get user2Pubkey() {
     return this.user2Kp.publicKey;
   }
 
@@ -87,11 +87,11 @@ export default class MangoTester extends MangoClient {
     await this.prepMarket();
     this.mngoMintPubkey = (await this._createMint(this.user1Kp)).publicKey;
     // Setup MangoGroup
-    const mangoGroupPk = await this.createMangoGroup();
+    const mangoGroupPubkey = await this.createMangoGroup();
 
     // add oracles
-    await this.addPriceOracle(mangoGroupPk, 'QUOTE');
-    await this.addPriceOracle(mangoGroupPk, 'BASE');
+    await this.addPriceOracle(mangoGroupPubkey, 'QUOTE');
+    await this.addPriceOracle(mangoGroupPubkey, 'BASE');
 
     // set oracle prices
     await this.setOraclePrice('QUOTE', 1);
@@ -115,15 +115,15 @@ export default class MangoTester extends MangoClient {
     this.quoteMint = await this._createMint(this.user1Kp);
 
     // user 1 - we give them quote
-    this.baseUser1Pk = await this._createTokenAcc(this.baseMint, this.user1Pk);
-    this.quoteUser1Pk = await this._createTokenAcc(this.quoteMint, this.user1Pk);
-    await this._fundTokenAcc(this.quoteMint, this.user1Pk, this.quoteUser1Pk, 100000);
+    this.baseUser1Pubkey = await this._createTokenAcc(this.baseMint, this.user1Pubkey);
+    this.quoteUser1Pubkey = await this._createTokenAcc(this.quoteMint, this.user1Pubkey);
+    await this._fundTokenAcc(this.quoteMint, this.user1Pubkey, this.quoteUser1Pubkey, 100000);
 
     // user 2 - we give them base
     await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
-    this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.user2Pk);
-    this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.user2Pk);
-    await this._fundTokenAcc(this.baseMint, this.user1Pk, this.baseUser2Pk, 100000);
+    this.baseUser2Pubkey = await this._createTokenAcc(this.baseMint, this.user2Pubkey);
+    this.quoteUser2Pubkey = await this._createTokenAcc(this.quoteMint, this.user2Pubkey);
+    await this._fundTokenAcc(this.baseMint, this.user1Pubkey, this.baseUser2Pubkey, 100000);
   }
 
   async prepMarket(): Promise<void> {
@@ -136,7 +136,7 @@ export default class MangoTester extends MangoClient {
   }
 
   async initializeFeeVault(): Promise<PublicKey> {
-    const [createInsuranceVaultInstructionsandSigners, feeVaultPk] = await this.prepCreateTokenAccTransaction(
+    const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await this.prepCreateTokenAccTransaction(
       this.user1Kp.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
     );
 
@@ -146,18 +146,18 @@ export default class MangoTester extends MangoClient {
       createAccountsTransaction, [this.user1Kp, ...createInsuranceVaultInstructionsandSigners.signers],
     );
     console.log('Fees vault initialized');
-    return feeVaultPk;
+    return feeVaultPubkey;
   }
 
   async createMangoGroup(): Promise<PublicKey> {
-    const feesVaultPk = await this.initializeFeeVault();
+    const feesVaultPubkey = await this.initializeFeeVault();
     const cluster = 'localnet' as Cluster;
 
-    const groupPk = await this.nativeClient.initMangoGroup(
+    const groupPubkey = await this.nativeClient.initMangoGroup(
       this.quoteMint.publicKey,
       zeroKey,
       SERUM_PROG_ID,
-      feesVaultPk,
+      feesVaultPubkey,
       this.validInterval,
       this.optimalUtil,
       this.optimalRate,
@@ -165,7 +165,7 @@ export default class MangoTester extends MangoClient {
       this.user1Kp as unknown as Account,
     );
     console.log('Mango Group initialized');
-    const group = await this.nativeClient.getMangoGroup(groupPk);
+    const group = await this.nativeClient.getMangoGroup(groupPubkey);
     const rootBanks = await group.loadRootBanks(this.connection);
     const tokenIndex = group.getTokenIndex(this.quoteMint.publicKey);
     const nodeBanks = await rootBanks[tokenIndex]?.loadNodeBanks(this.connection);
@@ -181,7 +181,7 @@ export default class MangoTester extends MangoClient {
     const groupDesc = {
       cluster,
       name: this.groupName,
-      publicKey: groupPk,
+      publicKey: groupPubkey,
       quoteSymbol: 'QUOTE',
       mangoProgramId: MANGO_PROG_ID,
       serumProgramId: SERUM_PROG_ID,
@@ -192,12 +192,12 @@ export default class MangoTester extends MangoClient {
     };
 
     this.config.storeGroup(groupDesc);
-    return groupPk;
+    return groupPubkey;
   }
 
-  async addPriceOracle(mangoGroupPk: PublicKey, symbol: string): Promise<void> {
-    await this.nativeClient.addStubOracle(mangoGroupPk, this.user1Kp as unknown as Account);
-    const group = await this.nativeClient.getMangoGroup(mangoGroupPk);
+  async addPriceOracle(mangoGroupPubkey: PublicKey, symbol: string): Promise<void> {
+    await this.nativeClient.addStubOracle(mangoGroupPubkey, this.user1Kp as unknown as Account);
+    const group = await this.nativeClient.getMangoGroup(mangoGroupPubkey);
     const groupConfig = this.config.groups[0];
 
     const oracle = {
@@ -742,9 +742,9 @@ export default class MangoTester extends MangoClient {
     }
   }
 
-  async getMangoTokenBalance(userPk: PublicKey, accIndex: number, tokenIndex: number) {
+  async getMangoTokenBalance(userPubkey: PublicKey, accIndex: number, tokenIndex: number) {
     await this.loadGroup();
-    const mangoAccounts = await this.loadUserAccounts(userPk);
+    const mangoAccounts = await this.loadUserAccounts(userPubkey);
     const cache = await this.getCache();
     return mangoAccounts[accIndex]
       .getNativeDeposit(

@@ -30,11 +30,11 @@ export default class SerumTester extends SerumClient {
 
   user2Kp: Keypair = new Keypair();
 
-  quoteUser1Pk!: PublicKey;
+  quoteUser1Pubkey!: PublicKey;
 
-  baseUser2Pk!: PublicKey;
+  baseUser2Pubkey!: PublicKey;
 
-  quoteUser2Pk!: PublicKey;
+  quoteUser2Pubkey!: PublicKey;
 
   constructor() {
     super()
@@ -50,14 +50,14 @@ export default class SerumTester extends SerumClient {
 
     // user 1 - we give them quote
     // NOTE: we intentionally are NOT creating the base account for user 1. The BE should take care of that.
-    this.quoteUser1Pk = await this._createTokenAcc(this.quoteMint, this.user1Kp.publicKey);
-    await this._fundTokenAcc(this.quoteMint, this.user1Kp.publicKey, this.quoteUser1Pk, fundingAmount);
+    this.quoteUser1Pubkey = await this._createTokenAcc(this.quoteMint, this.user1Kp.publicKey);
+    await this._fundTokenAcc(this.quoteMint, this.user1Kp.publicKey, this.quoteUser1Pubkey, fundingAmount);
 
     // user 2 - we give them base
     await this._transferLamports(this.user1Kp, this.user2Kp.publicKey, LAMPORTS_PER_SOL);
-    this.baseUser2Pk = await this._createTokenAcc(this.baseMint, this.user2Kp.publicKey);
-    this.quoteUser2Pk = await this._createTokenAcc(this.quoteMint, this.user2Kp.publicKey);
-    await this._fundTokenAcc(this.baseMint, this.user1Kp.publicKey, this.baseUser2Pk, fundingAmount);
+    this.baseUser2Pubkey = await this._createTokenAcc(this.baseMint, this.user2Kp.publicKey);
+    this.quoteUser2Pubkey = await this._createTokenAcc(this.quoteMint, this.user2Kp.publicKey);
+    await this._fundTokenAcc(this.baseMint, this.user1Kp.publicKey, this.baseUser2Pubkey, fundingAmount);
   }
 
   async prepMarket() {
@@ -68,7 +68,7 @@ export default class SerumTester extends SerumClient {
     await this._prepareAndSendTransaction(transaction2);
     //the 1st keypair returned is always the marketKp
     this.marketKp = transaction1.signers[1] as Keypair;
-    console.log('New market Pk is', this.marketKp.publicKey.toBase58());
+    console.log('New market Pubkey is', this.marketKp.publicKey.toBase58());
     this.market = await this.loadSerumMarket(this.marketKp.publicKey);
   }
 

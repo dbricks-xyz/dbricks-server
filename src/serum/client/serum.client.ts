@@ -28,12 +28,12 @@ export default class SerumClient extends SolClient {
 
   async prepInitMarketTransaction(
     marketPubkey: PublicKey,
-    reqQPk: PublicKey,
-    eventQPk: PublicKey,
-    bidsPk: PublicKey,
-    asksPk: PublicKey,
-    baseVaultPk: PublicKey,
-    quoteVaultPk: PublicKey,
+    reqQPubkey: PublicKey,
+    eventQPubkey: PublicKey,
+    bidsPubkey: PublicKey,
+    asksPubkey: PublicKey,
+    baseVaultPubkey: PublicKey,
+    quoteVaultPubkey: PublicKey,
     baseMintPubkey: PublicKey,
     quoteMintPubkey: PublicKey,
     baseLotSize: BN,
@@ -45,13 +45,13 @@ export default class SerumClient extends SolClient {
     const initMarketInstruction = DexInstructions.initializeMarket({
       // dex accounts
       market: marketPubkey,
-      requestQueue: reqQPk,
-      eventQueue: eventQPk,
-      bids: bidsPk,
-      asks: asksPk,
+      requestQueue: reqQPubkey,
+      eventQueue: eventQPubkey,
+      bids: bidsPubkey,
+      asks: asksPubkey,
       // vaults
-      baseVault: baseVaultPk,
-      quoteVault: quoteVaultPk,
+      baseVault: baseVaultPubkey,
+      quoteVault: quoteVaultPubkey,
       // mints
       baseMint: baseMintPubkey,
       quoteMint: quoteMintPubkey,
@@ -79,11 +79,11 @@ export default class SerumClient extends SolClient {
     size: number,
     orderType: orderType,
     ownerPubkey: PublicKey,
-    payerPk: PublicKey,
+    payerPubkey: PublicKey,
   ): Promise<instructionsAndSigners> {
     const placeOrderTransaction = await market.makePlaceOrderTransaction(this.connection, {
       owner: ownerPubkey,
-      payer: payerPk,
+      payer: payerPubkey,
       side,
       price,
       size,
@@ -156,8 +156,8 @@ export default class SerumClient extends SolClient {
   async prepSettleFundsTransaction(
     market: Market,
     ownerPubkey: PublicKey,
-    ownerBasePk: PublicKey,
-    ownerQuotePk: PublicKey,
+    ownerBasePubkey: PublicKey,
+    ownerQuotePubkey: PublicKey,
   ): Promise<instructionsAndSigners> {
     // currently this will fail if this is the first ever trade for this user in this market
     // this means the 1st trade won't settle and we have to run this twice to actually settle it
@@ -170,8 +170,8 @@ export default class SerumClient extends SolClient {
     const settleFundsTransaction = await market.makeSettleFundsTransaction(
       this.connection,
       openOrdersAccounts[0],
-      ownerBasePk,
-      ownerQuotePk,
+      ownerBasePubkey,
+      ownerQuotePubkey,
     );
     return {
       instructions: [...settleFundsTransaction.transaction.instructions],
@@ -218,15 +218,15 @@ export default class SerumClient extends SolClient {
     market: Market,
     ownerPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey][]> {
-    const [ownerBaseInstructionsAndSigners, ownerBasePk] = await this.getOrCreateTokenAccByMint(
+    const [ownerBaseInstructionsAndSigners, ownerBasePubkey] = await this.getOrCreateTokenAccByMint(
       ownerPubkey, market.baseMintAddress,
     );
-    const [ownerQuoteInstructionsAndSigners, ownerQuotePk] = await this.getOrCreateTokenAccByMint(
+    const [ownerQuoteInstructionsAndSigners, ownerQuotePubkey] = await this.getOrCreateTokenAccByMint(
       ownerPubkey, market.quoteMintAddress,
     );
     return [
-      [ownerBaseInstructionsAndSigners, ownerBasePk],
-      [ownerQuoteInstructionsAndSigners, ownerQuotePk],
+      [ownerBaseInstructionsAndSigners, ownerBasePubkey],
+      [ownerQuoteInstructionsAndSigners, ownerQuotePubkey],
     ];
   }
 
@@ -274,14 +274,14 @@ export default class SerumClient extends SolClient {
   // --------------------------------------- helpers (active)
 
   async prepCreateStateAccInstruction(
-    stateAccPk: PublicKey,
+    stateAccPubkey: PublicKey,
     space: number,
     ownerPubkey: PublicKey,
   ): Promise<TransactionInstruction> {
     return SystemProgram.createAccount({
       programId: SERUM_PROG_ID,
       fromPubkey: ownerPubkey,
-      newAccountPubkey: stateAccPk,
+      newAccountPubkey: stateAccPubkey,
       space,
       lamports: await this.connection.getMinimumBalanceForRentExemption(space),
     });

@@ -121,15 +121,15 @@ export default class MangoClient extends SolClient {
     const tokenMint = this.group.tokens[tokenIndex].mint;
     const mangoAccounts = await this.loadUserAccounts(ownerPubkey);
 
-    let destinationPk: PublicKey;
+    let destinationPubkey: PublicKey;
     if (mangoAccounts.length === 0) { // Init Mango Account before deposit
-      const [newAccInstructionsAndSigners, newAccPk] = await this.prepCreateMangoAccTransaction(ownerPubkey);
+      const [newAccInstructionsAndSigners, newAccountPubkey] = await this.prepCreateMangoAccTransaction(ownerPubkey);
       instructionsAndSigners.instructions.push(...newAccInstructionsAndSigners.instructions);
       instructionsAndSigners.signers.push(...newAccInstructionsAndSigners.signers);
-      destinationPk = newAccPk;
+      destinationPubkey = newAccountPubkey;
     } else {
       // TODO: UI should always pass a valid number, but what if it doesn't?
-      destinationPk = mangoAccounts[mangoAccountNumber].publicKey;
+      destinationPubkey = mangoAccounts[mangoAccountNumber].publicKey;
     }
 
     let wrappedSolAccount: Keypair | null = null;
@@ -156,7 +156,7 @@ export default class MangoClient extends SolClient {
       this.group.publicKey,
       ownerPubkey,
       this.group.mangoCache,
-      destinationPk,
+      destinationPubkey,
       rootBank,
       nodeBank,
       vault,
@@ -485,7 +485,7 @@ export default class MangoClient extends SolClient {
 
   async prepPlacePerpOrderTransaction(
     mangoAccount: MangoAccount,
-    mangoCachePk: PublicKey,
+    mangoCachePubkey: PublicKey,
     perpMarket: PerpMarket,
     ownerPubkey: PublicKey,
     side: side,
@@ -519,7 +519,7 @@ export default class MangoClient extends SolClient {
       this.group.publicKey,
       mangoAccount.publicKey,
       ownerPubkey,
-      mangoCachePk,
+      mangoCachePubkey,
       perpMarket.publicKey,
       perpMarket.bids,
       perpMarket.asks,
@@ -675,14 +675,14 @@ export default class MangoClient extends SolClient {
   }
 
   async loadGroup(): Promise<void> {
-    const groupPk = this.config.groups.find(
+    const groupPubkey = this.config.groups.find(
       (group) => group.name === this.groupName,
     )?.publicKey;
-    if (!groupPk) {
+    if (!groupPubkey) {
       throw new Error('Error finding Mango group');
     }
     const mangoGroup = await this.nativeClient.getMangoGroup(
-      new PublicKey(groupPk),
+      new PublicKey(groupPubkey),
     );
     await mangoGroup.loadRootBanks(this.connection);
     await Promise.all(

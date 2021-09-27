@@ -47,8 +47,8 @@ export default class MangoOrderService extends MangoClient implements IMangoDEXO
     if (!openOrders) {
       throw new Error(`Could not find open orders from: ${mangoAcc.publicKey.toBase58()} for market: ${params.marketPubkey.toBase58()}`);
     }
-    const openOrdersPk = openOrders.owner;
-    const orders = await spotMarket.loadOrdersForOwner(this.connection, openOrdersPk);
+    const openOrdersPubkey = openOrders.owner;
+    const orders = await spotMarket.loadOrdersForOwner(this.connection, openOrdersPubkey);
     const order = orders.find((o) => o.orderId.toString() === params.orderId!.toString()) as Order;
 
     const transaction = await this.prepCancelSpotOrderTransaction(

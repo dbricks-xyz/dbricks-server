@@ -59,8 +59,8 @@ export default class SerumMarketService extends SerumClient implements ISerumDEX
   async settle(params: ISerumDEXMarketSettleParamsParsed): Promise<instructionsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPubkey);
     const [
-      [ownerBaseInstructionsAndSigners, ownerBasePk],
-      [ownerQuoteInstructionsAndSigners, ownerQuotePk],
+      [ownerBaseInstructionsAndSigners, ownerBasePubkey],
+      [ownerQuoteInstructionsAndSigners, ownerQuotePubkey],
     ] = await this.getBaseAndQuoteAccountsFromMarket(
       market,
       params.ownerPubkey,
@@ -68,8 +68,8 @@ export default class SerumMarketService extends SerumClient implements ISerumDEX
     const settleInstructionsAndSigners = await this.prepSettleFundsTransaction(
       market,
       params.ownerPubkey,
-      ownerBasePk,
-      ownerQuotePk,
+      ownerBasePubkey,
+      ownerQuotePubkey,
     );
     let transaction = mergeInstructionsAndSigners(ownerBaseInstructionsAndSigners, ownerQuoteInstructionsAndSigners);
     transaction = mergeInstructionsAndSigners(transaction, settleInstructionsAndSigners);
