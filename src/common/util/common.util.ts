@@ -58,7 +58,10 @@ export function tryGetSerumMarketName(marketPubkey: string): string | undefined 
  * NOTE: deduplicates signers, but not instructions.
  * This is because instructions can repeat (eg 2 place orders), but signers can't
  */
-export function mergeInstructionsAndSigners(x: instructionsAndSigners, y: instructionsAndSigners): instructionsAndSigners {
+export function mergeInstructionsAndSigners(
+  x: instructionsAndSigners,
+  y: instructionsAndSigners
+): instructionsAndSigners {
   const result: instructionsAndSigners = {instructions: [], signers: []};
   result.instructions = [...x.instructions, ...y.instructions];
   result.signers = [...x.signers];

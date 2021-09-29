@@ -8,7 +8,7 @@
 solana-test-validator # this sets up a local validator. You can add --reset to reset the state
 # git clone the protocols below
 https://github.com/project-serum/serum-dex
-https://github.com/blockworks-foundation/mango
+https://github.com/blockworks-foundation/mango-v3
 # for each protocol cd into the folder with `Cargo.toml` (note for serum you MUST cd into `dex`, not the root folder)
 cargo-build bpf
 # this will produce a command to deploy the protocol - copy paste it into terminal. Eg:
