@@ -6,52 +6,52 @@
     {
       "cluster": "localnet",
       "name": "localnet.1",
-      "publicKey": "3Rrjg1a9Q7xdGoUjy1FGjKq3iaXXBif7V1x5SJdfMKKW",
+      "publicKey": "F99Vm3AANJcvbtowMwU3684Ko81WPKtS5z9mA4jdKNt7",
       "quoteSymbol": "QUOTE",
       "mangoProgramId": "zJTcyPy32ZHiUZUMmRDHw4G2fB21zEwopUxKYTq4K1T",
       "serumProgramId": "DVieqxNimmtbZpZTw2sZiSAohNJuHLywGaMs47RAW97Z",
       "tokens": [
         {
           "symbol": "QUOTE",
-          "mintKey": "CBi7rWabjsBHtfDd21fgDYNt4PnFsUftUp6bru7E1sfu",
+          "mintKey": "9vKva7t81NLq7GKmmm35mQ9wzshg6AcR1QiVgem65Fj6",
           "decimals": 0,
-          "rootKey": "2HQG85fpvavk4MUS93zyPFgJznmPzfCCKmLt25BbPKJY",
+          "rootKey": "73bbifvyLmk8EQhYdKrnZGJxY6ZgMDDro4nTGeRFUiin",
           "nodeKeys": [
-            "9bTjb6c6WUveHmuYE3NsNAUhrhu918ey4m2Jow6aQyrY"
+            "7P7HkggVxm9Pd1xKT4uoD7o3xfxNjTtLcosJ279s62xr"
           ]
         },
         {
           "symbol": "BASE",
-          "mintKey": "EFmEMzH8oF2YSYnmU6t74irPWBMrHdRNQn5ziLoohUsu",
+          "mintKey": "5CAkUoF4GpBv8fVr2Vuc1tTh1iTUhkDaojh9NaBwT3Rh",
           "decimals": 0,
-          "rootKey": "AuNgn5YhrjEk2jkD8xTGsFWQbminDjMcfTzB9S21XEzb",
+          "rootKey": "48okcD9aC7bxKqzSf3ff6NTAoaLGGCtAfsJKs5QHfQae",
           "nodeKeys": [
-            "9LamEocdAexQqy23nGajQ4Q2bBf1BgxvAtLUArBUZjCk"
+            "DTPudjz3DVGFYFpLXkpvq4gQDwJgL8sBtAQ8ExNqf2LT"
           ]
         }
       ],
       "oracles": [
         {
           "symbol": "QUOTE",
-          "publicKey": "AUZsxS75qxqNEWX7soDnJAYnyzrGoLwVTenm1NpYZwcJ"
+          "publicKey": "EkPVmCUxuA616kgrN63LEsGqC54YteqQnoCUr7yM1hHS"
         },
         {
           "symbol": "BASE",
-          "publicKey": "5g7aoUp1te4gKHjqnu41JHUDLiDftSu1VF966gJFYvbx"
+          "publicKey": "7pPS41HbV8V3sh1rwiLgf3E2ReKUmA397W15pu9dy8oA"
         }
       ],
       "perpMarkets": [],
       "spotMarkets": [
         {
           "name": "BASE/QUOTE",
-          "publicKey": "9RAHG8juBzbTxTzeTr7kgxtZSMSGR8LjhvdCuNWCuNWb",
+          "publicKey": "999wnxTtU55jZDZCVbXe3zY8dxZwq9XgwAtDUsSG5S4Z",
           "baseSymbol": "BASE",
           "baseDecimals": 0,
           "quoteDecimals": 0,
           "marketIndex": 1,
-          "bidsKey": "CUJBSHmruKC7vbgqhPE18qdyiFTT3FeZywkjqhmEEuMZ",
-          "asksKey": "4NwJtoRrH4eFg2HnxW3d8JruHMAZyox1GKAiM9UZ2Hdf",
-          "eventsKey": "E8QProctq97CW11fqXJXJZUE35rSYtXHYeV2yt8BJBAD"
+          "bidsKey": "D1H9ABpsoac1X59g6ZA43nzqt9nkthaT8bbxhaRp9e4B",
+          "asksKey": "38ssZaGP26AwPYeyV1Ggjdp2s1FKYUk572V36hg6zgUn",
+          "eventsKey": "BVu1WBGjXT9VvGktYzNXV6oF2HhckbE1G4huPyR2ck61"
         }
       ]
     }
