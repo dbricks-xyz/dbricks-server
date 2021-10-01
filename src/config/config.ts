@@ -1,4 +1,7 @@
 import {Commitment, PublicKey} from '@solana/web3.js';
+import debug from "debug";
+
+const log: debug.IDebugger = debug('config');
 
 /*eslint-disable */
 require('dotenv').config();
@@ -11,8 +14,8 @@ if (process.env.TESTING_LOCAL) {
 } else {
   NETWORK = process.env.NETWORK as string;
 }
-console.log('// ---------------------------------------')
-console.log('LOADED ENV:', NETWORK);
+log('// ---------------------------------------')
+log('LOADED ENV:', NETWORK);
 
 export let SERUM_PROG_ID: PublicKey;
 export let SABER_PROG_ID: PublicKey;

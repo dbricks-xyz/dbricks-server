@@ -7,7 +7,6 @@ import {SerumRoutes} from './serum/routes/serum.routes';
 import {MangoRoutes} from './mango/routes/mango.routes';
 import {CommonRoutes} from "./common/routes/common.routes";
 import rateLimit from 'express-rate-limit';
-/* eslint-enable */
 
 const app: e.Application = e();
 

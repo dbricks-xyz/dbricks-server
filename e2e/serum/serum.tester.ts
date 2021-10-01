@@ -16,6 +16,9 @@ import {
 import {saveRequestResponseToJSON} from "../../docs/docs.generator";
 import SerumClient from "../../src/serum/client/serum.client";
 import {Market} from "@project-serum/serum";
+import debug from "debug";
+
+const log: debug.IDebugger = debug('tests:serum-tester');
 
 export default class SerumTester extends SerumClient {
   baseMint!: Token;
@@ -68,7 +71,7 @@ export default class SerumTester extends SerumClient {
     await this._prepareAndSendTransaction(transaction2);
     //the 1st keypair returned is always the marketKp
     this.marketKeypair = transaction1.signers[1] as Keypair;
-    console.log('New market Pubkey is', this.marketKeypair.publicKey.toBase58());
+    log('New market Pubkey is 2', this.marketKeypair.publicKey.toBase58());
     this.market = await this.loadSerumMarket(this.marketKeypair.publicKey);
   }
 

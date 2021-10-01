@@ -12,6 +12,5 @@ server.listen(port, () => {
   routes.forEach((route: CommonRoutesConfig) => {
     log(`Routes configured for ${route.getName()}`);
   });
-  // the only time we want to use console-log
-  console.log(`Server running at http://localhost:${port}`);
+  log(`Server running at http://localhost:${port}`);
 });

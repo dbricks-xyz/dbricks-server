@@ -173,7 +173,7 @@ export default class SolClient {
     }
     const transaction = new Transaction().add(...instructionsAndSigners.instructions);
     const sig = await sendAndConfirmTransaction(this.connection, transaction, instructionsAndSigners.signers);
-    console.log('Transaction successful,', sig);
+    log('Transaction successful,', sig);
     return sig;
   }
 
