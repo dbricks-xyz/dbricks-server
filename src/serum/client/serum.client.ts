@@ -1,19 +1,9 @@
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram, Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import {Keypair, PublicKey, SystemProgram, TransactionInstruction,} from '@solana/web3.js';
 import BN from 'bn.js';
 import {DexInstructions, Market, TokenInstructions} from '@project-serum/serum';
 import debug from 'debug';
 import {Order} from '@project-serum/serum/lib/market';
-import {
-  instructionsAndSigners,
-  orderType,
-  side,
-} from 'dbricks-lib';
+import {instructionsAndSigners, orderType, side,} from '@dbricks/dbricks-ts';
 import SolClient from '../../common/client/common.client';
 import {SERUM_PROG_ID} from '../../config/config';
 import {tryGetSerumMarketName} from "../../common/util/common.util";

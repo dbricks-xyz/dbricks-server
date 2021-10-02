@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import {Account, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction} from '@solana/web3.js';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Market } from '@project-serum/serum';
-import { deserializeInstructionsAndSigners, IMangoDEXOrderCancelParams, IMangoDEXOrderPlaceParams, IMangoLenderDepositParams, IMangoLenderWithdrawParams, ISerumDEXMarketInitParams, instructionsAndSigners, orderType, side } from 'dbricks-lib';
+import { deserializeInstructionsAndSigners, IMangoDEXOrderCancelParams, IMangoDEXOrderPlaceParams, IMangoLenderDepositParams, IMangoLenderWithdrawParams, ISerumDEXMarketInitParams, instructionsAndSigners, orderType, side } from '@dbricks/dbricks-ts';
 import MangoClient from '../../src/mango/client/mango.client';
 import app from '../../src/app';
 import { loadKeypairSync } from '../../src/common/util/common.util';

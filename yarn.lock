@@ -353,6 +353,18 @@
     enabled "2.0.x"
     kuler "^2.0.0"
 
+"@dbricks/dbricks-ts@^0.0.22":
+  version "0.0.22"
+  resolved "https://registry.yarnpkg.com/@dbricks/dbricks-ts/-/dbricks-ts-0.0.22.tgz#39eb5207f6b11e772503bad231355f8c6813a385"
+  integrity sha512-Dju4YlgDy3txwyxng9Z9peaO1ZN1C/iWMUh3czslXSUd2MnIg2ZKKeZGoKfODX+W/3N81SOKvBI0m2jLj/O2Ng==
+  dependencies:
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.29.0"
+    axios "^0.21.4"
+    bn.js "^5.2.0"
+    dotenv "^10.0.0"
+    winston "^3.3.3"
+
 "@eslint/eslintrc@^0.4.3":
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/@eslint/eslintrc/-/eslintrc-0.4.3.tgz#9e42981ef035beb3dd49add17acb96e8ff6f394c"
@@ -1492,15 +1504,6 @@ borsh@^0.4.0:
     bs58 "^4.0.0"
     text-encoding-utf-8 "^1.0.2"
 
-borsh@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/borsh/-/borsh-0.6.0.tgz#a7c9eeca6a31ca9e0607cb49f329cb659eb791e1"
-  integrity sha512-sl5k89ViqsThXQpYa9XDtz1sBl3l1lI313cFUY1HKr+wvMILnb+58xpkqTNrYbelh99dY7K8usxoCusQmqix9Q==
-  dependencies:
-    bn.js "^5.2.0"
-    bs58 "^4.0.0"
-    text-encoding-utf-8 "^1.0.2"
-
 boxen@^5.0.0:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/boxen/-/boxen-5.1.2.tgz#788cb686fc83c1f486dfa8a40c68fc2b831d2b50"
@@ -1948,17 +1951,6 @@ data-urls@^2.0.0:
     abab "^2.0.3"
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
-
-dbricks-lib@^0.1.51:
-  version "0.1.51"
-  resolved "https://registry.yarnpkg.com/dbricks-lib/-/dbricks-lib-0.1.51.tgz#6f8dd25fb58a7a71fcf75534d1656f8da575a6d3"
-  integrity sha512-RB+ytAKsSJ0Hm1ZKP/2qdVdzi/i63mfjZLeIuEBHJT0QFIYXYHdeezGnMinOKkgcT0qg5BPX9GGy/ivurlENlQ==
-  dependencies:
-    "@solana/spl-token" "^0.1.8"
-    "@solana/web3.js" "^1.29.0"
-    axios "^0.21.4"
-    bn.js "^5.2.0"
-    borsh "^0.6.0"
 
 debug@2.6.9, debug@^2.2.0, debug@^2.6.9:
   version "2.6.9"

@@ -12,10 +12,13 @@ import {
   ISerumDEXOrderPlaceParams,
   side,
   orderType,
-} from "dbricks-lib";
+} from "@dbricks/dbricks-ts";
 import {saveRequestResponseToJSON} from "../../docs/docs.generator";
 import SerumClient from "../../src/serum/client/serum.client";
 import {Market} from "@project-serum/serum";
+import debug from "debug";
+
+const log: debug.IDebugger = debug('tests:serum-tester');
 
 export default class SerumTester extends SerumClient {
   baseMint!: Token;
@@ -68,7 +71,7 @@ export default class SerumTester extends SerumClient {
     await this._prepareAndSendTransaction(transaction2);
     //the 1st keypair returned is always the marketKp
     this.marketKeypair = transaction1.signers[1] as Keypair;
-    console.log('New market Pubkey is', this.marketKeypair.publicKey.toBase58());
+    log('New market Pubkey is 2', this.marketKeypair.publicKey.toBase58());
     this.market = await this.loadSerumMarket(this.marketKeypair.publicKey);
   }
 
@@ -143,7 +146,7 @@ export default class SerumTester extends SerumClient {
     return deserializeInstructionsAndSigners(response.body);
   }
 
-  async requestCancelOrderInstruction(orderId: string, ownerPubkey: string) {
+  async requestCancelOrderInstruction(orderId: string, ownerPubkey: string, saveRes = true) {
     const route = '/serum/orders/cancel';
     const params: ISerumDEXOrderCancelParams = {
       marketPubkey: this.marketKeypair.publicKey.toBase58(),
@@ -151,14 +154,16 @@ export default class SerumTester extends SerumClient {
       ownerPubkey,
     };
     const response = await request(app).post(route).send(params).expect(200);
-    saveRequestResponseToJSON(
-      'serum.orders.cancel',
-      'serum',
-      'POST',
-      route,
-      params,
-      response.body
-    );
+    if (saveRes) {
+      saveRequestResponseToJSON(
+        'serum.orders.cancel',
+        'serum',
+        'POST',
+        route,
+        params,
+        response.body
+      );
+    }
     return deserializeInstructionsAndSigners(response.body);
   }
 
@@ -176,10 +181,11 @@ export default class SerumTester extends SerumClient {
     await this._prepareAndSendTransaction(transaction);
   }
 
-  async cancelOrder(user: Keypair, orderId: string) {
+  async cancelOrder(user: Keypair, orderId: string, saveRes=true) {
     const cancelTransaction = (await this.requestCancelOrderInstruction(
       orderId,
       user.publicKey.toBase58(),
+      saveRes,
     ))[0];
     cancelTransaction.signers.unshift(this.user1Keypair);
     await this._prepareAndSendTransaction(cancelTransaction);

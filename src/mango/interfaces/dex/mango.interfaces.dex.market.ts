@@ -1,4 +1,4 @@
-import {instructionsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from '@dbricks/dbricks-ts';
 import {ISerumDEXMarketSettleParamsParsed} from "../../../serum/interfaces/dex/serum.interfaces.dex.market";
 
 export interface IMangoDEXMarket {

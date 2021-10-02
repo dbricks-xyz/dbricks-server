@@ -2,7 +2,7 @@ import {Keypair} from '@solana/web3.js';
 import fs from 'fs';
 import {PublicKey} from '@solana/web3.js';
 import {NETWORK, SERUM_PROG_ID} from "../../config/config";
-import {instructionsAndSigners} from "dbricks-lib";
+import {instructionsAndSigners} from "@dbricks/dbricks-ts";
 
 export function loadKeypairSync(path: string): Keypair {
   const secretKey = JSON.parse(fs.readFileSync(path, 'utf8'));

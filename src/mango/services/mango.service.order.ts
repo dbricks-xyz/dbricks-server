@@ -1,4 +1,4 @@
-import {instructionsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from '@dbricks/dbricks-ts';
 import {Order} from '@project-serum/serum/lib/market';
 import {
   IMangoDEXOrder, IMangoDEXOrderCancelParamsParsed,

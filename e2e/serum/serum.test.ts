@@ -55,7 +55,7 @@ describe('Serum', () => {
     await tester.settleAndVerifyAmount(tester.user1Keypair, tester.quoteMint.publicKey, fundingAmount - 2 * amount * price);
 
     // cancel all at once
-    await tester.cancelOrder(tester.user1Keypair, '');
+    await tester.cancelOrder(tester.user1Keypair, '', false);
     await tester.verifyOpenOrdersCount(tester.user1Keypair, 0);
     await tester.settleAndVerifyAmount(tester.user1Keypair, tester.quoteMint.publicKey, fundingAmount);
 
@@ -65,15 +65,15 @@ describe('Serum', () => {
     }
 
     // cancel all at once
-    await tester.cancelOrder(tester.user1Keypair, '');
+    await tester.cancelOrder(tester.user1Keypair, '', false);
     await tester.verifyOpenOrdersCount(tester.user1Keypair, 0);
     await tester.settleAndVerifyAmount(tester.user1Keypair, tester.quoteMint.publicKey, fundingAmount);
 
     // cancel all when 0 exist
-    await tester.cancelOrder(tester.user1Keypair, '');
+    await tester.cancelOrder(tester.user1Keypair, '', false);
 
     // cancel a non-existent order
-    await tester.cancelOrder(tester.user1Keypair, 'fff');
+    await tester.cancelOrder(tester.user1Keypair, 'fff', false);
   });
 });
 

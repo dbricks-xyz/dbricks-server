@@ -4,15 +4,20 @@ import {
   ISerumDEXOrderPlaceParamsParsed,
 } from '../interfaces/dex/serum.interfaces.dex.order';
 import SerumClient from '../client/serum.client';
-import {mergeInstructionsAndSigners} from "../../common/util/common.util";
-import {DBricksSDK, flattenedBrick, instructionsAndSigners} from "dbricks-lib";
+import {
+  Action,
+  Builder,
+  IFlattenedBrick,
+  instructionsAndSigners,
+  Protocol
+} from "@dbricks/dbricks-ts";
 import {COMMITTMENT, CONNECTION_URL} from "../../config/config";
 import {PublicKey} from "@solana/web3.js";
 
 export default class SerumOrderService extends SerumClient implements ISerumDEXOrder {
   async place(params: ISerumDEXOrderPlaceParamsParsed): Promise<instructionsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPubkey);
-    const [payerInstructionsAndSigners, payerPubkey] = await this.getPayerForMarket(
+    const [_, payerPubkey] = await this.getPayerForMarket(
       market,
       params.side,
       params.ownerPubkey,
@@ -26,8 +31,8 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
       params.ownerPubkey,
       payerPubkey,
     );
-    const transaction = mergeInstructionsAndSigners(payerInstructionsAndSigners, placeInstructionsAndSigners);
-    return [transaction];
+    console.log(placeInstructionsAndSigners.instructions)
+    return [placeInstructionsAndSigners];
   }
 
   async cancel(params: ISerumDEXOrderCancelParamsParsed): Promise<instructionsAndSigners[]> {
@@ -38,20 +43,24 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
       params.orderId,
     );
     //the next steps are needed in case there are too many orders to cancel in a single Transaction
-    const flattenedBricks: flattenedBrick[] = instructionsAndSigners.instructions.map(i => {
+    const flattenedBricks: IFlattenedBrick[] = instructionsAndSigners.instructions.map(i => {
       return {
-        id: 0,
-        description: '',
+        protocol: Protocol.Serum,
+        action: Action.Serum.CancelOrder,
         instructionsAndSigners: {
           instructions: [i],
           signers: []
         } as instructionsAndSigners
       }
     })
-    const sizedBricks = await (new DBricksSDK(CONNECTION_URL, COMMITTMENT)).findOptimalBrickSize(
-      flattenedBricks,
-      new PublicKey("75ErM1QcGjHiPMX7oLsf9meQdGSUs4ZrwS2X8tBpsZhA") //doesn't matter what Pk is passed here
-    );
+    //we need to pass some publicKey to instantiate the builder, here it doesn't matter which
+    const ownerPubkey = new PublicKey("75ErM1QcGjHiPMX7oLsf9meQdGSUs4ZrwS2X8tBpsZhA");
+    const builder = new Builder({
+      ownerPubkey,
+      connectionUrl: CONNECTION_URL,
+      committment: COMMITTMENT,
+    });
+    const sizedBricks = await builder.optimallySizeBricks(flattenedBricks);
     return sizedBricks.map(brick => {
         return {
           instructions: brick.transaction.instructions,
