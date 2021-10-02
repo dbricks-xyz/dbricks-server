@@ -6,7 +6,7 @@ import {
   ISerumDEXMarketInitParamsParsed,
   ISerumDEXMarketSettleParamsParsed
 } from '../interfaces/dex/serum.interfaces.dex.market';
-import {instructionsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from '@dbricks/dbricks-ts';
 import SerumClient from '../client/serum.client';
 import {SERUM_PROG_ID} from '../../config/config';
 import {mergeInstructionsAndSigners} from "../../common/util/common.util";

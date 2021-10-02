@@ -5,7 +5,7 @@ import {
   IMangoDEXOrderCancelParams,
   IMangoDEXOrderPlaceParams,
   IMangoLenderDepositParams, IMangoLenderWithdrawParams
-} from 'dbricks-lib';
+} from '@dbricks/dbricks-ts';
 import { IMangoLenderDepositParamsParsed } from '../interfaces/lender/mango.interfaces.lender.deposit';
 import { IMangoLenderWithdrawParamsParsed } from '../interfaces/lender/mango.interfaces.lender.withdraw';
 import { IMangoDEXOrderPlaceParamsParsed, IMangoDEXOrderCancelParamsParsed } from '../interfaces/dex/mango.interfaces.dex.order';

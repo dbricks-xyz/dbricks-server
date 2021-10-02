@@ -59,7 +59,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import debug from 'debug';
-import {instructionsAndSigners, side, orderType} from 'dbricks-lib';
+import {instructionsAndSigners, side, orderType} from '@dbricks/dbricks-ts';
 import BN from 'bn.js';
 import * as fs from 'fs';
 import SolClient from '../../common/client/common.client';

@@ -12,7 +12,7 @@ import {
   ISerumDEXOrderPlaceParams,
   side,
   orderType,
-} from "dbricks-lib";
+} from "@dbricks/dbricks-ts";
 import {saveRequestResponseToJSON} from "../../docs/docs.generator";
 import SerumClient from "../../src/serum/client/serum.client";
 import {Market} from "@project-serum/serum";

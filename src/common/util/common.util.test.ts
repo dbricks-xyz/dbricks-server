@@ -5,7 +5,7 @@ import {
   tryGetSerumMarketName,
   tryGetSerumMarketPubkey
 } from "./common.util";
-import {instructionsAndSigners} from "dbricks-lib";
+import {instructionsAndSigners} from "@dbricks/dbricks-ts";
 import {TESTING_KEYPAIR_PATH} from "../../config/config";
 import SerumClient from "../../serum/client/serum.client";
 import {Keypair, PublicKey} from "@solana/web3.js";
