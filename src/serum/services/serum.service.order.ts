@@ -32,6 +32,7 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
       payerPubkey,
     );
     console.log(placeInstructionsAndSigners.instructions)
+    console.log('signers', placeInstructionsAndSigners.signers)
     return [placeInstructionsAndSigners];
   }
 
