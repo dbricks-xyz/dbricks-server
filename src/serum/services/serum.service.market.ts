@@ -6,10 +6,13 @@ import {
   ISerumDEXMarketInitParamsParsed,
   ISerumDEXMarketSettleParamsParsed
 } from '../interfaces/dex/serum.interfaces.dex.market';
-import {instructionsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from '@dbricks/dbricks-ts';
 import SerumClient from '../client/serum.client';
 import {SERUM_PROG_ID} from '../../config/config';
 import {mergeInstructionsAndSigners} from "../../common/util/common.util";
+import debug from "debug";
+
+const log: debug.IDebugger = debug('app:serum-market-service');
 
 export default class SerumMarketService extends SerumClient implements ISerumDEXMarket {
   async init(params: ISerumDEXMarketInitParamsParsed): Promise<instructionsAndSigners[]> {
@@ -52,7 +55,7 @@ export default class SerumMarketService extends SerumClient implements ISerumDEX
     );
     const transaction1 = prepareInstructionsAndSigners;
     const transaction2 = mergeInstructionsAndSigners(vaultInstructionsAndSigners, initInstructionsAndSigners);
-    console.log('New market address will be:', transaction1.signers[0].publicKey.toBase58());
+    log('New market address will be:', transaction1.signers[0].publicKey.toBase58());
     return [transaction1, transaction2];
   }
 

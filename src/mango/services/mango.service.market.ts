@@ -1,4 +1,4 @@
-import {instructionsAndSigners} from 'dbricks-lib';
+import {instructionsAndSigners} from '@dbricks/dbricks-ts';
 import {QUOTE_INDEX} from '@blockworks-foundation/mango-client';
 import {
   IMangoDEXMarket,

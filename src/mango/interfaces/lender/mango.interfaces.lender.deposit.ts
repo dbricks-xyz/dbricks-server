@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { instructionsAndSigners } from 'dbricks-lib';
+import { instructionsAndSigners } from '@dbricks/dbricks-ts';
 
 export interface IMangoLenderDeposit {
   deposit: (params: IMangoLenderDepositParamsParsed) => Promise<instructionsAndSigners[]>;

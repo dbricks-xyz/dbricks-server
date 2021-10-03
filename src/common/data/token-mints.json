@@ -258,5 +258,10 @@
     "address": "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac",
     "name": "MNGO",
     "network": "mainnet"
+  },
+  {
+    "address": "8HGyAAB1yoM1ttS7pXjHMa3dukTFGQggnFFH3hJZgzQh",
+    "name": "COPE",
+    "network": "localnet"
   }
 ]

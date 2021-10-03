@@ -1,6 +1,6 @@
 import e from 'express';
 import debug from 'debug';
-import {serializeInstructionsAndSigners} from 'dbricks-lib';
+import {serializeInstructionsAndSigners} from '@dbricks/dbricks-ts';
 import SerumOrderService from '../services/serum.service.order';
 import SerumMarketService from '../services/serum.service.market';
 import {

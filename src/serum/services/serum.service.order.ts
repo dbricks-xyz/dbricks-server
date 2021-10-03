@@ -11,7 +11,7 @@ import {instructionsAndSigners} from "dbricks-lib";
 export default class SerumOrderService extends SerumClient implements ISerumDEXOrder {
   async place(params: ISerumDEXOrderPlaceParamsParsed): Promise<instructionsAndSigners[]> {
     const market = await this.loadSerumMarket(params.marketPubkey);
-    const [payerInstructionsAndSigners, payerPubkey] = await this.getPayerForMarket(
+    const [_, payerPubkey] = await this.getPayerForMarket(
       market,
       params.side,
       params.ownerPubkey,
@@ -25,8 +25,7 @@ export default class SerumOrderService extends SerumClient implements ISerumDEXO
       params.ownerPubkey,
       payerPubkey,
     );
-    const transaction = mergeInstructionsAndSigners(payerInstructionsAndSigners, placeInstructionsAndSigners);
-    return [transaction];
+    return [placeInstructionsAndSigners];
   }
 
   async cancel(params: ISerumDEXOrderCancelParamsParsed): Promise<instructionsAndSigners[]> {

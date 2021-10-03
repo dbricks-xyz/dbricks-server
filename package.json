@@ -2,15 +2,15 @@
   "scripts": {
     "start": "nodemon --watch './src/**/*.ts' --exec 'ts-node' src/server.ts",
     "debug": "export DEBUG=* && npm run start",
-    "test:local": "export TESTING_LOCAL=1 && jest",
-    "test:serum": "export TESTING_LOCAL=1 && jest ./e2e/serum",
-    "test:mango": "export TESTING_LOCAL=1 && jest ./e2e/mango",
-    "test:dev": "export TESTING_DEV=1 && jest",
-    "update": "yarn upgrade dbricks-lib --latest --check-files",
-    "linklib": "npm link ../dbricks-lib"
+    "test:local": "export DEBUG=* TESTING_LOCAL=1 && jest",
+    "test:serum": "export DEBUG=* TESTING_LOCAL=1 && jest ./e2e/serum",
+    "test:mango": "export DEBUG=* TESTING_LOCAL=1 && jest ./e2e/mango",
+    "test:dev": "export DEBUG=* TESTING_DEV=1 && jest",
+    "update": "yarn upgrade @dbricks/dbricks-ts --latest --check-files"
   },
   "dependencies": {
     "@blockworks-foundation/mango-client": "^3.0.18",
+    "@dbricks/dbricks-ts": "^0.0.39",
     "@project-serum/serum": "^0.13.58",
     "@project-serum/swap": "^0.1.0-alpha.32",
     "@saberhq/stableswap-sdk": "^0.16.0",
@@ -18,9 +18,7 @@
     "@solana/web3.js": "^1.24.2",
     "axios": "^0.21.4",
     "bn.js": "^5.2.0",
-    "borsh": "^0.6.0",
     "cors": "^2.8.5",
-    "dbricks-lib": "^0.1.51",
     "debug": "^4.3.2",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",

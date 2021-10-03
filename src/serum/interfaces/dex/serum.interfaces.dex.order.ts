@@ -1,6 +1,6 @@
 import {PublicKey,} from '@solana/web3.js';
 import BN from 'bn.js';
-import {instructionsAndSigners, orderType, side} from "dbricks-lib";
+import {instructionsAndSigners, orderType, side} from "@dbricks/dbricks-ts";
 
 export interface ISerumDEXOrder {
   place: (params: ISerumDEXOrderPlaceParamsParsed) => Promise<instructionsAndSigners[]>;

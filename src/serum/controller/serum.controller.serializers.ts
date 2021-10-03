@@ -5,7 +5,7 @@ import {
   ISerumDEXMarketSettleParams,
   ISerumDEXOrderCancelParams,
   ISerumDEXOrderPlaceParams
-} from "dbricks-lib";
+} from "@dbricks/dbricks-ts";
 import BN from "bn.js";
 import {
   ISerumDEXOrderCancelParamsParsed,

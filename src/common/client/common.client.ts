@@ -11,7 +11,7 @@ import debug from 'debug';
 import {AccountInfo, AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID,} from '@solana/spl-token';
 import {COMMITTMENT, CONNECTION_URL, TESTING_KEYPAIR_PATH} from '../../config/config';
 import {loadKeypairSync, sleep} from '../util/common.util';
-import {instructionsAndSigners} from "dbricks-lib";
+import {instructionsAndSigners} from "@dbricks/dbricks-ts";
 
 const log: debug.IDebugger = debug('app:sol-client');
 
@@ -173,7 +173,7 @@ export default class SolClient {
     }
     const transaction = new Transaction().add(...instructionsAndSigners.instructions);
     const sig = await sendAndConfirmTransaction(this.connection, transaction, instructionsAndSigners.signers);
-    console.log('Transaction successful,', sig);
+    log('Transaction successful,', sig);
     return sig;
   }
 
