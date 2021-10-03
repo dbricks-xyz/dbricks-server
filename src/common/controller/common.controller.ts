@@ -5,10 +5,14 @@ import TokenService from "../services/common.services.token";
 const log: debug.IDebugger = debug('app:serum-controller');
 
 class CommonController {
-  async getMintName(request: e.Request, response: e.Response) {
+  async getMintName(request: e.Request, response: e.Response, next: e.NextFunction) {
     const tokenService = new TokenService();
-    const name = tokenService.getMintName(request.body.mintPubkey);
-    response.status(200).send(name);
+    Promise.resolve(tokenService.getMintName(request.body.mintPubkey))
+      .then((name) => {
+        log(`Mint with name ${name} fetched.`)
+        response.status(200).send(name);
+      })
+      .catch(next);
   }
 
 }
