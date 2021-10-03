@@ -1,20 +1,26 @@
-import { getMultipleAccounts, zeroKey, ZERO_BN } from '@blockworks-foundation/mango-client';
+import { getMultipleAccounts, zeroKey } from '@blockworks-foundation/mango-client';
+import { publicKey } from '@project-serum/anchor/dist/utils';
 import { Market, OpenOrders } from '@project-serum/serum';
 import { PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
 import { SERUM_PROG_ID } from '../../src/config/config';
-import { pause } from '../common/e2e.common';
 import MangoTester from './mango.tester';
 
 const tester = new MangoTester();
+const BASE = 1; // Token index in Mango
+const QUOTE = 15; // Token index in Mango
 
 describe('Mango', () => {
+  // √ Initializes everything needed to run mango locally
   it('Can init Mango Group', async () => {
     await tester.setupLocalForTests();
   });
 });
 
 describe('Mango', () => {
-  it('Can create a MangoAccount by depositing', async () => {
+  // √ Tests depositing and creating mangoAccount
+  // √ Tests depositing to an already existing mangoAccount
+  it('Can test deposit a MangoAccount by depositing', async () => {
   // verify that user 2 has no mango accounts, and thus no deposits
     const beforeMangoAccounts = await tester.loadUserAccounts(tester.user2Pubkey);
     expect(beforeMangoAccounts.length === 0);
@@ -23,205 +29,256 @@ describe('Mango', () => {
     await tester.deposit(tester.baseMint.publicKey, '1', tester.user2Keypair);
 
     // verify that there is a mangoAccount with 1 coin in it
-    const amount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
-    expect(amount).toBeGreaterThanOrEqual(0.999999);
-    expect(amount).toBeLessThanOrEqual(1);
-  });
-});
-
-describe('Mango', () => {
-  it('Can deposit into an existing MangoAccount', async () => {
-    const beforeDepositAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
-    expect(beforeDepositAmount).toBeGreaterThanOrEqual(0.999999);
-    expect(beforeDepositAmount).toBeLessThanOrEqual(1);
+    await tester.verifyAmount(tester.user2Pubkey, 1, BASE);
 
     // deposit
-    await tester.deposit(tester.baseMint.publicKey, '1000', tester.user2Keypair);
+    await tester.deposit(tester.baseMint.publicKey, '9999', tester.user2Keypair);
 
-    // verify that there is a mangoAccount with 1 coin in it
-    const afterDepositAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
-    expect(afterDepositAmount).toBeGreaterThanOrEqual(1000.999999);
-    expect(afterDepositAmount).toBeLessThanOrEqual(1001);
-    expect(afterDepositAmount - beforeDepositAmount).toBeGreaterThanOrEqual(999.999999);
-    expect(afterDepositAmount - beforeDepositAmount).toBeLessThanOrEqual(1000);
+    // verify new balance
+    await tester.verifyAmount(tester.user2Pubkey, 10000, BASE);
   });
 });
 
 describe('Mango', () => {
+  // √ Tests withdrawing tokens
   it('Can withdraw from an existing MangoAccount', async () => {
-    const beforeWithdrawAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
-    expect(beforeWithdrawAmount).toBeGreaterThanOrEqual(1000.999999);
-    expect(beforeWithdrawAmount).toBeLessThanOrEqual(1001);
+    await tester.verifyAmount(tester.user2Pubkey, 10000, BASE);
 
     // withdraw
-    await tester.withdraw(tester.baseMint.publicKey, '10', tester.user2Keypair, false);
+    await tester.withdraw(tester.baseMint.publicKey, '100', tester.user2Keypair, false);
 
     // verify withdrawal
-    const afterWithdrawAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
-    expect(afterWithdrawAmount).toBeLessThanOrEqual(991);
-    expect(afterWithdrawAmount).toBeGreaterThanOrEqual(990.999);
-    expect(afterWithdrawAmount - beforeWithdrawAmount).toBeLessThanOrEqual(-9.999999);
-    expect(afterWithdrawAmount - beforeWithdrawAmount).toBeGreaterThanOrEqual(-10);
+    const user2BaseAccount = await tester.getTokenAccountsForOwner(
+      tester.user2Pubkey,
+      tester.quoteMint.publicKey,
+    );
+    expect(user2BaseAccount[0].amount === 100);
+    await tester.verifyAmount(tester.user2Pubkey, 9900, BASE);
   });
 });
 
 describe('Mango', () => {
+  // √ Tests borrowing tokens via withdrawal
   it('Can borrow QUOTE with BASE as collateral', async () => {
     // user 1 deposits so that there is something to borrow
-    await tester.deposit(tester.quoteMint.publicKey, '1000', tester.user1Keypair);
+    await tester.deposit(tester.quoteMint.publicKey, '10000', tester.user1Keypair);
 
-    const user1QuoteAmount = await tester.getMangoTokenBalance(tester.user1Pubkey, 0, 15);
-    expect(user1QuoteAmount).toBeLessThanOrEqual(1000);
-    expect(user1QuoteAmount).toBeGreaterThanOrEqual(999.999);
-
-    // verify user 2 has 991 BASE tokens
-    const user2BaseAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
-    expect(user2BaseAmount).toBeLessThanOrEqual(991);
-    expect(user2BaseAmount).toBeGreaterThanOrEqual(990.999);
+    await tester.verifyAmount(tester.user1Pubkey, 10000, QUOTE);
+    await tester.verifyAmount(tester.user2Pubkey, 9900, BASE);
 
     // user 2 borrows 10 QUOTE via withdraw
-    await tester.withdraw(tester.quoteMint.publicKey, '10', tester.user2Keypair, true);
+    await tester.withdraw(tester.quoteMint.publicKey, '100', tester.user2Keypair, true);
 
-    // verify borrow, should have 10 QUOTE in wallet, and still 991 QUOTE in Mango
+    // verify borrow, should have 100 QUOTE in wallet, and still 9900 BASE in Mango
     const user2QuoteAccount = await tester.getTokenAccountsForOwner(
       tester.user2Pubkey,
       tester.quoteMint.publicKey,
     );
-    expect(user2QuoteAccount[0].amount === 10);
-    const updatedUser2BaseAmount = await tester.getMangoTokenBalance(tester.user2Pubkey, 0, 1);
-    expect(updatedUser2BaseAmount).toBeLessThanOrEqual(991);
-    expect(updatedUser2BaseAmount).toBeGreaterThanOrEqual(990.999);
+    expect(user2QuoteAccount[0].amount === 100);
+    await tester.verifyAmount(tester.user2Pubkey, 9900, BASE);
+  });
+});
+
+describe('Mango', () => {
+  // √ Tests placing a Serum spot order through Mango
+  it('Can place a spot order', async () => {
+    // load orders and market
+    const mangoAccount = await tester.loadMangoAccountForOwner(tester.user2Pubkey, 0);
+    const openOrdersAccounts = mangoAccount.spotOpenOrdersAccounts.filter((oo) => oo !== undefined);
+    const beforeOrders = await tester.loadAllOrdersForTestMarket();
+    expect(openOrdersAccounts.length).toBe(0);
+    expect(beforeOrders?.length).toBe(0);
+
+    // place order
+    await tester.placeSpotOrder(tester.marketKeypair.publicKey, 'buy', '1', '5', 'limit', tester.user2Keypair);
+
+    // verify that an order was placed
+    const updatedOrders = await tester.loadAllOrdersForTestMarket();
+    expect(updatedOrders?.length).toBe(1);
+  });
+});
+
+describe('Mango', () => {
+  // √ Tests cancelling a Serum spot order through Mango
+  it('Can cancel a spot order', async () => {
+    // load orders and market
+    const mangoAccount = await tester.loadMangoAccountForOwner(tester.user2Pubkey, 0);
+    const mangoAccountOrders = mangoAccount.spotOpenOrdersAccounts[1]
+      ?.orders.filter((oo) => !oo.eq(new BN(0)));
+    const beforeOrders = await tester.loadAllOrdersForTestMarket();
+    expect(mangoAccountOrders?.length).toBe(1);
+    expect(beforeOrders?.length).toBe(1);
+
+    // cancel order
+    const orderIdHexString = (mangoAccountOrders as BN[])[0].toString('hex');
+    await tester.cancelSpotOrder(
+      tester.marketKeypair.publicKey, orderIdHexString, tester.user2Keypair,
+    );
+
+    // verify that there are no more orders
+    const updatedOrders = await tester.loadAllOrdersForTestMarket();
+    expect(updatedOrders?.length).toBe(0);
+  });
+});
+
+describe('Mango', () => {
+  // √ Tests cancelling multiple Serum spot orders at once
+  it('Can cancel multiple orders at once', async () => {
+    // place some orders
+    await tester.placeSpotOrder(tester.marketKeypair.publicKey, 'buy', '1.1', '5', 'limit', tester.user2Keypair);
+    await tester.placeSpotOrder(tester.marketKeypair.publicKey, 'buy', '1.2', '5', 'limit', tester.user2Keypair);
+    await tester.placeSpotOrder(tester.marketKeypair.publicKey, 'buy', '1.3', '5', 'limit', tester.user2Keypair);
+
+    // check that the orders have been placed
+    const beforeOrders = await tester.loadAllOrdersForTestMarket();
+    expect(beforeOrders?.length).toBe(3);
+
+    // cancel all orders
+    await tester.cancelSpotOrder(
+      tester.marketKeypair.publicKey, '', tester.user2Keypair,
+    );
+
+    // verify that there are no more orders
+    const updatedOrders = await tester.loadAllOrdersForTestMarket();
+    expect(updatedOrders?.length).toBe(0);
+  });
+});
+
+describe('Mango', () => {
+  // √ Tests settling Mango balances after a completed spot order
+  it('Can settle balances after a completed spot order', async () => {
+    // check balances
+    await tester.verifyAmount(tester.user1Pubkey, 0, BASE);
+    await tester.verifyAmount(tester.user1Pubkey, 10000, QUOTE);
+    await tester.verifyAmount(tester.user2Pubkey, 9900, BASE);
+    await tester.verifyAmount(tester.user2Pubkey, 0, QUOTE);
+
+    // place some orders
+    await tester.placeSpotOrder(tester.marketKeypair.publicKey, 'buy', '1', '1000', 'limit', tester.user1Keypair); // Buying BASE
+    await tester.placeSpotOrder(tester.marketKeypair.publicKey, 'sell', '1', '1000', 'limit', tester.user2Keypair); // Selling BASE
+    const orders = await tester.loadAllOrdersForTestMarket();
+    expect(orders?.length).toBe(0);
+
+    // crank
+    const market = await Market.load(
+      tester.connection, tester.marketKeypair.publicKey, {}, SERUM_PROG_ID,
+    );
+    const mangoAccount = await tester.loadMangoAccountForOwner(tester.user2Pubkey, 0);
+    const openOrdersPubkey = mangoAccount.spotOpenOrdersAccounts.find(
+      (account) => account?.market.toBase58() === tester.marketKeypair.publicKey.toBase58(),
+    )?.owner as PublicKey;
+
+    await tester._consumeEvents(market, openOrdersPubkey, tester.user2Keypair);
+
+    await tester.settleSpot(market.publicKey, tester.user1Keypair);
+    await tester.settleSpot(market.publicKey, tester.user2Keypair);
+
+    // check balances again
+    await tester.verifyAmount(tester.user1Pubkey, 1000, BASE);
+    await tester.verifyAmount(tester.user1Pubkey, 9000, QUOTE);
+    await tester.verifyAmount(tester.user2Pubkey, 8900, BASE);
+    await tester.verifyAmount(tester.user2Pubkey, 897, QUOTE); // 1000 - 100 (earlier borrow) - 3 (Serum fees)
   });
 });
 
 // describe('Mango', () => {
-//   it('Can place orders', async () => {
-//     const mangoAcc = await tester.loadMangoAccForOwner(tester.user2Pubkey, 0);
-//     const openOrdersAccounts = mangoAcc.spotOpenOrdersAccounts.filter((oo) => oo !== undefined);
-//     expect(openOrdersAccounts.length).toBe(0);
+//   // √ Tests placing a Mango perp order
+//   it('Can place a perp order', async () => {
+//     const mangoAcc = await tester.loadMangoAccountForOwner(tester.user2Pubkey, 0);
+//     expect(mangoAcc.perpAccounts[1].bidsQuantity.toNumber()).toBe(0);
 
-//     await tester.placeSpotOrder(tester.marketKp.publicKey, 'buy', '1', '5', 'limit', tester.user2Kp);
-//     // await tester.keeperUpdateAll(); // NECESSARY?
-//     // await tester.loadGroup();
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'buy', '1', '500', 'limit', tester.user2Keypair);
 
 //     await mangoAcc.reload(tester.connection, SERUM_PROG_ID);
-//     const updatedOrders = mangoAcc.spotOpenOrdersAccounts[1]?.orders.filter(
-//       (oo) => !oo.eq(ZERO_BN),
-//     );
-
-//     expect(updatedOrders?.length).toBe(1);
+//     expect(mangoAcc.perpAccounts[1].bidsQuantity.toNumber()).toBe(500);
 //   });
 // });
 
+// describe('Mango', () => {
+//   // √ Tests cancelling a Mango perp order
+//   it('Can cancel a perp order', async () => {
+//     const mangoAcc = await tester.loadMangoAccountForOwner(tester.user2Pubkey, 0);
+//     expect(mangoAcc.perpAccounts[1].bidsQuantity.toNumber()).toBe(500);
 
+//     const perpMarket = await tester.loadPerpMarket(tester.perpMarketPubkey);
+//     const openOrders = await perpMarket.loadOrdersForAccount(
+//       tester.connection,
+//       mangoAcc,
+//     );
+//     const orderIdHexString = openOrders[0].orderId.toString('hex');
+//     await tester.cancelPerpOrder(tester.perpMarketPubkey, orderIdHexString, tester.user2Keypair);
 
-// const ooPk = mangoAcc.spotOpenOrdersAccounts[1]?.publicKey;
-// if (!ooPk) {
-//   throw new Error('aaa');
-// }
+//     await mangoAcc.reload(tester.connection, SERUM_PROG_ID);
+//     expect(mangoAcc.perpAccounts[1].bidsQuantity.toNumber()).toBe(0);
+//   });
+// });
 
-// const market = await Market.load(tester.connection, tester.marketKp.publicKey, {}, SERUM_PROG_ID);
+// describe('Mango', () => {
+//   // √ Tests cancelling multiple Mango perp orders at once
+//   it('Can cancel multiple perp orders at once', async () => {
+//     const mangoAcc = await tester.loadMangoAccountForOwner(tester.user2Pubkey, 0);
+//     expect(mangoAcc.perpAccounts[1].bidsQuantity.toNumber()).toBe(0);
 
-// const accounts = await getMultipleAccounts(
-//   tester.connection,
-//   mangoAcc.spotOpenOrders.filter((pk) => !pk.equals(zeroKey)),
-// );
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'buy', '1', '500', 'limit', tester.user2Keypair);
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'buy', '1', '500', 'limit', tester.user2Keypair);
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'buy', '1', '500', 'limit', tester.user2Keypair);
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'buy', '1', '500', 'limit', tester.user2Keypair);
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'buy', '1', '500', 'limit', tester.user2Keypair);
 
-// console.log(mangoAcc.spotOpenOrdersAccounts[1]);
+//     await mangoAcc.reload(tester.connection, SERUM_PROG_ID);
+//     expect(mangoAcc.perpAccounts[1].bidsQuantity.toNumber()).toBe(2500);
 
-// const oog = await market.findOpenOrdersAccountsForOwner(
-//   tester.connection,
-//   ooPk,
-// );
+//     await tester.cancelPerpOrder(tester.perpMarketPubkey, '', tester.user2Keypair);
 
-// const own = await market.findOpenOrdersAccountsForOwner(
-//   tester.connection,
-//   tester.user2Kp.publicKey,
-// );
+//     await mangoAcc.reload(tester.connection, SERUM_PROG_ID);
+//     expect(mangoAcc.perpAccounts[1].bidsQuantity.toNumber()).toBe(0);
+//   });
+// });
 
-// const owl = await market.findOpenOrdersAccountsForOwner(
-//   tester.connection,
-//   mangoAcc.publicKey,
-// );
+// describe('Mango', () => {
+//   // √ Tests settling pnl on a Mango perp
+//   it('Can settle pnl on a perp contract', async () => {
+//     // verify token amounts
+//     await tester.verifyAmount(tester.user1Pubkey, 1000, BASE);
+//     await tester.verifyAmount(tester.user1Pubkey, 9000, QUOTE);
+//     await tester.verifyAmount(tester.user2Pubkey, 8900, BASE);
+//     await tester.verifyAmount(tester.user2Pubkey, 897, QUOTE);
 
-// await tester._consumeEvents(market, tester.user2Kp);
+//     const user1MangoAccount = await tester.loadMangoAccountForOwner(tester.user1Pubkey, 0);
+//     const user2MangoAccount = await tester.loadMangoAccountForOwner(tester.user2Pubkey, 0);
 
-// const oog = await market.loadOrdersForOwner(
-//   tester.connection,
-//   ooPk,
-// );
+//     // user 1 goes short perp at $1
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'sell', '1', '500', 'limit', tester.user1Keypair);
+//     await user1MangoAccount.reload(tester.connection, SERUM_PROG_ID);
+//     expect(user1MangoAccount.perpAccounts[1].asksQuantity.toNumber()).toBe(500);
 
-// const own = await market.loadOrdersForOwner(
-//   tester.connection,
-//   tester.user2Kp.publicKey,
-// );
+//     // user 2 goes long perp at $1
+//     await tester.placePerpOrder(tester.perpMarketPubkey, 'buy', '1', '500', 'limit', tester.user2Keypair);
+//     await user2MangoAccount.reload(tester.connection, SERUM_PROG_ID);
+//     expect(user2MangoAccount.perpAccounts[1].takerBase.toNumber()).toBe(500);
 
-// const owl = await market.loadOrdersForOwner(
-//   tester.connection,
-//   mangoAcc.publicKey,
-// );
+//     // crank and verify both sides have a position
+//     await tester.keeperUpdateAll();
+//     await user1MangoAccount.reload(tester.connection, SERUM_PROG_ID);
+//     await user2MangoAccount.reload(tester.connection, SERUM_PROG_ID);
+//     expect(user1MangoAccount.perpAccounts[1].basePosition.eq(new BN(-500)));
+//     expect(user2MangoAccount.perpAccounts[1].basePosition.eq(new BN(500)));
 
-// const {
-//   allMarketConfigs, allMarketAccountInfos, mangoGroupConfig,
-// } = await tester.getAllMarketInfos();
-// console.log(allMarketAccountInfos);
+//     // update price so that there will be something to settle
+//     await tester.setOraclePrice('BASE', 2);
 
-// console.log(`open orders pubkey: ${ooPk.toBase58()}`);
-// console.log(` market pubkey: ${tester.marketKp.publicKey.toBase58()}`);
-// console.log(tester.user2Kp.publicKey.toBase58());
-// console.log(mangoAcc.publicKey.toBase58());
-// console.log(oog);
-// console.log(own);
-// console.log(owl);
+//     // crank again -> both sides have unsettled pnl and unchanged token amounts
+//     await tester.keeperUpdateAll();
+//     await tester.verifyAmount(tester.user1Pubkey, 1000, BASE);
+//     await tester.verifyAmount(tester.user1Pubkey, 9000, QUOTE);
+//     await tester.verifyAmount(tester.user2Pubkey, 8900, BASE);
+//     await tester.verifyAmount(tester.user2Pubkey, 897, QUOTE);
 
-
-
-
-
-
-
-
-
-
-
-
-  // it('Can cancel a single order', async () => {
-  //   const mangoAcc = await tester.loadMangoAccForOwner(tester.user2Pubkey, 0);
-  //   console.log(mangoAcc.orders);
-  //   const orders = mangoAcc.spotOpenOrdersAccounts[1]?.orders.filter((oo) => !oo.eq(ZERO_BN));
-  //   expect(orders?.length).toBe(1);
-  //   if (orders === undefined) {
-  //     throw new Error('There should be an order to cancel');
-  //   }
-
-  //   const ooPk = mangoAcc.spotOpenOrdersAccounts[1]?.publicKey;
-  //   if (!ooPk) {
-  //     throw new Error('fuq');
-  //   }
-  //   const market = await Market.load(tester.connection, tester.marketKp.publicKey, {}, SERUM_PROG_ID);
-
-  //   const orderIdHexString = orders[0].toString('hex');
-  //   await tester.placeCancelOrderTransactionn(tester.marketKp.publicKey, orderIdHexString, tester.user2Kp);
-  //   await tester.keeperUpdateAll();
-  //   // await tester._consumeEvents(market, tester.user2Kp);
-  //   await tester.loadGroup();
-
-
-  //   await mangoAcc.reload(tester.connection, SERUM_PROG_ID);
-  //   // why no cancel??
-  //   const updatedOrders = mangoAcc.spotOpenOrdersAccounts[1]?.orders.filter(
-  //     (oo) => !oo.eq(ZERO_BN),
-  //   );
-  //   // console.log(mangoAcc.loa);
-  //   // console.log(tester.user2Kp.publicKey.toBase58());
-  //   expect(updatedOrders?.length).toBe(0);
-  // });
-
-  // it can cancel multiple orders at once
-
-
-
-  // take other side and settle -> need to crank
-  // await tester.placeSpotOrderTransactionn(tester.marketKp.publicKey, 'buy', '1', '11', 'limit', tester.user2Kp);
-
-  // same with perps??
+//     // settle pnl and verify that it has been realized on both sides
+//     await tester.settlePerpPnl(tester.perpMarketPubkey, tester.user2Keypair);
+//     await tester.verifyAmount(tester.user1Pubkey, 1000, BASE);
+//     await tester.verifyAmount(tester.user1Pubkey, 8500.25, QUOTE);
+//     await tester.verifyAmount(tester.user2Pubkey, 8900, BASE);
+//     await tester.verifyAmount(tester.user2Pubkey, 1396.75, QUOTE);
+//   });
+// });

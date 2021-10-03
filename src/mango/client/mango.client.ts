@@ -5,12 +5,10 @@
 import {
   Cluster,
   createAccountInstruction,
-  getTokenAccountsByOwnerWithWrappedSol,
   getAllMarkets,
   getMultipleAccounts,
   IDS,
   Config,
-  PerpMarketLayout,
   makeDepositInstruction,
   makeInitMangoAccountInstruction,
   makeWithdrawInstruction,
@@ -29,8 +27,6 @@ import {
   zeroKey,
   nativeToUi,
   PerpMarket,
-  PerpMarketConfig,
-  PerpOrder,
   makeCancelPerpOrderInstruction,
   I80F48,
   makeSettleFeesInstruction,
@@ -40,7 +36,7 @@ import {
   ZERO_I80F48,
   GroupConfig,
   MarketConfig,
-  TokenAccount
+  makeCancelAllPerpOrdersInstruction
 } from '@blockworks-foundation/mango-client';
 import {
   closeAccount,
@@ -54,9 +50,7 @@ import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
-  Signer,
   SystemProgram,
-  TransactionInstruction,
 } from '@solana/web3.js';
 import debug from 'debug';
 import {instructionsAndSigners, side, orderType} from 'dbricks-lib';
@@ -413,37 +407,53 @@ export default class MangoClient extends SolClient {
     return instructionsAndSigners;
   }
 
-  //todo currently fails when trying to cancel multiple orders - look at how I did serum
   async prepareCancelSpotOrderTransaction(
     mangoAccount: MangoAccount,
     ownerPubkey: PublicKey,
-    spotMarket: Market,
-    order: Order,
+    marketPubkey: PublicKey,
+    orderId?: BN,
   ): Promise<instructionsAndSigners> {
     const instructionsAndSigners: instructionsAndSigners = {
       instructions: [],
       signers: [],
     };
 
-    const cancelSpotOrderInstruction = makeCancelSpotOrderInstruction(
-      MANGO_PROG_ID,
-      this.group.publicKey,
-      ownerPubkey,
-      mangoAccount.publicKey,
-      spotMarket.programId,
-      spotMarket.publicKey,
-      spotMarket['_decoded'].bids,
-      spotMarket['_decoded'].asks,
-      order.openOrdersAddress,
-      this.group.signerKey,
-      spotMarket['_decoded'].eventQueue,
-      order,
+    const spotMarket = await this.loadSpotMarket(marketPubkey);
+    const userOpenOrders = mangoAccount.spotOpenOrdersAccounts.find(
+      (account) => account?.market.toBase58() === marketPubkey.toBase58(),
     );
-    instructionsAndSigners.instructions.push(cancelSpotOrderInstruction);
+    if (!userOpenOrders) {
+      throw new Error(`Could not find open orders from: ${mangoAccount.publicKey.toBase58()} for market: ${marketPubkey.toBase58()}`);
+    }
+    const userOrderIdStrings = userOpenOrders.orders.filter((o) => !o.eq(ZERO_BN)).map((o) => o.toString());
+    // Mango aggregates orders from different users into a single Serum open orders account for fee discounts
+    const mangoOpenOrders = await spotMarket.loadOrdersForOwner(this.connection, userOpenOrders.owner); // Here owner is the Serum open orders account, not the user
+    let orders: Order[];
+    if (orderId) {
+      orders = [mangoOpenOrders.find((o) => o.orderId.toString() === orderId!.toString()) as Order];
+    } else {
+      orders = mangoOpenOrders.filter((o) => userOrderIdStrings.includes(o.orderId.toString())) as Order[];
+    }
 
-    const prepareSpotSettleFundsInstructionAndSigners = await this.prepareSpotSettleFundsInstruction(
-      this.group, mangoAccount, spotMarket, ownerPubkey,
-    );
+    orders.forEach((order) => {
+      const cancelSpotOrderInstruction = makeCancelSpotOrderInstruction(
+        MANGO_PROG_ID,
+        this.group.publicKey,
+        ownerPubkey,
+        mangoAccount.publicKey,
+        spotMarket.programId,
+        spotMarket.publicKey,
+        spotMarket['_decoded'].bids,
+        spotMarket['_decoded'].asks,
+        order.openOrdersAddress,
+        this.group.signerKey,
+        spotMarket['_decoded'].eventQueue,
+        order,
+      );
+      instructionsAndSigners.instructions.push(cancelSpotOrderInstruction);
+    });
+
+    const prepareSpotSettleFundsInstructionAndSigners = await this.prepareSpotSettleFundsInstruction(this.group, mangoAccount, spotMarket, ownerPubkey);
     instructionsAndSigners.instructions.push(...prepareSpotSettleFundsInstructionAndSigners.instructions);
     instructionsAndSigners.signers.push(...prepareSpotSettleFundsInstructionAndSigners.signers);
 
@@ -452,33 +462,18 @@ export default class MangoClient extends SolClient {
 
   async prepareSettleSpotTransaction(
     mangoAccount: MangoAccount,
-    spotMarkets: Market[],
+    spotMarket: Market,
     ownerPubkey: PublicKey,
   ): Promise<instructionsAndSigners> {
     const instructionsAndSigners: instructionsAndSigners = {
       instructions: [],
       signers: [],
     };
-
-    for (let i = 0; i < spotMarkets.length; i += 1) {
-      const openOrdersAccount: any = mangoAccount.spotOpenOrdersAccounts[i];
-      if (openOrdersAccount === undefined) {
-        continue;
-      } else if (
-        openOrdersAccount.quoteTokenFree.toNumber()
-        + openOrdersAccount['referrerRebatesAccrued'].toNumber()
-        === 0
-        && openOrdersAccount.baseTokenFree.toNumber() === 0
-      ) {
-        continue;
-      }
-      const spotMarket = spotMarkets[i];
-      const prepareSpotSettleFundsInstructionAndSigners = await this.prepareSpotSettleFundsInstruction(
-        this.group, mangoAccount, spotMarket, ownerPubkey,
-      );
-      instructionsAndSigners.instructions.push(...prepareSpotSettleFundsInstructionAndSigners.instructions);
-      instructionsAndSigners.signers.push(...prepareSpotSettleFundsInstructionAndSigners.signers);
-    }
+    const prepareSpotSettleFundsInstructionAndSigners = await this.prepareSpotSettleFundsInstruction(
+      this.group, mangoAccount, spotMarket, ownerPubkey,
+    );
+    instructionsAndSigners.instructions.push(...prepareSpotSettleFundsInstructionAndSigners.instructions);
+    instructionsAndSigners.signers.push(...prepareSpotSettleFundsInstructionAndSigners.signers);
 
     return instructionsAndSigners;
   }
@@ -537,27 +532,50 @@ export default class MangoClient extends SolClient {
   }
 
   async prepareCancelPerpOrderTransaction(
-    mangoAcc: MangoAccount,
+    mangoAccount: MangoAccount,
     ownerPubkey: PublicKey,
     perpMarket: PerpMarket,
-    order: PerpOrder,
+    orderId?: BN,
   ): Promise<instructionsAndSigners> {
     const instructionsAndSigners: instructionsAndSigners = {
       instructions: [],
       signers: [],
     };
-    const cancelPerpOrderInstruction = makeCancelPerpOrderInstruction(
-      MANGO_PROG_ID,
-      this.group.publicKey,
-      mangoAcc.publicKey,
-      ownerPubkey,
-      perpMarket.publicKey,
-      perpMarket.bids,
-      perpMarket.asks,
-      order,
-      false,
-    );
-    instructionsAndSigners.instructions.push(cancelPerpOrderInstruction);
+
+    if (orderId) {
+      const openOrders = await perpMarket.loadOrdersForAccount(
+        this.connection,
+        mangoAccount,
+      );
+      const order = openOrders.find((o) => o.orderId.toString() === orderId.toString());
+      if (!order) {
+        throw new Error(`Could not find perp order: ${orderId.toString()}`);
+      }
+      const cancelPerpOrderInstruction = makeCancelPerpOrderInstruction(
+        MANGO_PROG_ID,
+        this.group.publicKey,
+        mangoAccount.publicKey,
+        ownerPubkey,
+        perpMarket.publicKey,
+        perpMarket.bids,
+        perpMarket.asks,
+        order,
+        false,
+      );
+      instructionsAndSigners.instructions.push(cancelPerpOrderInstruction);
+    } else {
+      const cancelPerpOrderInstruction = makeCancelAllPerpOrdersInstruction(
+        MANGO_PROG_ID,
+        this.group.publicKey,
+        mangoAccount.publicKey,
+        ownerPubkey,
+        perpMarket.publicKey,
+        perpMarket.bids,
+        perpMarket.asks,
+        new BN(50),
+      );
+      instructionsAndSigners.instructions.push(cancelPerpOrderInstruction);
+    }
 
     return instructionsAndSigners;
   }
@@ -766,25 +784,6 @@ export default class MangoClient extends SolClient {
       throw new Error('Failed to load markets');
     }
     return {allMarketConfigs, allMarketAccountInfos, mangoGroupConfig};
-  }
-
-  async loadSpotMarkets(): Promise<Market[]> {
-    const {
-      allMarketConfigs, allMarketAccountInfos, mangoGroupConfig,
-    } = await this.getAllMarketInfos();
-    const spotMarkets = allMarketConfigs.filter((config) => config.kind == 'spot').map((config, i) => {
-      const decoded = Market.getLayout(MANGO_PROG_ID).decode(
-        allMarketAccountInfos[i].accountInfo.data,
-      );
-      return new Market(
-        decoded,
-        config.baseDecimals,
-        config.quoteDecimals,
-        undefined,
-        mangoGroupConfig.serumProgramId,
-      );
-    });
-    return spotMarkets;
   }
 
   async loadSpotMarket(marketPubkey: PublicKey) {
