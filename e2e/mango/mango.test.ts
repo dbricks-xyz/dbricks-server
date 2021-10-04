@@ -20,7 +20,7 @@ describe('Mango', () => {
 describe('Mango', () => {
   // √ Tests depositing and creating mangoAccount
   // √ Tests depositing to an already existing mangoAccount
-  it('Can test deposit a MangoAccount by depositing', async () => {
+  it('Can deposit into a MangoAccount', async () => {
   // verify that user 2 has no mango accounts, and thus no deposits
     const beforeMangoAccounts = await tester.loadUserAccounts(tester.user2Pubkey);
     expect(beforeMangoAccounts.length === 0);
@@ -258,7 +258,7 @@ describe('Mango', () => {
 //     expect(user2MangoAccount.perpAccounts[1].takerBase.toNumber()).toBe(500);
 
 //     // crank and verify both sides have a position
-//     await tester.keeperUpdateAll();
+//     await tester.keeperUpdateAll(true);
 //     await user1MangoAccount.reload(tester.connection, SERUM_PROG_ID);
 //     await user2MangoAccount.reload(tester.connection, SERUM_PROG_ID);
 //     expect(user1MangoAccount.perpAccounts[1].basePosition.eq(new BN(-500)));
@@ -268,7 +268,7 @@ describe('Mango', () => {
 //     await tester.setOraclePrice('BASE', 2);
 
 //     // crank again -> both sides have unsettled pnl and unchanged token amounts
-//     await tester.keeperUpdateAll();
+//     await tester.keeperUpdateAll(true);
 //     await tester.verifyAmount(tester.user1Pubkey, 1000, BASE);
 //     await tester.verifyAmount(tester.user1Pubkey, 9000, QUOTE);
 //     await tester.verifyAmount(tester.user2Pubkey, 8900, BASE);
