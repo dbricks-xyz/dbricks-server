@@ -695,7 +695,8 @@ export default class MangoTester extends MangoClient {
     orderType: orderType,
     userKeypair: Keypair,
   ): Promise<void> {
-    await this.keeperUpdateAll();
+    const includePerp = true;
+    await this.keeperUpdateAll(includePerp);
     const tx = (await this.requestPlacePerpOrderTxn(
       marketPubkey,
       side,
@@ -713,7 +714,8 @@ export default class MangoTester extends MangoClient {
     orderId: string,
     userKeypair: Keypair,
   ): Promise<void> {
-    await this.keeperUpdateAll();
+    const includePerp = true;
+    await this.keeperUpdateAll(includePerp);
     const tx = (await this.requestCancelPerpOrderTxn(
       marketPubkey,
       orderId,
@@ -727,8 +729,9 @@ export default class MangoTester extends MangoClient {
     marketPubkey: PublicKey,
     userKeypair: Keypair,
   ): Promise<void> {
+    const includePerp = true;
     await this.loadGroup();
-    await this.keeperUpdateAll();
+    await this.keeperUpdateAll(includePerp);
     const tx = (await this.requestSettlePerpTransactionn(
       marketPubkey,
       userKeypair,
@@ -737,12 +740,14 @@ export default class MangoTester extends MangoClient {
     await this._prepareAndSendTransaction(tx);
   }
 
-  async keeperUpdateAll(): Promise<void> {
+  async keeperUpdateAll(includePerp = false): Promise<void> {
     await this.loadGroup();
     await this.keeperCrankCache(this.group);
-    const perpMarket = await this.loadPerpMarket(this.perpMarketPubkey);
-    await this.keeperCrankTransactions(this.group, [perpMarket]);
-    await this.keeperConsumeEvents(this.group, [perpMarket]);
+    if (includePerp) {
+      const perpMarket = await this.loadPerpMarket(this.perpMarketPubkey);
+      await this.keeperCrankTransactions(this.group, [perpMarket]);
+      await this.keeperConsumeEvents(this.group, [perpMarket]);
+    }
   }
 
   async keeperCrankCache(mangoGroup: MangoGroup): Promise<void> {
