@@ -49,7 +49,7 @@ export function deserializeCancel(request: e.Request): IMangoDEXOrderCancelParam
   const body: IMangoDEXOrderCancelParams = request.body;
   return {
     marketPubkey: deserializePubkey(body.marketPubkey),
-    orderId: new BN(body.orderId, 16), // comes as string, hex,
+    orderId: body.orderId ? new BN(body.orderId, 16) : undefined, // comes as string, hex,
     ownerPubkey: deserializePubkey(body.ownerPubkey),
     mangoAccountNumber: body.mangoAccountNumber ? parseFloat(body.mangoAccountNumber) : 0,
   };

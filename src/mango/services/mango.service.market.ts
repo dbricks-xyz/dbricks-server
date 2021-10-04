@@ -9,11 +9,10 @@ import MangoClient from '../client/mango.client';
 export default class MangoMarketService extends MangoClient implements IMangoDEXMarket {
   async settleSpot(params: IMangoDEXMarketSettleParamsParsed): Promise<instructionsAndSigners[]> {
     const mangoAccount = await this.loadMangoAccountForOwner(params.ownerPubkey, params.mangoAccountNumber);
-    const markets = await this.loadSpotMarkets();
-
+    const spotMarket = await this.loadSpotMarket(params.marketPubkey);
     const transaction = await this.prepareSettleSpotTransaction(
       mangoAccount,
-      markets,
+      spotMarket,
       params.ownerPubkey,
     );
     return [transaction];
