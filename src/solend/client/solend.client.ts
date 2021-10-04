@@ -1,7 +1,7 @@
 import SolClient from "../../common/client/common.client";
 import debug from "debug";
 
-const log: debug.IDebugger = debug('app:serum-client');
+const log: debug.IDebugger = debug('app:solend-client');
 
 export default class SolendClient extends SolClient {
   constructor() {
