@@ -353,10 +353,10 @@
     enabled "2.0.x"
     kuler "^2.0.0"
 
-"@dbricks/dbricks-ts@^0.0.39":
-  version "0.0.39"
-  resolved "https://registry.yarnpkg.com/@dbricks/dbricks-ts/-/dbricks-ts-0.0.39.tgz#d8a2f3bc9fc1b402fb47206daa9466827dc54611"
-  integrity sha512-Tp0o2CQoInP/IsenRgZfXQR4Vq6zBX83kCS6n72AuI+ZdWry3oUFXtXYLVuD7iG4lryfBC+U2oljivompX/7XA==
+"@dbricks/dbricks-ts@^0.0.45":
+  version "0.0.45"
+  resolved "https://registry.yarnpkg.com/@dbricks/dbricks-ts/-/dbricks-ts-0.0.45.tgz#b64c62c1e8675a5a4bc6ced289b33be52325ce60"
+  integrity sha512-Rbt8iyFUv1CejaO+eR8b4QVDkGaOoSPqPki2S6jv6jIxoisBwh5FB4mWz3dRBN2XNlLZFhgYNzP0kxxkRHTLFw==
   dependencies:
     "@solana/spl-token" "^0.1.8"
     "@solana/web3.js" "^1.29.0"

@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import {Account, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction} from '@solana/web3.js';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Market } from '@project-serum/serum';
-import { deserializeInstructionsAndSigners, IMangoDEXOrderCancelParams, IMangoDEXOrderPlaceParams, IMangoLenderDepositParams, IMangoLenderWithdrawParams, ISerumDEXMarketInitParams, instructionsAndSigners, orderType, side, IMangoDEXMarketSettleParams } from 'dbricks-lib';
+import { deserializeInstructionsAndSigners, IMangoDEXOrderCancelParams, IMangoDEXOrderPlaceParams, IMangoLenderDepositParams, IMangoLenderWithdrawParams, ISerumDEXMarketInitParams, instructionsAndSigners, orderType, side, IMangoDEXMarketSettleParams } from '@dbricks/dbricks-ts';
 import BN from 'bn.js';
 import MangoClient from '../../src/mango/client/mango.client';
 import app from '../../src/app';

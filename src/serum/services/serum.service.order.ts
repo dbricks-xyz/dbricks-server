@@ -4,8 +4,8 @@ import {
   ISerumDEXOrderPlaceParamsParsed,
 } from '../interfaces/dex/serum.interfaces.dex.order';
 import SerumClient from '../client/serum.client';
-import {mergeInstructionsAndSigners, splitInstructionsAndSigners} from "../../common/util/common.util";
-import {instructionsAndSigners} from "dbricks-lib";
+import {splitInstructionsAndSigners} from "../../common/util/common.util";
+import {instructionsAndSigners} from "@dbricks/dbricks-ts";
 
 
 export default class SerumOrderService extends SerumClient implements ISerumDEXOrder {

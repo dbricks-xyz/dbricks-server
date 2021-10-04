@@ -6,6 +6,7 @@ import CommonRoutesConfig from './common/routes/common.routes.config';
 import {SerumRoutes} from './serum/routes/serum.routes';
 import {MangoRoutes} from './mango/routes/mango.routes';
 import {CommonRoutes} from "./common/routes/common.routes";
+import {SolendRoutes} from "./solend/routes/solend.routes";
 import rateLimit from 'express-rate-limit';
 
 const app: e.Application = e();
@@ -38,6 +39,7 @@ export const routes: Array<CommonRoutesConfig> = [];
 routes.push(new CommonRoutes(app));
 routes.push(new SerumRoutes(app));
 routes.push(new MangoRoutes(app));
+routes.push(new SolendRoutes(app));
 
 // test route
 app.get('/ping', (request: e.Request, response: e.Response) => {

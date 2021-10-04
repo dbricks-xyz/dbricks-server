@@ -1,7 +1,12 @@
-import {Keypair} from '@solana/web3.js';
+import {Keypair, PublicKey} from '@solana/web3.js';
 import fs from 'fs';
-import {PublicKey} from '@solana/web3.js';
-import {DBricksSDK, flattenedBrick, instructionsAndSigners} from 'dbricks-lib';
+import {
+  Action,
+  Builder,
+  IFlattenedBrick,
+  instructionsAndSigners,
+  Protocol
+} from '@dbricks/dbricks-ts';
 import {COMMITTMENT, CONNECTION_URL, NETWORK, SERUM_PROG_ID} from '../../config/config';
 
 export function loadKeypairSync(path: string): Keypair {
@@ -72,26 +77,35 @@ export function mergeInstructionsAndSigners(
   });
   return result;
 }
+
 /**
  * NOTE: Function assumes no signers are provided
  * This is used to ensure batch cancels don't exceed the Transaction size limit
  */
 export async function splitInstructionsAndSigners(instructionsAndSigners: instructionsAndSigners) {
-  // the next steps are needed in case there are too many orders to cancel in a single Transaction
-  const flattenedBricks: flattenedBrick[] = instructionsAndSigners.instructions.map((i) => ({
-    id: 0,
-    description: '',
-    instructionsAndSigners: {
-      instructions: [i],
+  ///the next steps are needed in case there are too many orders to cancel in a single Transaction
+  const flattenedBricks: IFlattenedBrick[] = instructionsAndSigners.instructions.map(i => {
+    return {
+      protocol: Protocol.Serum,
+      action: Action.Serum.CancelOrder,
+      instructionsAndSigners: {
+        instructions: [i],
+        signers: []
+      } as instructionsAndSigners
+    }
+  })
+  //we need to pass some publicKey to instantiate the builder, here it doesn't matter which
+  const ownerPubkey = new PublicKey("75ErM1QcGjHiPMX7oLsf9meQdGSUs4ZrwS2X8tBpsZhA");
+  const builder = new Builder({
+    ownerPubkey,
+    connectionUrl: CONNECTION_URL,
+    committment: COMMITTMENT,
+  });
+  const sizedBricks = await builder.optimallySizeBricks(flattenedBricks);
+  return sizedBricks.map(brick => {
+    return {
+      instructions: brick.transaction.instructions,
       signers: [],
-    } as instructionsAndSigners,
-  }));
-  const sizedBricks = await (new DBricksSDK(CONNECTION_URL, COMMITTMENT)).findOptimalBrickSize(
-    flattenedBricks,
-    new PublicKey('75ErM1QcGjHiPMX7oLsf9meQdGSUs4ZrwS2X8tBpsZhA'), // doesn't matter what Pk is passed here
-  );
-  return sizedBricks.map((brick) => ({
-    instructions: brick.transaction.instructions,
-    signers: [],
-  } as instructionsAndSigners));
+    } as instructionsAndSigners;
+  })
 }
