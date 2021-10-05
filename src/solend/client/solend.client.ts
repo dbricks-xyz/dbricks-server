@@ -1,7 +1,9 @@
 import SolClient from "../../common/client/common.client";
 import debug from "debug";
 import {
-  depositReserveLiquidityAndObligationCollateralInstruction, OBLIGATION_SIZE,
+  depositReserveLiquidityAndObligationCollateralInstruction,
+  initObligationInstruction,
+  OBLIGATION_SIZE,
   refreshReserveInstruction
 } from "@dbricks/dbricks-solend";
 import {PublicKey, SystemProgram, TransactionInstruction} from "@solana/web3.js";
@@ -55,7 +57,10 @@ export default class SolendClient extends SolClient {
       ownerPubkey,
       SOLEND_PROG_ID,
     )
+    console.log(userLPAccountInstructionsAndSigners)
+    console.log(userObligationInstructionsAndSigners)
     const finalInstructionsAndSigners = mergeInstructionsAndSigners(userLPAccountInstructionsAndSigners, userObligationInstructionsAndSigners);
+    console.log(finalInstructionsAndSigners)
     finalInstructionsAndSigners.instructions.push(refreshReserveIx);
     finalInstructionsAndSigners.instructions.push(depositIx)
     return finalInstructionsAndSigners
@@ -74,7 +79,7 @@ export default class SolendClient extends SolClient {
   }
 
   async getOrCreateObligationAccount(ownerPubkey: PublicKey): Promise<[instructionsAndSigners, PublicKey]> {
-    const instructionsAndSigners: instructionsAndSigners = {instructions:[], signers:[]}
+    const instructionsAndSigners: instructionsAndSigners = {instructions: [], signers: []}
     const seed = SOLEND_MARKET_ID.toBase58().slice(0, 32);
     const obligationAddress = await PublicKey.createWithSeed(
       ownerPubkey,
@@ -86,8 +91,15 @@ export default class SolendClient extends SolClient {
       console.log(`Obligation account for user ${ownerPubkey} already exists. Proceeding.`)
     } else {
       console.log(`Obligation account for user ${ownerPubkey} needs to be created. Creating.`)
-      const createIx = await this.createSolendStateAccount(obligationAddress, OBLIGATION_SIZE, ownerPubkey);
+      const createIx = await this.createSolendStateAccount(obligationAddress, OBLIGATION_SIZE, ownerPubkey, seed);
+      const initObligIx = initObligationInstruction(
+        obligationAddress,
+        SOLEND_MARKET_ID,
+        ownerPubkey,
+        SOLEND_PROG_ID,
+      );
       instructionsAndSigners.instructions.push(createIx);
+      instructionsAndSigners.instructions.push(initObligIx);
     }
     return [instructionsAndSigners, obligationAddress]
   }
@@ -96,13 +108,16 @@ export default class SolendClient extends SolClient {
     newAccountPubkey: PublicKey,
     space: number,
     ownerPubkey: PublicKey,
+    seed: string
   ): Promise<TransactionInstruction> {
-    return SystemProgram.createAccount({
-      programId: SOLEND_PROG_ID,
+    return SystemProgram.createAccountWithSeed({
       fromPubkey: ownerPubkey,
+      basePubkey: ownerPubkey,
+      seed,
       newAccountPubkey,
-      space,
       lamports: await this.connection.getMinimumBalanceForRentExemption(space),
+      space,
+      programId: SOLEND_PROG_ID,
     });
   }
 
@@ -119,7 +134,6 @@ interface ISolendReserve {
   reserveCollateralMint: PublicKey,
   decimals: number,
 }
-
 
 
 function findSolendReserveInfo(mintPubkey: PublicKey): ISolendReserve {
