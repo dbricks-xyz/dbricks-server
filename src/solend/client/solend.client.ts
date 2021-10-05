@@ -20,6 +20,7 @@ export default class SolendClient extends SolClient {
     log('Initialized Solend client')
   }
 
+  //todo note SOL currently doesn't work - need to mess around with wrapped SOL tokens
   async prepareDepositTransaction(
     mintPubkey: PublicKey,
     quantity: bigint,
@@ -57,10 +58,7 @@ export default class SolendClient extends SolClient {
       ownerPubkey,
       SOLEND_PROG_ID,
     )
-    console.log(userLPAccountInstructionsAndSigners)
-    console.log(userObligationInstructionsAndSigners)
     const finalInstructionsAndSigners = mergeInstructionsAndSigners(userLPAccountInstructionsAndSigners, userObligationInstructionsAndSigners);
-    console.log(finalInstructionsAndSigners)
     finalInstructionsAndSigners.instructions.push(refreshReserveIx);
     finalInstructionsAndSigners.instructions.push(depositIx)
     return finalInstructionsAndSigners

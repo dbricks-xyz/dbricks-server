@@ -54,6 +54,15 @@ export default class SolClient {
     ownerPubkey: PublicKey,
     mintPubkey?: PublicKey,
   ): Promise<FoundTokenAccount[]> {
+    if (mintPubkey?.toBase58() === "So11111111111111111111111111111111111111112") {
+      return [{
+        pubkey: ownerPubkey,
+        mint: new PublicKey("So11111111111111111111111111111111111111112"),
+        owner: ownerPubkey,
+        state: "",
+        amount: 0,
+      }]
+    }
     let tokenAccounts;
     if (mintPubkey) {
       tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(
