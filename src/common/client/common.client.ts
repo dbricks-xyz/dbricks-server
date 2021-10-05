@@ -54,19 +54,19 @@ export default class SolClient {
     ownerPubkey: PublicKey,
     mintPubkey?: PublicKey,
   ): Promise<FoundTokenAccount[]> {
-    let payerAccounts;
+    let tokenAccounts;
     if (mintPubkey) {
-      payerAccounts = await this.connection.getParsedTokenAccountsByOwner(
+      tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(
         ownerPubkey,
         {programId: TOKEN_PROGRAM_ID, mint: mintPubkey},
       );
     } else {
-      payerAccounts = await this.connection.getParsedTokenAccountsByOwner(
+      tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(
         ownerPubkey,
         {programId: TOKEN_PROGRAM_ID},
       );
     }
-    return payerAccounts.value.map((a) => ({
+    return tokenAccounts.value.map((a) => ({
       pubkey: a.pubkey,
       mint: new PublicKey(a.account.data.parsed.info.mint),
       owner: new PublicKey(a.account.data.parsed.info.owner),
