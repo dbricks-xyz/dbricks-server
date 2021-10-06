@@ -3,8 +3,8 @@ import debug from "debug";
 import {
   depositReserveLiquidityAndObligationCollateralInstruction,
   initObligationInstruction,
-  OBLIGATION_SIZE,
-  refreshReserveInstruction
+  OBLIGATION_SIZE, parseObligation, refreshObligationInstruction,
+  refreshReserveInstruction, withdrawObligationCollateralAndRedeemReserveCollateralInstruction
 } from "@dbricks/dbricks-solend";
 import {PublicKey, SystemProgram, TransactionInstruction} from "@solana/web3.js";
 import {SOLEND_MARKET_ID, SOLEND_MARKET_OWNER_ID, SOLEND_PROG_ID} from "../../config/config";
@@ -15,6 +15,9 @@ import {mergeInstructionsAndSigners} from "../../common/util/common.util";
 const log: debug.IDebugger = debug('app:solend-client');
 
 export default class SolendClient extends SolClient {
+  obligationDeposits: PublicKey[] = [];
+  obligationBorrows: PublicKey[] = [];
+
   constructor() {
     super();
     log('Initialized Solend client')
@@ -27,7 +30,7 @@ export default class SolendClient extends SolClient {
     ownerPubkey: PublicKey,
   ): Promise<instructionsAndSigners> {
     const sourceLiquidity = (await this.getTokenAccountsForOwner(ownerPubkey, mintPubkey))[0].pubkey;
-    const reserveInfo = findSolendReserveInfo(mintPubkey);
+    const reserveInfo = findSolendReserveInfoByMint(mintPubkey);
     const [userLPAccountInstructionsAndSigners, userLPPubkey] = await this.getOrCreateTokenAccountByMint(
       ownerPubkey,
       reserveInfo.reserveCollateralMint,
@@ -35,13 +38,8 @@ export default class SolendClient extends SolClient {
     const [userObligationInstructionsAndSigners, userObligationPubkey] = await this.getOrCreateObligationAccount(
       ownerPubkey
     );
-    const refreshReserveIx = refreshReserveInstruction(
-      reserveInfo.reserve,
-      reserveInfo.pythPriceOracle,
-      reserveInfo.switchboardOracle,
-      SOLEND_PROG_ID,
-    )
-    const depositIx = depositReserveLiquidityAndObligationCollateralInstruction(
+    const refreshReserveInstruction = this.getRefreshReserveInstruction(mintPubkey);
+    const depositInstruction = depositReserveLiquidityAndObligationCollateralInstruction(
       quantity,
       sourceLiquidity,
       userLPPubkey,
@@ -59,13 +57,75 @@ export default class SolendClient extends SolClient {
       SOLEND_PROG_ID,
     )
     const finalInstructionsAndSigners = mergeInstructionsAndSigners(userLPAccountInstructionsAndSigners, userObligationInstructionsAndSigners);
-    finalInstructionsAndSigners.instructions.push(refreshReserveIx);
-    finalInstructionsAndSigners.instructions.push(depositIx)
+    finalInstructionsAndSigners.instructions.push(refreshReserveInstruction);
+    finalInstructionsAndSigners.instructions.push(depositInstruction)
     return finalInstructionsAndSigners
   }
 
-  async prepareWithdrawTransaction() {
-    console.log('withdraw')
+  async prepareWithdrawTransaction(
+    mintPubkey: PublicKey,
+    quantity: bigint,
+    ownerPubkey: PublicKey,
+  ) :Promise<instructionsAndSigners[]> {
+    //find all reserves that the user has either deposited into or borrowed from
+    const [_, userObligationPubkey] = await this.getOrCreateObligationAccount(
+      ownerPubkey
+    );
+    await this.refreshObligDepositsAndBorrows(userObligationPubkey);
+
+    //prepare instructions to create any necessary token accounts
+    const reserveInfo = findSolendReserveInfoByMint(mintPubkey);
+    const [userLPAccountInstructionsAndSigners, userLPPubkey] = await this.getOrCreateTokenAccountByMint(
+      ownerPubkey,
+      reserveInfo.reserveCollateralMint,
+    );
+    const [userLiqAccountInstructionsAndSigners, userLiqPubkey] = await this.getOrCreateTokenAccountByMint(
+      ownerPubkey,
+      mintPubkey,
+    );
+    //prepare refresh oblig instruction (refresh reserves are done below)
+    const refreshObligInstruction = this.getRefreshObligInstruction(userObligationPubkey);
+    //prepare actual withdraw instruction
+    const withdrawInstruction = withdrawObligationCollateralAndRedeemReserveCollateralInstruction(
+      quantity,
+      reserveInfo.reserveCollateral,
+      userLPPubkey,
+      reserveInfo.reserve,
+      userObligationPubkey,
+      SOLEND_MARKET_ID,
+      SOLEND_MARKET_OWNER_ID,
+      userLiqPubkey,
+      reserveInfo.reserveCollateralMint,
+      reserveInfo.reserveLiquidity,
+      ownerPubkey,
+      ownerPubkey,
+      SOLEND_PROG_ID
+    );
+
+    //in case user doesn't have required token accounts, we create them
+    const tokenInstructionsAndSigners = mergeInstructionsAndSigners(userLPAccountInstructionsAndSigners, userLiqAccountInstructionsAndSigners);
+    //refresh target reserve
+    const solendInstructionsAndSigners: instructionsAndSigners = {instructions:[], signers:[]};
+    //refresh the rem reserves
+    this.obligationDeposits.forEach(reservePubkey => {
+      const mintPubkey = findSolendReserveInfoByReservePubkey(reservePubkey).mint;
+      const refreshReserveInstruction = this.getRefreshReserveInstruction(mintPubkey);
+      if (solendInstructionsAndSigners.instructions.indexOf(refreshReserveInstruction) === -1) {
+        solendInstructionsAndSigners.instructions.push(refreshReserveInstruction)
+      }
+    });
+    this.obligationBorrows.forEach(reservePubkey => {
+      const mintPubkey = findSolendReserveInfoByReservePubkey(reservePubkey).mint;
+      const refreshReserveInstruction = this.getRefreshReserveInstruction(mintPubkey);
+      if (solendInstructionsAndSigners.instructions.indexOf(refreshReserveInstruction) === -1) {
+        solendInstructionsAndSigners.instructions.push(refreshReserveInstruction)
+      }
+    });
+    //refresh obligation
+    solendInstructionsAndSigners.instructions.push(refreshObligInstruction);
+    //push the actual ix
+    solendInstructionsAndSigners.instructions.push(withdrawInstruction);
+    return [tokenInstructionsAndSigners, solendInstructionsAndSigners];
   }
 
   async prepareBorrowTransaction() {
@@ -74,6 +134,36 @@ export default class SolendClient extends SolClient {
 
   async prepareRepayTransaction() {
 
+  }
+
+  async refreshObligDepositsAndBorrows(obligationPubkey: PublicKey) {
+    const obligInfo = await this.connection.getAccountInfo(obligationPubkey);
+    const obligState = parseObligation(obligationPubkey, obligInfo!);
+    this.obligationDeposits = obligState!.data.deposits.map(d => d.depositReserve);
+    this.obligationBorrows = obligState!.data.borrows.map(d => d.borrowReserve);
+  }
+
+  getRefreshReserveInstruction(
+    mintPubkey: PublicKey,
+  ): TransactionInstruction {
+    const reserveInfo = findSolendReserveInfoByMint(mintPubkey);
+    return refreshReserveInstruction(
+      reserveInfo.reserve,
+      reserveInfo.pythPriceOracle,
+      reserveInfo.switchboardOracle,
+      SOLEND_PROG_ID,
+    )
+  }
+
+  getRefreshObligInstruction(
+    obligationPubkey: PublicKey,
+  ): TransactionInstruction {
+    return refreshObligationInstruction(
+      obligationPubkey,
+      this.obligationDeposits,
+      this.obligationBorrows,
+      SOLEND_PROG_ID,
+    );
   }
 
   async getOrCreateObligationAccount(ownerPubkey: PublicKey): Promise<[instructionsAndSigners, PublicKey]> {
@@ -89,15 +179,16 @@ export default class SolendClient extends SolClient {
       console.log(`Obligation account for user ${ownerPubkey} already exists. Proceeding.`)
     } else {
       console.log(`Obligation account for user ${ownerPubkey} needs to be created. Creating.`)
-      const createIx = await this.createSolendStateAccount(obligationAddress, OBLIGATION_SIZE, ownerPubkey, seed);
-      const initObligIx = initObligationInstruction(
+      const createInstruction = await this.createSolendStateAccount(obligationAddress, OBLIGATION_SIZE, ownerPubkey, seed);
+      //todo apparently the below init instructions is not necessary (@nope in discord)
+      const initObligInstruction = initObligationInstruction(
         obligationAddress,
         SOLEND_MARKET_ID,
         ownerPubkey,
         SOLEND_PROG_ID,
       );
-      instructionsAndSigners.instructions.push(createIx);
-      instructionsAndSigners.instructions.push(initObligIx);
+      instructionsAndSigners.instructions.push(createInstruction);
+      instructionsAndSigners.instructions.push(initObligInstruction);
     }
     return [instructionsAndSigners, obligationAddress]
   }
@@ -123,6 +214,7 @@ export default class SolendClient extends SolClient {
 
 interface ISolendReserve {
   name: string,
+  mint: PublicKey,
   pythProductOracle: PublicKey,
   pythPriceOracle: PublicKey,
   switchboardOracle: PublicKey,
@@ -134,18 +226,29 @@ interface ISolendReserve {
 }
 
 
-function findSolendReserveInfo(mintPubkey: PublicKey): ISolendReserve {
+export function findSolendReserveInfoByMint(mintPubkey: PublicKey): ISolendReserve {
   const reserves = JSON.parse(fs.readFileSync(`${__dirname}/../data/solendReservesMainnet.json`, 'utf8'));
-  const foundReserveRaw = reserves[mintPubkey.toBase58()];
-  return {
-    name: foundReserveRaw.name,
-    pythProductOracle: new PublicKey(foundReserveRaw.pythProductOracle),
-    pythPriceOracle: new PublicKey(foundReserveRaw.pythPriceOracle),
-    switchboardOracle: new PublicKey(foundReserveRaw.switchboardOracle),
-    reserve: new PublicKey(foundReserveRaw.reserve),
-    reserveLiquidity: new PublicKey(foundReserveRaw.reserveLiquidity),
-    reserveCollateral: new PublicKey(foundReserveRaw.reserveCollateral),
-    reserveCollateralMint: new PublicKey(foundReserveRaw.reserveCollateralMint),
-    decimals: foundReserveRaw.decimals,
+  const foundReserveRaw = reserves.find((r:any) => r.mint === mintPubkey.toBase58());
+  return serializeFoundReserve(foundReserveRaw);
+}
+
+export function findSolendReserveInfoByReservePubkey(reserve: PublicKey): ISolendReserve {
+  const reserves = JSON.parse(fs.readFileSync(`${__dirname}/../data/solendReservesMainnet.json`, 'utf8'));
+  const foundReserveRaw = reserves.find((r:any) => r.reserve === reserve.toBase58());
+  return serializeFoundReserve(foundReserveRaw);
+}
+
+export function serializeFoundReserve(reserveRaw: any): ISolendReserve {
+    return {
+    name: reserveRaw.name,
+    mint: new PublicKey(reserveRaw.mint),
+    pythProductOracle: new PublicKey(reserveRaw.pythProductOracle),
+    pythPriceOracle: new PublicKey(reserveRaw.pythPriceOracle),
+    switchboardOracle: new PublicKey(reserveRaw.switchboardOracle),
+    reserve: new PublicKey(reserveRaw.reserve),
+    reserveLiquidity: new PublicKey(reserveRaw.reserveLiquidity),
+    reserveCollateral: new PublicKey(reserveRaw.reserveCollateral),
+    reserveCollateralMint: new PublicKey(reserveRaw.reserveCollateralMint),
+    decimals: reserveRaw.decimals,
   }
 }

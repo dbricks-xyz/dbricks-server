@@ -8,6 +8,5 @@ export interface ISolendLenderWithdraw {
 export interface ISolendLenderWithdrawParamsParsed {
   mintPubkey: PublicKey,
   quantity: bigint,
-  isBorrow: boolean,
   ownerPubkey: PublicKey,
 }
