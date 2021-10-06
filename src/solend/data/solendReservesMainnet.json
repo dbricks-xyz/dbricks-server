@@ -1,7 +1,7 @@
 [
   {
     "name": "SOL",
-    "mint": "SOL_CURRENTLY_DISABLED",
+    "mint": "So11111111111111111111111111111111111111112",
     "pythProductOracle": "ALP8SdU9oARYVLgLR7LrqMNCYBnhtnQz1cj6bwgwQmgj",
     "pythPriceOracle": "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG",
     "switchboardOracle": "AdtRGGhmqvom3Jemp5YNrxd9q9unX36BZk1pujkkXijL",
@@ -9,6 +9,7 @@
     "reserveLiquidity": "8UviNr47S8eL6J3WfDxMRa3hvLta1VDJwNWqsDgtN3Cv",
     "reserveCollateral": "B1ATuYXNkacjjJS78MAmqu8Lu8PvEPt51u4oBasH1m1g",
     "reserveCollateralMint": "5h6ssFpeDeRbzsEHDbTQNH7nVGgsKrZydxdSTnLm6QdV",
+    "feeReceiver": "5wo1tFpi4HaVKnemqaXeQnBEpezrJXcXvuztYaPhvgC7",
     "decimals": 9
   },
   {
@@ -21,6 +22,7 @@
     "reserveLiquidity": "8SheGtsopRUDzdiD6v6BR9a6bqZ9QwywYQY99Fp5meNf",
     "reserveCollateral": "UtRy8gcEu9fCkDuUrU8EmC7Uc6FZy5NCwttzG7i6nkw",
     "reserveCollateralMint": "993dVFL2uXWYeoXuEBFXR4BijeXdTv4s6BzsCjJZuwqk",
+    "feeReceiver": "5Gdxn4yquneifE6uk9tK8X4CqHfWKjW2BvYU25hAykwP",
     "decimals": 6
   },
   {
@@ -33,6 +35,7 @@
     "reserveLiquidity": "B7Lg4cJZHPLFaGdqfaAWG35KFFaEtBMmRAGf98kNaogt",
     "reserveCollateral": "2Yv6ZgZ9ccV8bCYD7T5t2kcAQYRbukMKha6NiPQ8cFAT",
     "reserveCollateralMint": "AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa",
+    "feeReceiver": "8RS6VQM1RcuVUrQmfHgF3RAUPCbsbmejgbvTLvr8ZgrV",
     "decimals": 6
   },
   {
@@ -45,6 +48,7 @@
     "reserveLiquidity": "4jkyJVWQm8NUkiJFJQx6ZJQhfKLGpeZsNrXoT4bAPrRv",
     "reserveCollateral": "9HrQ9RuRsHjKXuAbZzMHMrYuyq62LjY3B7EBWkM4Uyke",
     "reserveCollateralMint": "Gqu3TFmJXfnfSX84kqbZ5u9JjSBVoesaHjfTsaPjRSnZ",
+    "feeReceiver": "9CjhBpwiQbP2zYnj7PqHTxPPp2BCR4Y4rP4ZPWkqrCQk",
     "decimals": 6
   },
   {
@@ -57,6 +61,7 @@
     "reserveLiquidity": "4JHVBtmMPFyRpidxHtM8gVjGuLBXhaXCF4jNFFKBdGpb",
     "reserveCollateral": "D52HyVBEMWy2WBptV5zsPuYS8W8C62gYjYKuVzaK1ruM",
     "reserveCollateralMint": "4CxGuD2NMr6zM8f18gr6kRhgd748pnmkAhkY1YJtkup1",
+    "feeReceiver": "AkwRd7hZ35BmnYvj9S5PgVpiBQfuzxaapshJe9PCN5hh",
     "decimals": 6
   },
   {
@@ -69,6 +74,7 @@
     "reserveLiquidity": "3CdpSW5dxM7RTxBgxeyt8nnnjqoDbZe48tsBs9QUrmuN",
     "reserveCollateral": "CXDxj6cepVv9nWh4QYqWS2MpeoVKBLKJkMfo3c6Y1Lud",
     "reserveCollateralMint": "BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8",
+    "feeReceiver": "Cpyk5WRGmdK2yFGTJCrmgyABPiNEF5eCyCMMZLxpdkXu",
     "decimals": 6
   },
   {
@@ -81,6 +87,7 @@
     "reserveLiquidity": "9ZdwVAZsqFWtzNNGZhmQJttYQxTCVPRnaXMgA2KrQpLK",
     "reserveCollateral": "HbMugfk2UDNoCiBUqgXdPu75ksMZHvkJjRZ8YKrcPwz2",
     "reserveCollateralMint": "A38TjtcYrfutXT6nfRxhqwoGiXyzwJsGPmekoZYYmfgP",
+    "feeReceiver": "J4Zttvtnt2ECLyyEaxQRywAQEN4xcbHsgMF1Fhgdyow9",
     "decimals": 6
   },
   {
@@ -93,6 +100,7 @@
     "reserveLiquidity": "5JT6EK5wLEYGpAXMY2BXvhoeuQCp93eo4os2EtXwnPG1",
     "reserveCollateral": "6uEjo58ecepRyYnKRLdAMRn8ic3oJJxnwMBH96ufMSXN",
     "reserveCollateralMint": "2d95ZC8L5XP6xCnaKx8D5U5eX6rKbboBBAwuBLxaFmmJ",
+    "feeReceiver": "2E15BsCyBeAu9TwhWKQ9yWj9a4TKoPkv7B1JjNxFF7v7",
     "decimals": 6
   }
 ]

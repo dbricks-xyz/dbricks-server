@@ -366,10 +366,10 @@
     buffer-layout "^1.2.2"
     mkdirp "^1.0.4"
 
-"@dbricks/dbricks-ts@^0.0.50":
-  version "0.0.50"
-  resolved "https://registry.yarnpkg.com/@dbricks/dbricks-ts/-/dbricks-ts-0.0.50.tgz#8de0fbabe8bd04be06d578c8f2ccee905f37fbe0"
-  integrity sha512-7fQWiRbrRoeg0NTic56Yjt4+ADNXTga5BiwHZKaxeQFieOJ3CI1EDLoBbhdj5O4ZyTxjqsMbezox77P4aK415w==
+"@dbricks/dbricks-ts@^0.0.51":
+  version "0.0.51"
+  resolved "https://registry.yarnpkg.com/@dbricks/dbricks-ts/-/dbricks-ts-0.0.51.tgz#3f5e8e9079599e07c199d4349b85bbed2632f118"
+  integrity sha512-zvaxhllRsuYTsHX+FX5+R4Iew56tmZr/t/+L4g1i1qUkgYrdlxOKfV1pEfpJkpky4sU5JT8l2Kzy7t/tRJyuoQ==
   dependencies:
     "@solana/spl-token" "^0.1.8"
     "@solana/web3.js" "^1.29.0"

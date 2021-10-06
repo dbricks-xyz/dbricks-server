@@ -1,10 +1,15 @@
 import SolClient from "../../common/client/common.client";
 import debug from "debug";
 import {
+  borrowObligationLiquidityInstruction,
   depositReserveLiquidityAndObligationCollateralInstruction,
   initObligationInstruction,
-  OBLIGATION_SIZE, parseObligation, refreshObligationInstruction,
-  refreshReserveInstruction, withdrawObligationCollateralAndRedeemReserveCollateralInstruction
+  OBLIGATION_SIZE,
+  parseObligation,
+  refreshObligationInstruction,
+  refreshReserveInstruction,
+  repayObligationLiquidityInstruction,
+  withdrawObligationCollateralAndRedeemReserveCollateralInstruction
 } from "@dbricks/dbricks-solend";
 import {PublicKey, SystemProgram, TransactionInstruction} from "@solana/web3.js";
 import {SOLEND_MARKET_ID, SOLEND_MARKET_OWNER_ID, SOLEND_PROG_ID} from "../../config/config";
@@ -66,7 +71,113 @@ export default class SolendClient extends SolClient {
     mintPubkey: PublicKey,
     quantity: bigint,
     ownerPubkey: PublicKey,
-  ) :Promise<instructionsAndSigners[]> {
+  ): Promise<instructionsAndSigners[]> {
+    const {
+      instructionsAndSigners,
+      reserveInfo,
+      userObligationPubkey,
+      userLPPubkey,
+      userLiqPubkey,
+    } = await this.prepareTokenAndRefreshInstructions(mintPubkey, ownerPubkey);
+
+    const withdrawInstruction = withdrawObligationCollateralAndRedeemReserveCollateralInstruction(
+      quantity,
+      reserveInfo.reserveCollateral,
+      userLPPubkey,
+      reserveInfo.reserve,
+      userObligationPubkey,
+      SOLEND_MARKET_ID,
+      SOLEND_MARKET_OWNER_ID,
+      userLiqPubkey,
+      reserveInfo.reserveCollateralMint,
+      reserveInfo.reserveLiquidity,
+      ownerPubkey,
+      ownerPubkey,
+      SOLEND_PROG_ID
+    );
+    instructionsAndSigners.solendInstructionsAndSigners.instructions.push(withdrawInstruction);
+
+    return [
+      instructionsAndSigners.tokenInstructionsAndSigners,
+      instructionsAndSigners.solendInstructionsAndSigners
+    ];
+  }
+
+  async prepareBorrowTransaction(
+    mintPubkey: PublicKey,
+    quantity: bigint,
+    ownerPubkey: PublicKey,
+  ): Promise<instructionsAndSigners[]> {
+    const {
+      instructionsAndSigners,
+      reserveInfo,
+      userObligationPubkey,
+      userLPPubkey,
+      userLiqPubkey,
+    } = await this.prepareTokenAndRefreshInstructions(mintPubkey, ownerPubkey);
+
+    const borrowInstruction = borrowObligationLiquidityInstruction(
+      quantity,
+      reserveInfo.reserveLiquidity,
+      userLiqPubkey,
+      reserveInfo.reserve,
+      reserveInfo.feeReceiver,
+      userObligationPubkey,
+      SOLEND_MARKET_ID,
+      SOLEND_MARKET_OWNER_ID,
+      ownerPubkey,
+      SOLEND_PROG_ID,
+    );
+    instructionsAndSigners.solendInstructionsAndSigners.instructions.push(borrowInstruction);
+
+    return [
+      instructionsAndSigners.tokenInstructionsAndSigners,
+      instructionsAndSigners.solendInstructionsAndSigners
+    ];
+  }
+
+  async prepareRepayTransaction(
+    mintPubkey: PublicKey,
+    quantity: bigint,
+    ownerPubkey: PublicKey,
+  ): Promise<instructionsAndSigners[]> {
+    const {
+      instructionsAndSigners,
+      reserveInfo,
+      userObligationPubkey,
+      userLPPubkey,
+      userLiqPubkey,
+    } = await this.prepareTokenAndRefreshInstructions(mintPubkey, ownerPubkey);
+
+    const repayInstruction = repayObligationLiquidityInstruction(
+      quantity,
+      userLiqPubkey,
+      reserveInfo.reserveLiquidity,
+      reserveInfo.reserve,
+      userObligationPubkey,
+      SOLEND_MARKET_ID,
+      ownerPubkey,
+      SOLEND_PROG_ID,
+    );
+    instructionsAndSigners.solendInstructionsAndSigners.instructions.push(repayInstruction);
+
+    return [
+      instructionsAndSigners.tokenInstructionsAndSigners,
+      instructionsAndSigners.solendInstructionsAndSigners
+    ];
+  }
+
+  // --------------------------------------- helpers
+
+  /**
+   * Prepares all the instructions needed for refreshing obligations / reserves,
+   * as well any missing token accounts.
+   * Basically boilerplate for each function above.
+   */
+  async prepareTokenAndRefreshInstructions(
+    mintPubkey: PublicKey,
+    ownerPubkey: PublicKey,
+  ) {
     //find all reserves that the user has either deposited into or borrowed from
     const [_, userObligationPubkey] = await this.getOrCreateObligationAccount(
       ownerPubkey
@@ -83,57 +194,53 @@ export default class SolendClient extends SolClient {
       ownerPubkey,
       mintPubkey,
     );
-    //prepare refresh oblig instruction (refresh reserves are done below)
-    const refreshObligInstruction = this.getRefreshObligInstruction(userObligationPubkey);
-    //prepare actual withdraw instruction
-    const withdrawInstruction = withdrawObligationCollateralAndRedeemReserveCollateralInstruction(
-      quantity,
-      reserveInfo.reserveCollateral,
-      userLPPubkey,
-      reserveInfo.reserve,
-      userObligationPubkey,
-      SOLEND_MARKET_ID,
-      SOLEND_MARKET_OWNER_ID,
-      userLiqPubkey,
-      reserveInfo.reserveCollateralMint,
-      reserveInfo.reserveLiquidity,
-      ownerPubkey,
-      ownerPubkey,
-      SOLEND_PROG_ID
-    );
-
-    //in case user doesn't have required token accounts, we create them
     const tokenInstructionsAndSigners = mergeInstructionsAndSigners(userLPAccountInstructionsAndSigners, userLiqAccountInstructionsAndSigners);
-    //refresh target reserve
-    const solendInstructionsAndSigners: instructionsAndSigners = {instructions:[], signers:[]};
-    //refresh the rem reserves
+
+    //prepare refresh instructions (oblig and reserves)
+    const solendInstructionsAndSigners = this.prepareAllRefreshInstructionss(userObligationPubkey, mintPubkey);
+
+    return {
+      instructionsAndSigners: {
+        tokenInstructionsAndSigners,
+        solendInstructionsAndSigners
+      },
+      reserveInfo,
+      userObligationPubkey,
+      userLPPubkey,
+      userLiqPubkey,
+    };
+  }
+
+  prepareAllRefreshInstructionss(
+    userObligationPubkey: PublicKey,
+    mintPubkey: PublicKey,
+  ): instructionsAndSigners {
+    const instructionsAndSigners: instructionsAndSigners = {instructions: [], signers: []};
+    const refreshObligInstruction = this.getRefreshObligInstruction(userObligationPubkey);
     this.obligationDeposits.forEach(reservePubkey => {
       const mintPubkey = findSolendReserveInfoByReservePubkey(reservePubkey).mint;
       const refreshReserveInstruction = this.getRefreshReserveInstruction(mintPubkey);
-      if (solendInstructionsAndSigners.instructions.indexOf(refreshReserveInstruction) === -1) {
-        solendInstructionsAndSigners.instructions.push(refreshReserveInstruction)
+      if (instructionsAndSigners.instructions.indexOf(refreshReserveInstruction) === -1) {
+        instructionsAndSigners.instructions.push(refreshReserveInstruction)
       }
     });
     this.obligationBorrows.forEach(reservePubkey => {
       const mintPubkey = findSolendReserveInfoByReservePubkey(reservePubkey).mint;
       const refreshReserveInstruction = this.getRefreshReserveInstruction(mintPubkey);
-      if (solendInstructionsAndSigners.instructions.indexOf(refreshReserveInstruction) === -1) {
-        solendInstructionsAndSigners.instructions.push(refreshReserveInstruction)
+      if (instructionsAndSigners.instructions.indexOf(refreshReserveInstruction) === -1) {
+        instructionsAndSigners.instructions.push(refreshReserveInstruction)
       }
     });
-    //refresh obligation
-    solendInstructionsAndSigners.instructions.push(refreshObligInstruction);
-    //push the actual ix
-    solendInstructionsAndSigners.instructions.push(withdrawInstruction);
-    return [tokenInstructionsAndSigners, solendInstructionsAndSigners];
-  }
 
-  async prepareBorrowTransaction() {
+    // add target asset in case user never interacted with it before,
+    // and it doesn't get picked up by current deposits / borrows
+    const targetRefreshInstruction = this.getRefreshReserveInstruction(mintPubkey);
+    if (instructionsAndSigners.instructions.indexOf(targetRefreshInstruction) === -1) {
+      instructionsAndSigners.instructions.push(targetRefreshInstruction);
+    }
 
-  }
-
-  async prepareRepayTransaction() {
-
+    instructionsAndSigners.instructions.push(refreshObligInstruction);
+    return instructionsAndSigners
   }
 
   async refreshObligDepositsAndBorrows(obligationPubkey: PublicKey) {
@@ -212,6 +319,8 @@ export default class SolendClient extends SolClient {
 
 }
 
+// --------------------------------------- json related
+
 interface ISolendReserve {
   name: string,
   mint: PublicKey,
@@ -222,24 +331,12 @@ interface ISolendReserve {
   reserveLiquidity: PublicKey,
   reserveCollateral: PublicKey,
   reserveCollateralMint: PublicKey,
+  feeReceiver: PublicKey,
   decimals: number,
 }
 
-
-export function findSolendReserveInfoByMint(mintPubkey: PublicKey): ISolendReserve {
-  const reserves = JSON.parse(fs.readFileSync(`${__dirname}/../data/solendReservesMainnet.json`, 'utf8'));
-  const foundReserveRaw = reserves.find((r:any) => r.mint === mintPubkey.toBase58());
-  return serializeFoundReserve(foundReserveRaw);
-}
-
-export function findSolendReserveInfoByReservePubkey(reserve: PublicKey): ISolendReserve {
-  const reserves = JSON.parse(fs.readFileSync(`${__dirname}/../data/solendReservesMainnet.json`, 'utf8'));
-  const foundReserveRaw = reserves.find((r:any) => r.reserve === reserve.toBase58());
-  return serializeFoundReserve(foundReserveRaw);
-}
-
 export function serializeFoundReserve(reserveRaw: any): ISolendReserve {
-    return {
+  return {
     name: reserveRaw.name,
     mint: new PublicKey(reserveRaw.mint),
     pythProductOracle: new PublicKey(reserveRaw.pythProductOracle),
@@ -249,6 +346,20 @@ export function serializeFoundReserve(reserveRaw: any): ISolendReserve {
     reserveLiquidity: new PublicKey(reserveRaw.reserveLiquidity),
     reserveCollateral: new PublicKey(reserveRaw.reserveCollateral),
     reserveCollateralMint: new PublicKey(reserveRaw.reserveCollateralMint),
+    feeReceiver: new PublicKey(reserveRaw.feeReceiver),
     decimals: reserveRaw.decimals,
   }
 }
+
+export function findSolendReserveInfoByMint(mintPubkey: PublicKey): ISolendReserve {
+  const reserves = JSON.parse(fs.readFileSync(`${__dirname}/../data/solendReservesMainnet.json`, 'utf8'));
+  const foundReserveRaw = reserves.find((r: any) => r.mint === mintPubkey.toBase58());
+  return serializeFoundReserve(foundReserveRaw);
+}
+
+export function findSolendReserveInfoByReservePubkey(reserve: PublicKey): ISolendReserve {
+  const reserves = JSON.parse(fs.readFileSync(`${__dirname}/../data/solendReservesMainnet.json`, 'utf8'));
+  const foundReserveRaw = reserves.find((r: any) => r.reserve === reserve.toBase58());
+  return serializeFoundReserve(foundReserveRaw);
+}
+
