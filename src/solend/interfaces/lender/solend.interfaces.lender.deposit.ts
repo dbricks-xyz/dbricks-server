@@ -7,6 +7,6 @@ export interface ISolendLenderDeposit {
 
 export interface ISolendLenderDepositParamsParsed {
   mintPubkey: PublicKey,
-  quantity: number,
+  quantity: bigint,
   ownerPubkey: PublicKey,
 }

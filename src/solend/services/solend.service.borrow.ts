@@ -1,14 +1,14 @@
 import SolendClient from "../client/solend.client";
 import {
-  ISolendLenderWithdraw,
-  ISolendLenderWithdrawParamsParsed
-} from "../interfaces/lender/solend.interfaces.lender.withdraw";
+  ISolendLenderBorrow,
+  ISolendLenderBorrowParamsParsed
+} from "../interfaces/lender/solend.interfaces.lender.borrow";
 import {instructionsAndSigners} from "@dbricks/dbricks-ts";
 import {splitInstructionsAndSigners} from "../../common/util/common.util";
 
-export default class SolendWithdrawService extends SolendClient implements ISolendLenderWithdraw {
-  async withdraw(params: ISolendLenderWithdrawParamsParsed): Promise<instructionsAndSigners[]> {
-    const [tokenInstructionsAndSigners, solendInstructionsAndSigners] = await this.prepareWithdrawTransaction(
+export default class SolendBorrowService extends SolendClient implements ISolendLenderBorrow {
+  async borrow(params: ISolendLenderBorrowParamsParsed): Promise<instructionsAndSigners[]> {
+    const [tokenInstructionsAndSigners, solendInstructionsAndSigners] = await this.prepareBorrowTransaction(
       params.mintPubkey,
       params.quantity,
       params.ownerPubkey,

@@ -80,14 +80,15 @@ export function mergeInstructionsAndSigners(
 
 /**
  * NOTE: Function assumes no signers are provided
- * This is used to ensure batch cancels don't exceed the Transaction size limit
+ * Keeps splitting the transaction until appropriate size found
  */
-export async function splitInstructionsAndSigners(instructionsAndSigners: instructionsAndSigners) {
-  ///the next steps are needed in case there are too many orders to cancel in a single Transaction
+export async function splitInstructionsAndSigners(
+  instructionsAndSigners: instructionsAndSigners
+): Promise<instructionsAndSigners[]> {
   const flattenedBricks: IFlattenedBrick[] = instructionsAndSigners.instructions.map(i => {
     return {
-      protocol: Protocol.Serum,
-      action: Action.Serum.CancelOrder,
+      protocol: Protocol.Serum, //it doesn't matter which protocol is passed here
+      action: Action.Serum.CancelOrder, //it doesn't matter which action is passed here
       instructionsAndSigners: {
         instructions: [i],
         signers: []
