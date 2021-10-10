@@ -139,6 +139,29 @@ export default class SolClient {
     return [{instructions: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
   }
 
+  async prepareCreateAssociatedTokenAccountTransaction(
+    token: Token,
+    associatedAddress: PublicKey,
+    ownerPubkey: PublicKey,
+  ): Promise<[instructionsAndSigners, PublicKey]> {
+    const instructionsAndSigners: instructionsAndSigners = {
+      instructions: [],
+      signers: [],
+    };
+
+    const createAssociatedTokenAccountInstructions = Token.createAssociatedTokenAccountInstruction(
+      token.associatedProgramId,
+      token.programId,
+      token.publicKey,
+      associatedAddress,
+      ownerPubkey,
+      ownerPubkey,
+    );
+
+    instructionsAndSigners.instructions.push(createAssociatedTokenAccountInstructions);
+    return [instructionsAndSigners, associatedAddress];
+  }
+
   async getOrCreateTokenAccountByMint(
     ownerPubkey: PublicKey,
     mintPubkey: PublicKey,
@@ -149,8 +172,8 @@ export default class SolClient {
       return [instructionsAndSigners, ownerPubkey];
     }
     const tokenAccounts = (await this.connection.getTokenAccountsByOwner(ownerPubkey, {
-        mint: mintPubkey,
-      }
+      mint: mintPubkey,
+    }
     )).value;
 
     if (tokenAccounts.length === 0) {
@@ -158,6 +181,39 @@ export default class SolClient {
       [instructionsAndSigners, tokenAccountPubkey] = await this.prepareCreateTokenAccountTransaction(ownerPubkey, mintPubkey);
     } else {
       tokenAccountPubkey = tokenAccounts[0].pubkey;
+    }
+    log(`User's account for mint ${mintPubkey.toBase58()} is ${tokenAccountPubkey.toBase58()}`);
+
+    return [instructionsAndSigners, tokenAccountPubkey];
+  }
+
+  async getOrCreateAssociatedTokenAccountByMint(
+    ownerPubkey: PublicKey,
+    mintPubkey: PublicKey,
+    fetchOnly: boolean = false,
+  ): Promise<[instructionsAndSigners, PublicKey]> {
+    let instructionsAndSigners: instructionsAndSigners = {instructions: [], signers: []};
+    let tokenAccountPubkey: PublicKey;
+    if (mintPubkey.toBase58() === 'So11111111111111111111111111111111111111112') {
+      return [instructionsAndSigners, ownerPubkey];
+    }
+    const token = await this.deserializeToken(mintPubkey);
+
+    const associatedAddress = await Token.getAssociatedTokenAddress(
+      token.associatedProgramId,
+      token.programId,
+      token.publicKey,
+      ownerPubkey,
+    );
+    try {
+      tokenAccountPubkey = (await token.getAccountInfo(associatedAddress)).address;
+      if (fetchOnly) {
+        return [instructionsAndSigners, tokenAccountPubkey];
+      }
+    } catch (err) {
+      log(`Creating associated token account for mint ${mintPubkey.toBase58()}`);
+      [instructionsAndSigners, tokenAccountPubkey] = await this
+        .prepareCreateAssociatedTokenAccountTransaction(token, associatedAddress, ownerPubkey);
     }
     log(`User's account for mint ${mintPubkey.toBase58()} is ${tokenAccountPubkey.toBase58()}`);
 
