@@ -1,19 +1,20 @@
 import debug from 'debug';
 import { calculateEstimatedSwapOutputAmount, ExchangeBasic, loadExchangeInfo, makeExchange, StableSwap, StableSwapState, SwapTokenInfo } from '@saberhq/stableswap-sdk';
 import { instructionsAndSigners, Saber } from '@dbricks/dbricks-ts';
-import { findQuarryAddress, MineWrapper, QuarrySDK, QuarryWrapper, QUARRY_ADDRESSES } from '@quarryprotocol/quarry-sdk';
+import { findQuarryAddress, findMintWrapperAddress, MineWrapper, MintWrapper, QuarrySDK, QuarryWrapper, QUARRY_ADDRESSES } from '@quarryprotocol/quarry-sdk';
 import { SingleConnectionBroadcaster, SolanaProvider as SaberProvider, TransactionEnvelope } from '@saberhq/solana-contrib';
-import { TokenAmount, Token as SaberToken, parseBigintIsh } from '@saberhq/token-utils';
-import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { TokenAmount, Token as SaberToken, parseBigintIsh, getATAAddress } from '@saberhq/token-utils';
+import { Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { Wallet, Program, Provider as AnchorProvider } from '@project-serum/anchor';
 import * as fs from 'fs';
 import SolClient from '../../common/client/common.client';
 import { SABER_SWAP_PROG_ID, TESTING_KEYPAIR_PATH } from '../../config/config';
 import { ISaberPoolDepositParamsParsed, ISaberPoolWithdrawParamsParsed, ISaberSwapParamsParsed } from '../interfaces/saber.interfaces.pool';
-import { ISaberFarmDepositParamsParsed } from '../interfaces/saber.interfaces.farm';
+import { ISaberFarmHarvestParamsParsed, ISaberFarmParamsParsed } from '../interfaces/saber.interfaces.farm';
 import { loadKeypairSync } from '../../common/util/common.util';
 import { RegistryToken, SaberPoolInfo } from '../interfaces/saber.interfaces.SaberPoolInfo';
+import { findProgramAddressSync } from '@project-serum/anchor/dist/utils/pubkey';
 
 const log: debug.IDebugger = debug('app:saber-client');
 
@@ -25,13 +26,36 @@ export type WrappedTokenPair = {
 export default class SaberClient extends SolClient {
   providers: {saberProvider: SaberProvider, anchorProvider: AnchorProvider};
 
-  rewarderKey: PublicKey = new PublicKey('rXhAofQCT7NN9TUqigyEAUzV1uLL4boeD8CRkNBSkYk');
+  rewarderKey: PublicKey = new PublicKey('rXhAofQCT7NN9TUqigyEAUzV1uLL4boeD8CRkNBSkYk'); // Mainnet only
+
+  saberMintPubkey: PublicKey = new PublicKey('Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1'); // Mainnet only
 
   sdk: QuarrySDK;
 
   decimalProgram: Program;
 
+  quarryProgram: Program;
+
+  redeemerProgram: Program;
+
   poolRegistry: SaberPoolInfo[];
+
+  // The below are constants that have to do with claiming SBR token rewards
+  iouMintPubkey: PublicKey = new PublicKey('iouQcQBAiEXe6cKLS85zmZxUqaCqBdeHFpqKoSz615u'); // Mainnet only
+
+  redeemerPubkey: PublicKey = new PublicKey('CL9wkGFT3SZRRNa9dgaovuRV7jrVVigBUZ6DjcgySsCU'); // Mainnet only
+
+  redemptionVaultPubkey: PublicKey = new PublicKey('ESg7xPUBioCqK4QaSvuZkhuekagvKcx326wNo3U7kRWc'); // Mainnet only
+
+  mintProxyStatePubkey: PublicKey = new PublicKey('9qRjwMQYrkd5JvsENaYYxSCgwEuVhK4qAo5kCFHSmdmL'); // Mainnet only
+
+  proxyMintAuthorityPubkey: PublicKey = new PublicKey('GyktbGXbH9kvxP8RGfWsnFtuRgC7QCQo2WBqpo3ryk7L'); // Mainnet only
+
+  mintProxyProgramPubkey: PublicKey = new PublicKey('UBEBk5idELqykEEaycYtQ7iBVrCg6NmvFSzMpdr22mL'); // Mainnet only
+
+  minterInfoPubkey: PublicKey = new PublicKey('GNSuMDSnUP9oK4HRtCi41zAbUzEqeLK1QPoby6dLVD9v'); // Mainnet only
+
+
 
   constructor() {
     super();
@@ -41,6 +65,8 @@ export default class SaberClient extends SolClient {
     });
 
     this.decimalProgram = this.loadDecimalProgram();
+    this.quarryProgram = this.loadQuarryProgram();
+    this.redeemerProgram = this.loadRedeemerProgram();
     this.poolRegistry = JSON.parse(fs.readFileSync('./mainnetPools.json', 'utf-8')).pools;
 
     log('Initialized Saber client');
@@ -55,9 +81,19 @@ export default class SaberClient extends SolClient {
     return new Program(idl, programId, this.providers.anchorProvider);
   }
 
+  loadQuarryProgram(): Program {
+    const idl = JSON.parse(fs.readFileSync('./quarry.json', 'utf-8'));
+    return new Program(idl, QUARRY_ADDRESSES.Mine, this.providers.anchorProvider);
+  }
+
+  loadRedeemerProgram(): Program {
+    const idl = JSON.parse(fs.readFileSync('./redeemer.json', 'utf-8'));
+    const programId = new PublicKey('RDM23yr8pr1kEAmhnFpaabPny6C9UVcEcok3Py5v86X');
+    return new Program(idl, programId, this.providers.anchorProvider);
+  }
+
   loadProviders(): {saberProvider: SaberProvider, anchorProvider: AnchorProvider} {
-    const dummyWallet = new Wallet(Keypair.generate()); // Problem?
-    // Wallet should never actually be used to sign
+    const dummyWallet = new Wallet(Keypair.generate());
 
     const saberProvider = new SaberProvider(this.connection,
       new SingleConnectionBroadcaster(this.connection),
@@ -155,7 +191,8 @@ export default class SaberClient extends SolClient {
       throw new Error(`Could not find token accounts for: ${wrapPair.underlyingPubkey.toBase58()}`);
     }
 
-    const [blankInstructionsAndSigners, wrapperUnderlyingPubkey] =
+    // Fails if you search for Associated Token Account
+    const [unusedInstructionsAndSigners, wrapperUnderlyingPubkey] =
     await this.getOrCreateTokenAccountByMint(
       wrapperPubkey.mintAuthority,
       wrapPair.underlyingPubkey,
@@ -379,31 +416,127 @@ export default class SaberClient extends SolClient {
     return instructionsAndSigners;
   }
 
-  async prepareFarmDepositTransaction(
-    params: ISaberFarmDepositParamsParsed,
+  async prepareFarmDepositOrWithdrawTransaction(
+    params: ISaberFarmParamsParsed,
+    action: 'deposit' | 'withdraw',
   ): Promise<instructionsAndSigners> {
+    const instructionsAndSigners: instructionsAndSigners = {
+      instructions: [],
+      signers: [],
+    };
     const tokenDecimals = (await this.deserializeTokenMint(params.mintPubkey)).decimals;
     const poolToken = SaberToken.fromMint(params.mintPubkey, tokenDecimals);
+    const quarry = await this.loadQuarry(poolToken);
+    const minerActions = await quarry.getMinerActions(
+      params.ownerPubkey,
+    );
+    const minerAccounts = minerActions.userStakeAccounts;
 
+    const [unusedInstructionsAndSigners, ownerPoolPubkey] = await
+    this.getOrCreateAssociatedTokenAccountByMint(params.ownerPubkey, params.mintPubkey);
+    const amount = await this.getIntegerAmount(params.amount, params.mintPubkey);
+
+
+    // console.log(params.ownerPubkey.toBase58());
+    // console.log(minerAccounts.miner.toString());
+    // console.log(quarry.key.toBase58());
+    // console.log(minerAccounts.minerVault.toString());
+    // console.log(ownerPoolPubkey.toBase58());
+    // console.log(TOKEN_PROGRAM_ID.toBase58());
+    // console.log(this.rewarderKey.toBase58());
+    // console.log(SYSVAR_CLOCK_PUBKEY.toBase58());
+
+    const accounts = {
+      authority: params.ownerPubkey,
+      miner: new PublicKey(minerAccounts.miner.toString()),
+      quarry: new PublicKey(minerAccounts.quarry.toString()),
+      minerVault: new PublicKey(minerAccounts.minerVault.toString()),
+      tokenAccount: ownerPoolPubkey,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rewarder: this.rewarderKey,
+      unusedClock: SYSVAR_CLOCK_PUBKEY,
+    };
+
+    let stakeInstruction: TransactionInstruction;
+    if (action === 'deposit') {
+      stakeInstruction = this.quarryProgram.instruction.stakeTokens(amount, { accounts });
+    } else {
+      stakeInstruction = this.quarryProgram.instruction.withdrawTokens(amount, { accounts });
+    }
+
+    instructionsAndSigners.instructions.push(stakeInstruction);
+    return instructionsAndSigners;
+  }
+
+  async prepareFarmHarvestTransaction(
+    params: ISaberFarmHarvestParamsParsed,
+  ): Promise<instructionsAndSigners> {
+    const instructionsAndSigners: instructionsAndSigners = {
+      instructions: [],
+      signers: [],
+    };
+
+    const tokenDecimals = (await this.deserializeTokenMint(params.poolMintPubkey)).decimals;
+    const poolToken = SaberToken.fromMint(params.poolMintPubkey, tokenDecimals);
     const quarry = await this.loadQuarry(poolToken);
     const minerActions = await quarry.getMinerActions(
       params.ownerPubkey,
     );
 
-    const depositAmount = params.depositAmount * (10 ** tokenDecimals);
-    const tokenAmount = new TokenAmount(poolToken, parseBigintIsh(depositAmount));
+    const [ownerIouPubkeyInstructionsAndSigners, ownerIouPubkey] = await
+    this.getOrCreateAssociatedTokenAccountByMint(params.ownerPubkey, this.iouMintPubkey);
 
-    const stakeTransaction: TransactionEnvelope = minerActions
-      .stake(tokenAmount);
+    const [ownerSaberPubkeyInstructionsAndSigners, ownerSaberPubkey] = await
+    this.getOrCreateAssociatedTokenAccountByMint(params.ownerPubkey, this.saberMintPubkey);
 
-    console.log(stakeTransaction.signers);
+    instructionsAndSigners.instructions.push(...ownerIouPubkeyInstructionsAndSigners.instructions);
+    instructionsAndSigners.instructions.push(...ownerSaberPubkeyInstructionsAndSigners.instructions);
 
-    return {
-      instructions: [
-        ...stakeTransaction.instructions,
-      ],
-      signers: [],
+    instructionsAndSigners.signers.push(...ownerIouPubkeyInstructionsAndSigners.signers);
+    instructionsAndSigners.signers.push(...ownerSaberPubkeyInstructionsAndSigners.signers);
+
+    // first need to retrieve the IOU tokens via quarry mine
+    const claimIouTransaction = await minerActions.claim();
+    instructionsAndSigners.instructions.push(...claimIouTransaction.instructions);
+
+    // then I can use them to harvest the SBR
+
+    // console.log(ownerIOUPubkey.toBase58());
+    console.log(this.redeemerPubkey.toBase58());
+    console.log(this.iouMintPubkey.toBase58());
+    console.log(this.saberMintPubkey.toBase58());
+    console.log(this.redemptionVaultPubkey.toBase58()); // redeemer's SBR Token Account
+    console.log(TOKEN_PROGRAM_ID.toBase58());
+    console.log(params.ownerPubkey.toBase58());
+    console.log(ownerIouPubkey.toBase58());
+    console.log(ownerSaberPubkey.toBase58()); // owner SBR Token Account
+    console.log(this.mintProxyStatePubkey.toBase58()); // no clue
+    console.log(this.proxyMintAuthorityPubkey.toBase58()); // also no clue
+    console.log(this.mintProxyProgramPubkey.toBase58()); // owns mintProxyState and minterInfo
+    console.log(this.minterInfoPubkey.toBase58()); // wtf
+
+    const accounts = {
+      redeemCtx: {
+        redeemer: this.redeemerPubkey,
+        tokens: {
+          iouMint: this.iouMintPubkey,
+          redemptionMint: this.saberMintPubkey,
+          redemptionVault: this.redemptionVaultPubkey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+        sourceAuthority: params.ownerPubkey,
+        iouSource: ownerIouPubkey,
+        redemptionDestination: ownerSaberPubkey,
+      },
+      mintProxyState: this.mintProxyStatePubkey,
+      proxyMintAuthority: this.proxyMintAuthorityPubkey,
+      mintProxyProgram: this.mintProxyProgramPubkey,
+      minterInfo: this.minterInfoPubkey,
     };
+
+    const harvestInstruction = this.redeemerProgram.instruction.redeemAllTokensFromMintProxy({ accounts });
+    instructionsAndSigners.instructions.push(harvestInstruction);
+    return instructionsAndSigners;
   }
 
   async loadQuarry(poolToken: SaberToken): Promise<QuarryWrapper> {

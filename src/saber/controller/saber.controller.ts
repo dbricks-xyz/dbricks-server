@@ -3,7 +3,7 @@ import debug from 'debug';
 import {serializeInstructionsAndSigners} from '@dbricks/dbricks-ts';
 import SaberPoolService from '../services/saber.service.pool';
 import SaberFarmService from '../services/saber.service.farm';
-import { deserializePoolDeposit, deserializeFarmDeposit, deserializeSwap, deserializePoolWithdraw } from './saber.controller.serializer';
+import { deserializePoolDeposit, deserializeFarmDeposit, deserializeSwap, deserializePoolWithdraw, deserializeFarmWithdraw, deserializeFarmHarvest } from './saber.controller.serializer';
 
 const log: debug.IDebugger = debug('app:saber-controller');
 
@@ -46,7 +46,29 @@ class SaberController {
     const saberFarmService = new SaberFarmService();
     Promise.resolve(saberFarmService.deposit(params))
       .then((instructionsAndSigners) => {
-        log('Pool deposit instruction/signers generated');
+        log('Farm deposit instruction/signers generated');
+        response.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
+      })
+      .catch(next);
+  }
+
+  async farmWithdraw(request: e.Request, response: e.Response, next: e.NextFunction) {
+    const params = deserializeFarmWithdraw(request);
+    const saberFarmService = new SaberFarmService();
+    Promise.resolve(saberFarmService.withdraw(params))
+      .then((instructionsAndSigners) => {
+        log('Farm withdraw instruction/signers generated');
+        response.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
+      })
+      .catch(next);
+  }
+
+  async farmHarvest(request: e.Request, response: e.Response, next: e.NextFunction) {
+    const params = deserializeFarmHarvest(request);
+    const saberFarmService = new SaberFarmService();
+    Promise.resolve(saberFarmService.harvest(params))
+      .then((instructionsAndSigners) => {
+        log('Farm harvest instruction/signers generated');
         response.status(200).send(serializeInstructionsAndSigners(instructionsAndSigners));
       })
       .catch(next);
@@ -54,4 +76,3 @@ class SaberController {
 }
 
 export default new SaberController();
-

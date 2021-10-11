@@ -33,13 +33,18 @@ export class SaberRoutes extends CommonRoutesConfig {
         SaberController.farmDeposit,
       );
 
-    return this.app;
-    // /saber/swap
-    // /saber/pool/deposit
-    // /saber/pool/withdraw
-    // /saber/farm/deposit
-    // /saber/farm/withdraw
-    // /saber/farm/harvest (for rewards)
+    this.app.route('/saber/farm/withdraw')
+      .post(
+        SaberMiddleware.validateStuff,
+        SaberController.farmWithdraw,
+      );
 
-}
+    this.app.route('/saber/farm/harvest')
+      .post(
+        SaberMiddleware.validateStuff,
+        SaberController.farmHarvest,
+      );
+
+    return this.app;
+  }
 }

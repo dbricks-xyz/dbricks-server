@@ -11,8 +11,10 @@ import {
     ISaberSwapParamsParsed,
 } from '../interfaces/saber.interfaces.pool';
 import {
-  ISaberFarmDepositParamsParsed,
-  ISaberFarmDepositParams,
+  ISaberFarmParamsParsed,
+  ISaberFarmParams,
+  ISaberFarmHarvestParamsParsed,
+  ISaberFarmHarvestParams,
 } from '../interfaces/saber.interfaces.farm';
 
 export function deserializePoolDeposit(request: e.Request): ISaberPoolDepositParamsParsed {
@@ -45,11 +47,28 @@ export function deserializeSwap(request: e.Request): ISaberSwapParamsParsed {
   };
 }
 
-export function deserializeFarmDeposit(request: e.Request): ISaberFarmDepositParamsParsed {
-  const body: ISaberFarmDepositParams = request.body;
+export function deserializeFarmDeposit(request: e.Request): ISaberFarmParamsParsed {
+  const body: ISaberFarmParams = request.body;
   return {
     mintPubkey: deserializePubkey(body.mintPubkey),
-    depositAmount: parseFloat(body.depositAmount),
+    amount: parseFloat(body.amount),
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
+  };
+}
+
+export function deserializeFarmWithdraw(request: e.Request): ISaberFarmParamsParsed {
+  const body: ISaberFarmParams = request.body;
+  return {
+    mintPubkey: deserializePubkey(body.mintPubkey),
+    amount: parseFloat(body.amount),
+    ownerPubkey: deserializePubkey(body.ownerPubkey),
+  };
+}
+
+export function deserializeFarmHarvest(request: e.Request): ISaberFarmHarvestParamsParsed {
+  const body: ISaberFarmHarvestParams = request.body;
+  return {
+    poolMintPubkey: deserializePubkey(body.poolMintPubkey),
     ownerPubkey: deserializePubkey(body.ownerPubkey),
   };
 }
