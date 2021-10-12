@@ -1,20 +1,18 @@
 import debug from 'debug';
-import { calculateEstimatedSwapOutputAmount, ExchangeBasic, loadExchangeInfo, makeExchange, StableSwap, StableSwapState, SwapTokenInfo } from '@saberhq/stableswap-sdk';
-import { instructionsAndSigners, Saber } from '@dbricks/dbricks-ts';
-import { findQuarryAddress, findMintWrapperAddress, MineWrapper, MintWrapper, QuarrySDK, QuarryWrapper, QUARRY_ADDRESSES } from '@quarryprotocol/quarry-sdk';
+import { StableSwap, StableSwapState } from '@saberhq/stableswap-sdk';
+import { instructionsAndSigners } from '@dbricks/dbricks-ts';
+import { findQuarryAddress, QuarrySDK, QuarryWrapper, QUARRY_ADDRESSES } from '@quarryprotocol/quarry-sdk';
 import { SingleConnectionBroadcaster, SolanaProvider as SaberProvider, TransactionEnvelope } from '@saberhq/solana-contrib';
-import { TokenAmount, Token as SaberToken, parseBigintIsh, getATAAddress } from '@saberhq/token-utils';
-import { Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
+import { TokenAmount, Token as SaberToken } from '@saberhq/token-utils';
+import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { Wallet, Program, Provider as AnchorProvider } from '@project-serum/anchor';
 import * as fs from 'fs';
 import SolClient from '../../common/client/common.client';
-import { SABER_SWAP_PROG_ID, TESTING_KEYPAIR_PATH } from '../../config/config';
+import { SABER_SWAP_PROG_ID } from '../../config/config';
 import { ISaberPoolDepositParamsParsed, ISaberPoolWithdrawParamsParsed, ISaberSwapParamsParsed } from '../interfaces/saber.interfaces.pool';
 import { ISaberFarmHarvestParamsParsed, ISaberFarmParamsParsed } from '../interfaces/saber.interfaces.farm';
-import { loadKeypairSync } from '../../common/util/common.util';
 import { RegistryToken, SaberPoolInfo } from '../interfaces/saber.interfaces.SaberPoolInfo';
-import { findProgramAddressSync } from '@project-serum/anchor/dist/utils/pubkey';
 
 const log: debug.IDebugger = debug('app:saber-client');
 
@@ -40,7 +38,7 @@ export default class SaberClient extends SolClient {
 
   poolRegistry: SaberPoolInfo[];
 
-  // The below are constants that have to do with claiming SBR token rewards
+  // The below have to do with claiming SBR token rewards, and do not vary across pools
   iouMintPubkey: PublicKey = new PublicKey('iouQcQBAiEXe6cKLS85zmZxUqaCqBdeHFpqKoSz615u'); // Mainnet only
 
   redeemerPubkey: PublicKey = new PublicKey('CL9wkGFT3SZRRNa9dgaovuRV7jrVVigBUZ6DjcgySsCU'); // Mainnet only
@@ -55,8 +53,6 @@ export default class SaberClient extends SolClient {
 
   minterInfoPubkey: PublicKey = new PublicKey('GNSuMDSnUP9oK4HRtCi41zAbUzEqeLK1QPoby6dLVD9v'); // Mainnet only
 
-
-
   constructor() {
     super();
     this.providers = this.loadProviders();
@@ -67,14 +63,14 @@ export default class SaberClient extends SolClient {
     this.decimalProgram = this.loadDecimalProgram();
     this.quarryProgram = this.loadQuarryProgram();
     this.redeemerProgram = this.loadRedeemerProgram();
-    this.poolRegistry = JSON.parse(fs.readFileSync('./mainnetPools.json', 'utf-8')).pools;
+    this.poolRegistry = JSON.parse(fs.readFileSync('./saberInfo/mainnetPools.json', 'utf-8')).pools;
 
     log('Initialized Saber client');
   }
 
   loadDecimalProgram(): Program {
     // Read the generated IDL.
-    const idl = JSON.parse(fs.readFileSync('./addDecimals.json', 'utf-8'));
+    const idl = JSON.parse(fs.readFileSync('./saberInfo/addDecimals.json', 'utf-8'));
     // Address of the deployed program.
     const programId = new PublicKey('DecZY86MU5Gj7kppfUCEmd4LbXXuyZH1yHaP2NTqdiZB');
     // Generate the program client from IDL.
@@ -82,12 +78,12 @@ export default class SaberClient extends SolClient {
   }
 
   loadQuarryProgram(): Program {
-    const idl = JSON.parse(fs.readFileSync('./quarry.json', 'utf-8'));
+    const idl = JSON.parse(fs.readFileSync('./saberInfo/quarry.json', 'utf-8'));
     return new Program(idl, QUARRY_ADDRESSES.Mine, this.providers.anchorProvider);
   }
 
   loadRedeemerProgram(): Program {
-    const idl = JSON.parse(fs.readFileSync('./redeemer.json', 'utf-8'));
+    const idl = JSON.parse(fs.readFileSync('./saberInfo/redeemer.json', 'utf-8'));
     const programId = new PublicKey('RDM23yr8pr1kEAmhnFpaabPny6C9UVcEcok3Py5v86X');
     return new Program(idl, programId, this.providers.anchorProvider);
   }
@@ -426,45 +422,21 @@ export default class SaberClient extends SolClient {
     };
     const tokenDecimals = (await this.deserializeTokenMint(params.mintPubkey)).decimals;
     const poolToken = SaberToken.fromMint(params.mintPubkey, tokenDecimals);
+    const amount = await this.getIntegerAmount(params.amount, params.mintPubkey);
+    const tokenAmount = new TokenAmount(poolToken, amount.toNumber());
     const quarry = await this.loadQuarry(poolToken);
     const minerActions = await quarry.getMinerActions(
       params.ownerPubkey,
     );
-    const minerAccounts = minerActions.userStakeAccounts;
 
-    const [unusedInstructionsAndSigners, ownerPoolPubkey] = await
-    this.getOrCreateAssociatedTokenAccountByMint(params.ownerPubkey, params.mintPubkey);
-    const amount = await this.getIntegerAmount(params.amount, params.mintPubkey);
-
-
-    // console.log(params.ownerPubkey.toBase58());
-    // console.log(minerAccounts.miner.toString());
-    // console.log(quarry.key.toBase58());
-    // console.log(minerAccounts.minerVault.toString());
-    // console.log(ownerPoolPubkey.toBase58());
-    // console.log(TOKEN_PROGRAM_ID.toBase58());
-    // console.log(this.rewarderKey.toBase58());
-    // console.log(SYSVAR_CLOCK_PUBKEY.toBase58());
-
-    const accounts = {
-      authority: params.ownerPubkey,
-      miner: new PublicKey(minerAccounts.miner.toString()),
-      quarry: new PublicKey(minerAccounts.quarry.toString()),
-      minerVault: new PublicKey(minerAccounts.minerVault.toString()),
-      tokenAccount: ownerPoolPubkey,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      rewarder: this.rewarderKey,
-      unusedClock: SYSVAR_CLOCK_PUBKEY,
-    };
-
-    let stakeInstruction: TransactionInstruction;
+    let transaction: TransactionEnvelope;
     if (action === 'deposit') {
-      stakeInstruction = this.quarryProgram.instruction.stakeTokens(amount, { accounts });
+      transaction = await minerActions.stake(tokenAmount);
     } else {
-      stakeInstruction = this.quarryProgram.instruction.withdrawTokens(amount, { accounts });
+      transaction = await minerActions.withdraw(tokenAmount);
     }
 
-    instructionsAndSigners.instructions.push(stakeInstruction);
+    instructionsAndSigners.instructions.push(...transaction.instructions);
     return instructionsAndSigners;
   }
 
@@ -495,26 +467,11 @@ export default class SaberClient extends SolClient {
     instructionsAndSigners.signers.push(...ownerIouPubkeyInstructionsAndSigners.signers);
     instructionsAndSigners.signers.push(...ownerSaberPubkeyInstructionsAndSigners.signers);
 
-    // first need to retrieve the IOU tokens via quarry mine
+    // Retrieve the IOU tokens via quarry mine
     const claimIouTransaction = await minerActions.claim();
     instructionsAndSigners.instructions.push(...claimIouTransaction.instructions);
 
-    // then I can use them to harvest the SBR
-
-    // console.log(ownerIOUPubkey.toBase58());
-    console.log(this.redeemerPubkey.toBase58());
-    console.log(this.iouMintPubkey.toBase58());
-    console.log(this.saberMintPubkey.toBase58());
-    console.log(this.redemptionVaultPubkey.toBase58()); // redeemer's SBR Token Account
-    console.log(TOKEN_PROGRAM_ID.toBase58());
-    console.log(params.ownerPubkey.toBase58());
-    console.log(ownerIouPubkey.toBase58());
-    console.log(ownerSaberPubkey.toBase58()); // owner SBR Token Account
-    console.log(this.mintProxyStatePubkey.toBase58()); // no clue
-    console.log(this.proxyMintAuthorityPubkey.toBase58()); // also no clue
-    console.log(this.mintProxyProgramPubkey.toBase58()); // owns mintProxyState and minterInfo
-    console.log(this.minterInfoPubkey.toBase58()); // wtf
-
+    // Then use them to harvest the SBR
     const accounts = {
       redeemCtx: {
         redeemer: this.redeemerPubkey,
@@ -552,16 +509,4 @@ export default class SaberClient extends SolClient {
       key: quarryKey,
     });
   }
-
-  // async loadSaberToken(mintPubkey: PublicKey): Promise<SaberToken> {
-  //   SaberToken.fromMint(mintPubkey, )
-
-  //   const tokenProvider = await new TokenListProvider().resolve();
-  //   const tokenList = tokenProvider.filterByClusterSlug('mainnet-beta').getList();
-  //   const tokenInfo = tokenList.find((t) => t.address === mintPubkey.toBase58());
-  //   if (!tokenInfo) {
-  //     throw new Error(`Could not find token with mint address: ${mintPubkey.toBase58()}`);
-  //   }
-  //   return new SaberToken(tokenInfo);
-  // }
 }
