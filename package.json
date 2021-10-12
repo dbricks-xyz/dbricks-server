@@ -6,12 +6,13 @@
     "test:serum": "export DEBUG=* TESTING_LOCAL=1 && jest ./e2e/serum",
     "test:mango": "export DEBUG=* TESTING_LOCAL=1 && jest ./e2e/mango",
     "test:dev": "export DEBUG=* TESTING_DEV=1 && jest",
-    "update": "yarn upgrade @dbricks/dbricks-ts --latest --check-files"
+    "update": "yarn upgrade @dbricks/dbricks-ts @dbricks/dbricks-solend --latest --check-files"
   },
   "dependencies": {
     "@blockworks-foundation/mango-client": "^3.0.18",
-    "@dbricks/dbricks-ts": "^0.0.45",
     "@project-serum/anchor": "^0.17.1-beta.1",
+    "@dbricks/dbricks-solend": "^0.0.6",
+    "@dbricks/dbricks-ts": "^0.0.51",
     "@project-serum/serum": "^0.13.58",
     "@project-serum/swap": "^0.1.0-alpha.32",
     "@quarryprotocol/quarry-sdk": "^1.8.2",

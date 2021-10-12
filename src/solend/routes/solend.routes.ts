@@ -21,6 +21,18 @@ export class SolendRoutes extends CommonRoutesConfig {
         SolendController.withdraw
       )
 
+        this.app.route('/solend/borrow')
+      .post(
+        SolendMiddleware.validateStuff,
+        SolendController.borrow
+      )
+
+        this.app.route('/solend/repay')
+      .post(
+        SolendMiddleware.validateStuff,
+        SolendController.repay
+      )
+
     return this.app;
   }
 }

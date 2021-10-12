@@ -7,7 +7,11 @@ import {instructionsAndSigners} from "@dbricks/dbricks-ts";
 
 export default class SolendDepositService extends SolendClient implements ISolendLenderDeposit {
   async deposit(params: ISolendLenderDepositParamsParsed): Promise<instructionsAndSigners[]> {
-    await this.prepareDepositTransaction();
-    return []
+    const transaction = await this.prepareDepositTransaction(
+      params.mintPubkey,
+      params.quantity,
+      params.ownerPubkey,
+    );
+    return [transaction]
   }
 }
