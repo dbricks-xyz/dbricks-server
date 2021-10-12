@@ -1,5 +1,4 @@
 export interface SaberPoolInfo {
-
         id: string,
         name: string,
         tokens: RegistryToken[],
@@ -28,32 +27,6 @@ export interface SaberPoolInfo {
               mint: string
             },
             poolTokenMint: string,
-            // initialAmpFactor: 03e8,
-            // targetAmpFactor: 03e8,
-            // startRampTimestamp: 0,
-            // stopRampTimestamp: 0,
-            // fees: {
-            //   adminTrade: {
-            //     formatted: 0.0000000000,
-            //     numerator: 0,
-            //     denominator: 10000000
-            //   },
-            //   adminWithdraw: {
-            //     formatted: 50.0000000000,
-            //     numerator: 5000000,
-            //     denominator: 10000000
-            //   },
-            //   trade: {
-            //     formatted: 0.0399900000,
-            //     numerator: 3999,
-            //     denominator: 10000000
-            //   },
-            //   withdraw: {
-            //     formatted: 0.5000000000,
-            //     numerator: 50000,
-            //     denominator: 10000000
-            //   }
-            // }
           }
         },
         quarry: string,
