@@ -358,6 +358,7 @@ export default class MangoTester extends MangoClient {
       maxDepthBps,
       targetPeriodLength,
       nativeMngoPerPeriod,
+      1 //todo had to add this exp argument - not sure what it should be
     );
 
     group = await this.nativeClient.getMangoGroup(groupConfig.publicKey);

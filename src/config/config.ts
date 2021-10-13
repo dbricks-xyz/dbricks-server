@@ -49,8 +49,8 @@ if (NETWORK === 'mainnet') {
   SABER_SWAP_PROG_ID = new PublicKey(process.env.LOCAL_SABER_SWAP_PROG_ID!);
   MANGO_PROG_ID = new PublicKey(process.env.LOCAL_MANGO_PROG_ID!);
   SOLEND_PROG_ID = new PublicKey(process.env.LOCAL_SOLEND_PROG_ID!);
-  SOLEND_MARKET_ID = new PublicKey(process.env.LOCAL_SOLEND_MARKET_ID!);
-  SOLEND_MARKET_OWNER_ID = new PublicKey(process.env.LOCAL_SOLEND_MARKET_OWNER_ID!);
+  // SOLEND_MARKET_ID = new PublicKey(process.env.LOCAL_SOLEND_MARKET_ID!);
+  // SOLEND_MARKET_OWNER_ID = new PublicKey(process.env.LOCAL_SOLEND_MARKET_OWNER_ID!);
   CONNECTION_URL = 'http://localhost:8899';
 } else {
   throw new Error(`Network unrecognized. Should be mainnet/devnet/localnet. Currently: ${NETWORK}`);
