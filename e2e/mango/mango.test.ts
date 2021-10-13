@@ -1,9 +1,7 @@
-import { getMultipleAccounts, zeroKey } from '@blockworks-foundation/mango-client';
-import { publicKey } from '@project-serum/anchor/dist/utils';
-import { Market, OpenOrders } from '@project-serum/serum';
-import { PublicKey } from '@solana/web3.js';
+import {Market} from '@project-serum/serum';
+import {PublicKey} from '@solana/web3.js';
 import BN from 'bn.js';
-import { SERUM_PROG_ID } from '../../src/config/config';
+import {SERUM_PROG_ID} from '../../src/config/config';
 import MangoTester from './mango.tester';
 
 const tester = new MangoTester();
