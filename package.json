@@ -1,6 +1,7 @@
 {
   "scripts": {
     "start": "nodemon --watch './src/**/*.ts' --exec 'ts-node' src/server.ts",
+    "build": "tsc",
     "debug": "export DEBUG=* && npm run start",
     "test:local": "export DEBUG=* TESTING_LOCAL=1 && jest",
     "test:serum": "export DEBUG=* TESTING_LOCAL=1 && jest ./e2e/serum",
