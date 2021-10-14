@@ -27,25 +27,3 @@ export interface ISaberSwapParamsParsed {
   swapAmount: number,
   ownerPubkey: PublicKey,
 }
-
-// TODO: move to the SDK or wherever?
-export interface ISaberPoolDepositParams {
-  swapPubkey: string,
-  tokenAmountA: string,
-  tokenAmountB: string,
-  ownerPubkey: string,
-}
-
-export interface ISaberPoolWithdrawParams {
-  swapPubkey: string,
-  poolTokenAmount: string,
-  withdrawMintPubkey: string,
-  ownerPubkey: string,
-}
-
-export interface ISaberSwapParams {
-  swapPubkey: string,
-  payingMintPubkey: string, // TODO: better name?
-  swapAmount: string,
-  ownerPubkey: string,
-}

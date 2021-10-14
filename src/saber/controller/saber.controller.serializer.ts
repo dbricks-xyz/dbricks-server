@@ -1,20 +1,20 @@
 import e from 'express';
 import {
   deserializePubkey,
+  ISaberFarmHarvestParams,
+  ISaberFarmParams,
+  ISaberPoolDepositParams,
+  ISaberPoolWithdrawParams,
+  ISaberSwapParams,
 } from '@dbricks/dbricks-ts';
 import {
-    ISaberPoolDepositParamsParsed,
-    ISaberPoolDepositParams,
-    ISaberPoolWithdrawParamsParsed,
-    ISaberPoolWithdrawParams,
-    ISaberSwapParams,
-    ISaberSwapParamsParsed,
+  ISaberPoolDepositParamsParsed,
+  ISaberPoolWithdrawParamsParsed,
+  ISaberSwapParamsParsed,
 } from '../interfaces/saber.interfaces.pool';
 import {
-  ISaberFarmParamsParsed,
-  ISaberFarmParams,
   ISaberFarmHarvestParamsParsed,
-  ISaberFarmHarvestParams,
+  ISaberFarmParamsParsed,
 } from '../interfaces/saber.interfaces.farm';
 
 export function deserializePoolDeposit(request: e.Request): ISaberPoolDepositParamsParsed {
@@ -49,8 +49,9 @@ export function deserializeSwap(request: e.Request): ISaberSwapParamsParsed {
 
 export function deserializeFarmDeposit(request: e.Request): ISaberFarmParamsParsed {
   const body: ISaberFarmParams = request.body;
+  console.log(body);
   return {
-    mintPubkey: deserializePubkey(body.mintPubkey),
+    poolMintPubkey: deserializePubkey(body.poolMintPubkey),
     amount: parseFloat(body.amount),
     ownerPubkey: deserializePubkey(body.ownerPubkey),
   };
@@ -59,7 +60,7 @@ export function deserializeFarmDeposit(request: e.Request): ISaberFarmParamsPars
 export function deserializeFarmWithdraw(request: e.Request): ISaberFarmParamsParsed {
   const body: ISaberFarmParams = request.body;
   return {
-    mintPubkey: deserializePubkey(body.mintPubkey),
+    poolMintPubkey: deserializePubkey(body.poolMintPubkey),
     amount: parseFloat(body.amount),
     ownerPubkey: deserializePubkey(body.ownerPubkey),
   };

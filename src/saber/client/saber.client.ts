@@ -63,14 +63,14 @@ export default class SaberClient extends SolClient {
     this.decimalProgram = this.loadDecimalProgram();
     this.quarryProgram = this.loadQuarryProgram();
     this.redeemerProgram = this.loadRedeemerProgram();
-    this.poolRegistry = JSON.parse(fs.readFileSync('../data/mainnetPools.json', 'utf-8')).pools;
+    this.poolRegistry = JSON.parse(fs.readFileSync(`${__dirname}/../data/mainnetPools.json`, 'utf-8')).pools;
 
     log('Initialized Saber client');
   }
 
   loadDecimalProgram(): Program {
     // Read the generated IDL.
-    const idl = JSON.parse(fs.readFileSync('../data/addDecimals.json', 'utf-8'));
+    const idl = JSON.parse(fs.readFileSync(`${__dirname}/../data/addDecimals.json`, 'utf-8'));
     // Address of the deployed program.
     const programId = new PublicKey('DecZY86MU5Gj7kppfUCEmd4LbXXuyZH1yHaP2NTqdiZB');
     // Generate the program client from IDL.
@@ -78,12 +78,12 @@ export default class SaberClient extends SolClient {
   }
 
   loadQuarryProgram(): Program {
-    const idl = JSON.parse(fs.readFileSync('../data/quarry.json', 'utf-8'));
+    const idl = JSON.parse(fs.readFileSync(`${__dirname}/../data/quarry.json`, 'utf-8'));
     return new Program(idl, QUARRY_ADDRESSES.Mine, this.providers.anchorProvider);
   }
 
   loadRedeemerProgram(): Program {
-    const idl = JSON.parse(fs.readFileSync('../data/redeemer.json', 'utf-8'));
+    const idl = JSON.parse(fs.readFileSync(`${__dirname}/../data/redeemer.json`, 'utf-8'));
     const programId = new PublicKey('RDM23yr8pr1kEAmhnFpaabPny6C9UVcEcok3Py5v86X');
     return new Program(idl, programId, this.providers.anchorProvider);
   }
@@ -420,9 +420,9 @@ export default class SaberClient extends SolClient {
       instructions: [],
       signers: [],
     };
-    const tokenDecimals = (await this.deserializeTokenMint(params.mintPubkey)).decimals;
-    const poolToken = SaberToken.fromMint(params.mintPubkey, tokenDecimals);
-    const amount = await this.getIntegerAmount(params.amount, params.mintPubkey);
+    const tokenDecimals = (await this.deserializeTokenMint(params.poolMintPubkey)).decimals;
+    const poolToken = SaberToken.fromMint(params.poolMintPubkey, tokenDecimals);
+    const amount = await this.getIntegerAmount(params.amount, params.poolMintPubkey);
     const tokenAmount = new TokenAmount(poolToken, amount.toNumber());
     const quarry = await this.loadQuarry(poolToken);
     const minerActions = await quarry.getMinerActions(
