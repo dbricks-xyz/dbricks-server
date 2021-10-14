@@ -23,7 +23,7 @@ export interface ISaberPoolWithdrawParamsParsed {
 
 export interface ISaberSwapParamsParsed {
   swapPubkey: PublicKey,
-  payingMintPubkey: PublicKey, // TODO: better name?
+  payingMintPubkey: PublicKey,
   swapAmount: number,
   ownerPubkey: PublicKey,
 }

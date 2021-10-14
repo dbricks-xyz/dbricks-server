@@ -1,10 +1,10 @@
 import debug from 'debug';
 import { StableSwap, StableSwapState } from '@saberhq/stableswap-sdk';
 import { instructionsAndSigners } from '@dbricks/dbricks-ts';
-import { findQuarryAddress, QuarrySDK, QuarryWrapper, QUARRY_ADDRESSES } from '@quarryprotocol/quarry-sdk';
+import { findMinerAddress, findQuarryAddress, QuarrySDK, QuarryWrapper, QUARRY_ADDRESSES } from '@quarryprotocol/quarry-sdk';
 import { SingleConnectionBroadcaster, SolanaProvider as SaberProvider, TransactionEnvelope } from '@saberhq/solana-contrib';
 import { TokenAmount, Token as SaberToken } from '@saberhq/token-utils';
-import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { Wallet, Program, Provider as AnchorProvider } from '@project-serum/anchor';
 import * as fs from 'fs';
@@ -438,11 +438,37 @@ export default class SaberClient extends SolClient {
 
     let transaction: TransactionEnvelope;
     if (action === 'deposit') {
+      const [minerPubkey, bump] = await findMinerAddress(
+        quarry.key,
+        params.ownerPubkey,
+        QUARRY_ADDRESSES.Mine,
+      );
+
+      const [createMinerVaultInstructionAndSigners, minerVaultPubKey] = await
+      this.getOrCreateAssociatedTokenAccountByMint(
+        quarry.token.mintAccount, minerPubkey, params.ownerPubkey, false, true,
+      );
+      if (createMinerVaultInstructionAndSigners.instructions.length > 0) {
+        const accounts = {
+          authority: params.ownerPubkey,
+          miner: minerPubkey,
+          quarry: quarry.key,
+          rewarder: this.rewarderKey,
+          systemProgram: SystemProgram.programId,
+          payer: params.ownerPubkey,
+          tokenMint: quarry.token.mintAccount,
+          minerVault: minerVaultPubKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        };
+        const createMinerInstruction = this.quarryProgram.instruction.createMiner(bump, {accounts});
+        instructionsAndSigners.instructions.push(...createMinerVaultInstructionAndSigners.instructions);
+        instructionsAndSigners.instructions.push(createMinerInstruction);
+      }
+
       transaction = await minerActions.stake(tokenAmount);
     } else {
       transaction = await minerActions.withdraw(tokenAmount);
     }
-
     instructionsAndSigners.instructions.push(...transaction.instructions);
     return instructionsAndSigners;
   }

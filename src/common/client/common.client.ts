@@ -122,8 +122,8 @@ export default class SolClient {
 
   async prepareCreateAssociatedTokenAccountTransaction(
     mintPubkey: PublicKey,
-    payerPubkey: PublicKey,
     ownerPubkey: PublicKey,
+    payerPubkey: PublicKey,
     newAddrPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey]> {
     const instructionsAndSigners: instructionsAndSigners = {instructions: [], signers: []};
@@ -144,6 +144,7 @@ export default class SolClient {
     ownerPubkey: PublicKey,
     payerPubkey: PublicKey,
     fetchOnly = false,
+    allowOwnerOffCurve = false,
   ): Promise<[instructionsAndSigners, PublicKey]> {
     const instructionsAndSigners: instructionsAndSigners = {instructions: [], signers: []};
     if (mintPubkey.toBase58() === 'So11111111111111111111111111111111111111112') {
@@ -155,6 +156,7 @@ export default class SolClient {
       TOKEN_PROGRAM_ID,
       mintPubkey,
       ownerPubkey,
+      allowOwnerOffCurve,
     );
     log(`User's associated token account for mint ${mintPubkey.toBase58()} is ${associatedAddress.toBase58()}`);
 
