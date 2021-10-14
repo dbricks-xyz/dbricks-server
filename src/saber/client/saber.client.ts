@@ -141,18 +141,21 @@ export default class SaberClient extends SolClient {
     };
     const [ownerAPubkeyInstructionsAndSigners, ownerAPubkey] =
     await this.getOrCreateAssociatedTokenAccountByMint(
-      ownerPubkey,
       state.tokenA.mint,
+      ownerPubkey,
+      ownerPubkey,
     );
     const [ownerBPubkeyInstructionsAndSigners, ownerBPubkey] =
     await this.getOrCreateAssociatedTokenAccountByMint(
-      ownerPubkey,
       state.tokenB.mint,
+      ownerPubkey,
+      ownerPubkey,
     );
     const [ownerPoolPubkeyInstructionsAndSigners, ownerPoolPubkey] =
       await this.getOrCreateAssociatedTokenAccountByMint(
-        ownerPubkey,
         state.poolTokenMint,
+        ownerPubkey,
+        ownerPubkey,
       );
 
     instructionsAndSigners.instructions.push(...ownerAPubkeyInstructionsAndSigners.instructions);
@@ -178,8 +181,9 @@ export default class SaberClient extends SolClient {
     };
     const [ownerUnderlyingPubkeyInstructionsAndSigners, ownerUnderlyingPubkey] =
     await this.getOrCreateAssociatedTokenAccountByMint(
-      ownerPubkey,
       wrapPair.underlyingPubkey,
+      ownerPubkey,
+      ownerPubkey,
     );
 
     const wrapperPubkey = await this.deserializeTokenMint(wrapPair.wrappedPubkey);
@@ -362,16 +366,18 @@ export default class SaberClient extends SolClient {
 
     const [ownerPayingPubkeyInstructionsAndSigners, ownerPayingPubkey] =
       await this.getOrCreateAssociatedTokenAccountByMint(
-        params.ownerPubkey,
         payingToken.mint,
+        params.ownerPubkey,
+        params.ownerPubkey,
       );
     instructionsAndSigners.instructions.push(...ownerPayingPubkeyInstructionsAndSigners.instructions);
     instructionsAndSigners.signers.push(...ownerPayingPubkeyInstructionsAndSigners.signers);
 
     const [ownerReceivingPubkeyInstructionsAndSigners, ownerReceivingPubkey] =
       await this.getOrCreateAssociatedTokenAccountByMint(
-        params.ownerPubkey,
         receivingToken.mint,
+        params.ownerPubkey,
+        params.ownerPubkey,
       );
     instructionsAndSigners.instructions.push(...ownerReceivingPubkeyInstructionsAndSigners.instructions);
     instructionsAndSigners.signers.push(...ownerReceivingPubkeyInstructionsAndSigners.signers);
@@ -456,10 +462,18 @@ export default class SaberClient extends SolClient {
     );
 
     const [ownerIouPubkeyInstructionsAndSigners, ownerIouPubkey] = await
-    this.getOrCreateAssociatedTokenAccountByMint(params.ownerPubkey, this.iouMintPubkey);
+    this.getOrCreateAssociatedTokenAccountByMint(
+      this.iouMintPubkey,
+      params.ownerPubkey,
+      params.ownerPubkey,
+    );
 
     const [ownerSaberPubkeyInstructionsAndSigners, ownerSaberPubkey] = await
-    this.getOrCreateAssociatedTokenAccountByMint(params.ownerPubkey, this.saberMintPubkey);
+    this.getOrCreateAssociatedTokenAccountByMint(
+      this.saberMintPubkey,
+      params.ownerPubkey,
+      params.ownerPubkey,
+    );
 
     instructionsAndSigners.instructions.push(...ownerIouPubkeyInstructionsAndSigners.instructions);
     instructionsAndSigners.instructions.push(...ownerSaberPubkeyInstructionsAndSigners.instructions);

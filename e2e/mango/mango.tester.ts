@@ -142,8 +142,8 @@ export default class MangoTester extends MangoClient {
 
   async initializeFeeVault(): Promise<PublicKey> {
     const [createInsuranceVaultInstructionsandSigners, feeVaultPubkey] = await
-    this.prepareCreateTokenAccountTransaction(
-      this.user1Keypair.publicKey, this.quoteMint.publicKey, TOKEN_PROGRAM_ID,
+    this.getOrCreateAssociatedTokenAccountByMint(
+      this.quoteMint.publicKey, TOKEN_PROGRAM_ID, this.user1Keypair.publicKey
     );
 
     const createAccountsTransaction = new Transaction();
