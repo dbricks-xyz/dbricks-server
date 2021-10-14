@@ -120,41 +120,6 @@ export default class SolClient {
 
   // --------------------------------------- active
 
-  //todo artifact
-  /**
-   * Re-make of the official function from the SDK found here:
-   * https://github.com/solana-labs/solana-program-library/blob/master/token/js/client/token.js#L446
-   * This prepares the TRANSACTION and returns it, instead of sending it.
-   */
-  async prepareCreateTokenAccountTransaction(
-    payerPubkey: PublicKey,
-    mintPubkey: PublicKey,
-    ownerPubkey?: PublicKey,
-  ): Promise<[instructionsAndSigners, PublicKey]> {
-    const balanceNeeded = await this.getMinBalanceRentForExemptAccount();
-
-    const newAccount = Keypair.generate();
-    const transaction = new Transaction();
-    transaction.add(
-      SystemProgram.createAccount({
-        fromPubkey: payerPubkey,
-        newAccountPubkey: newAccount.publicKey,
-        lamports: balanceNeeded,
-        space: AccountLayout.span,
-        programId: TOKEN_PROGRAM_ID,
-      }),
-    );
-    transaction.add(
-      Token.createInitAccountInstruction(
-        TOKEN_PROGRAM_ID,
-        mintPubkey,
-        newAccount.publicKey,
-        ownerPubkey ?? payerPubkey,
-      ),
-    );
-    return [{instructions: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
-  }
-
   async prepareCreateAssociatedTokenAccountTransaction(
     mintPubkey: PublicKey,
     payerPubkey: PublicKey,
@@ -172,33 +137,6 @@ export default class SolClient {
     );
     instructionsAndSigners.instructions.push(createAssociatedTokenAccountInstructions);
     return [instructionsAndSigners, newAddrPubkey];
-  }
-
-  //todo artifact
-  async getOrCreateTokenAccountByMint(
-    ownerPubkey: PublicKey,
-    mintPubkey: PublicKey,
-  ): Promise<[instructionsAndSigners, PublicKey]> {
-    // let instructionsAndSigners: instructionsAndSigners = {instructions: [], signers: []};
-    // let tokenAccountPubkey: PublicKey;
-    // if (mintPubkey.toBase58() === 'So11111111111111111111111111111111111111112') {
-    //   return [instructionsAndSigners, ownerPubkey];
-    // }
-    // const tokenAccounts = (await this.connection.getTokenAccountsByOwner(ownerPubkey, {
-    //   mint: mintPubkey,
-    // }
-    // )).value;
-    //
-    // if (tokenAccounts.length === 0) {
-    //   log(`Creating token account for mint ${mintPubkey.toBase58()}`);
-    //   [instructionsAndSigners, tokenAccountPubkey] = await this.prepareCreateTokenAccountTransaction(ownerPubkey, mintPubkey);
-    // } else {
-    //   tokenAccountPubkey = tokenAccounts[0].pubkey;
-    // }
-    // log(`User's account for mint ${mintPubkey.toBase58()} is ${tokenAccountPubkey.toBase58()}`);
-    //
-    // return [instructionsAndSigners, tokenAccountPubkey];
-    return this.getOrCreateAssociatedTokenAccountByMint(mintPubkey, ownerPubkey, ownerPubkey)
   }
 
   async getOrCreateAssociatedTokenAccountByMint(
@@ -312,5 +250,40 @@ export default class SolClient {
       instructions: [transferInstruction],
       signers: [fromKeypair]
     })
+  }
+
+  /**
+   * todo NOTE: should NOT be used for anything in prod! Only for tests!
+   * Re-make of the official function from the SDK found here:
+   * https://github.com/solana-labs/solana-program-library/blob/master/token/js/client/token.js#L446
+   * This prepares the TRANSACTION and returns it, instead of sending it.
+   */
+  async _prepareCreateTokenAccountTransaction(
+    payerPubkey: PublicKey,
+    mintPubkey: PublicKey,
+    ownerPubkey?: PublicKey,
+  ): Promise<[instructionsAndSigners, PublicKey]> {
+    const balanceNeeded = await this.getMinBalanceRentForExemptAccount();
+
+    const newAccount = Keypair.generate();
+    const transaction = new Transaction();
+    transaction.add(
+      SystemProgram.createAccount({
+        fromPubkey: payerPubkey,
+        newAccountPubkey: newAccount.publicKey,
+        lamports: balanceNeeded,
+        space: AccountLayout.span,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+    );
+    transaction.add(
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        mintPubkey,
+        newAccount.publicKey,
+        ownerPubkey ?? payerPubkey,
+      ),
+    );
+    return [{instructions: transaction.instructions, signers: [newAccount]}, newAccount.publicKey];
   }
 }

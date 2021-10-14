@@ -193,8 +193,9 @@ export default class SaberClient extends SolClient {
 
     // Fails if you search for Associated Token Account
     const [unusedInstructionsAndSigners, wrapperUnderlyingPubkey] =
-    await this.getOrCreateTokenAccountByMint(
+    await this.getOrCreateAssociatedTokenAccountByMint(
       wrapperPubkey.mintAuthority,
+      wrapPair.underlyingPubkey,
       wrapPair.underlyingPubkey,
     );
 

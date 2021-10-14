@@ -194,12 +194,12 @@ export default class SerumClient extends SolClient {
     ownerPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey]> {
     if (side === 'buy') {
-      return this.getOrCreateTokenAccountByMint(
-        ownerPubkey, market.quoteMintAddress,
+      return this.getOrCreateAssociatedTokenAccountByMint(
+        market.quoteMintAddress, ownerPubkey, ownerPubkey
       );
     } else {
-      return this.getOrCreateTokenAccountByMint(
-        ownerPubkey, market.baseMintAddress,
+      return this.getOrCreateAssociatedTokenAccountByMint(
+        market.baseMintAddress, ownerPubkey, ownerPubkey
       );
     }
   }
@@ -208,11 +208,11 @@ export default class SerumClient extends SolClient {
     market: Market,
     ownerPubkey: PublicKey,
   ): Promise<[instructionsAndSigners, PublicKey][]> {
-    const [ownerBaseInstructionsAndSigners, ownerBasePubkey] = await this.getOrCreateTokenAccountByMint(
-      ownerPubkey, market.baseMintAddress,
+    const [ownerBaseInstructionsAndSigners, ownerBasePubkey] = await this.getOrCreateAssociatedTokenAccountByMint(
+      market.baseMintAddress, ownerPubkey, ownerPubkey,
     );
-    const [ownerQuoteInstructionsAndSigners, ownerQuotePubkey] = await this.getOrCreateTokenAccountByMint(
-      ownerPubkey, market.quoteMintAddress,
+    const [ownerQuoteInstructionsAndSigners, ownerQuotePubkey] = await this.getOrCreateAssociatedTokenAccountByMint(
+      market.quoteMintAddress, ownerPubkey, ownerPubkey,
     );
     return [
       [ownerBaseInstructionsAndSigners, ownerBasePubkey],

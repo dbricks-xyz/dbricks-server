@@ -36,9 +36,10 @@ export default class SolendClient extends SolClient {
   ): Promise<instructionsAndSigners> {
     const sourceLiquidity = (await this.getTokenAccountsForOwner(ownerPubkey, mintPubkey))[0].pubkey;
     const reserveInfo = findSolendReserveInfoByMint(mintPubkey);
-    const [userLPAccountInstructionsAndSigners, userLPPubkey] = await this.getOrCreateTokenAccountByMint(
-      ownerPubkey,
+    const [userLPAccountInstructionsAndSigners, userLPPubkey] = await this.getOrCreateAssociatedTokenAccountByMint(
       reserveInfo.reserveCollateralMint,
+      ownerPubkey,
+      ownerPubkey,
     );
     const [userObligationInstructionsAndSigners, userObligationPubkey] = await this.getOrCreateObligationAccount(
       ownerPubkey
@@ -186,13 +187,15 @@ export default class SolendClient extends SolClient {
 
     //prepare instructions to create any necessary token accounts
     const reserveInfo = findSolendReserveInfoByMint(mintPubkey);
-    const [userLPAccountInstructionsAndSigners, userLPPubkey] = await this.getOrCreateTokenAccountByMint(
-      ownerPubkey,
+    const [userLPAccountInstructionsAndSigners, userLPPubkey] = await this.getOrCreateAssociatedTokenAccountByMint(
       reserveInfo.reserveCollateralMint,
-    );
-    const [userLiqAccountInstructionsAndSigners, userLiqPubkey] = await this.getOrCreateTokenAccountByMint(
       ownerPubkey,
+      ownerPubkey,
+    );
+    const [userLiqAccountInstructionsAndSigners, userLiqPubkey] = await this.getOrCreateAssociatedTokenAccountByMint(
       mintPubkey,
+      ownerPubkey,
+      ownerPubkey,
     );
     const tokenInstructionsAndSigners = mergeInstructionsAndSigners(userLPAccountInstructionsAndSigners, userLiqAccountInstructionsAndSigners);
 
