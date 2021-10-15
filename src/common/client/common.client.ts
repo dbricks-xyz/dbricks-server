@@ -16,8 +16,8 @@ import {
   Token,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import {COMMITTMENT, CONNECTION_URL, TESTING_KEYPAIR_PATH} from '../../config/config';
-import {loadKeypairSync, sleep} from '../util/common.util';
+import {COMMITTMENT, CONNECTION_URL} from '../../config/config';
+import {sleep} from '../util/common.util';
 import {instructionsAndSigners} from "@dbricks/dbricks-ts";
 
 const log: debug.IDebugger = debug('app:sol-client');
@@ -103,8 +103,8 @@ export default class SolClient {
   }
 
   async deserializeToken(mintPubkey: PublicKey): Promise<Token> {
-    // todo TESTING_KP_PATH should not be used here
-    const tempKeypair = loadKeypairSync(TESTING_KEYPAIR_PATH);
+    //doesn't matter which keypair goes here
+    const tempKeypair = Keypair.fromSecretKey(Uint8Array.from([208, 175, 150, 242, 88, 34, 108, 88, 177, 16, 168, 75, 115, 181, 199, 242, 120, 4, 78, 75, 19, 227, 13, 215, 184, 108, 226, 53, 111, 149, 179, 84, 137, 121, 79, 1, 160, 223, 124, 241, 202, 203, 220, 237, 50, 242, 57, 158, 226, 207, 203, 188, 43, 28, 70, 110, 214, 234, 251, 15, 249, 157, 62, 80]));
     return new Token(this.connection, mintPubkey, TOKEN_PROGRAM_ID, tempKeypair);
   }
 
