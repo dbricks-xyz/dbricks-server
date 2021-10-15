@@ -55,6 +55,10 @@ Commands to run tests:
 ```shell
 yarn test:local #on localnet
 yarn test:dev #on devnet
+
+# additionally possible
+yarn test:serum
+yarn test:mango
 ```
 
 Any function that beings with an underscore is designed for testing *only*. Not to be used in actual prod code.
