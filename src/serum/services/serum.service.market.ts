@@ -74,10 +74,10 @@ export default class SerumMarketService extends SerumClient implements ISerumDEX
       ownerBasePubkey,
       ownerQuotePubkey,
     );
-    // let transaction = mergeInstructionsAndSigners(ownerBaseInstructionsAndSigners, ownerQuoteInstructionsAndSigners);
-    // transaction = mergeInstructionsAndSigners(transaction, settleInstructionsAndSigners);
-    // console.log(transaction)
-    return [settleInstructionsAndSigners];
+    let transaction = mergeInstructionsAndSigners(ownerBaseInstructionsAndSigners, ownerQuoteInstructionsAndSigners);
+    transaction = mergeInstructionsAndSigners(transaction, settleInstructionsAndSigners);
+    console.log(transaction)
+    return [transaction];
   }
 
   async getMarketMints(marketPubkey: string): Promise<[string, string]> {
