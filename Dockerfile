@@ -16,5 +16,5 @@ RUN mkdir /app
 COPY --from=build-stage /app/dist /app
 COPY --from=build-stage /app/node_modules /node_modules
 EXPOSE 3000
-CMD ["node", "app/server.js"]
+CMD ["node", "app/src/server.js"]
 
