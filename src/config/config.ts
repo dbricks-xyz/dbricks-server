@@ -39,7 +39,7 @@ if (NETWORK === 'mainnet') {
   SOLEND_PROG_ID = new PublicKey('So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo');
   SOLEND_MARKET_ID = new PublicKey('4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtfpks7FatyKvdY');
   SOLEND_MARKET_OWNER_ID = new PublicKey('DdZR6zRFiUt4S5mg7AV1uKB2z1f1WzcNYCaTEEWPAuby');
-  CONNECTION_URL = 'https://solana-api.projectserum.com';
+  CONNECTION_URL = process.env.MAINNET_NODE_URL!;
 } else if (NETWORK === 'devnet') {
   SERUM_PROG_ID = new PublicKey('DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY');
   SABER_SWAP_PROG_ID = new PublicKey('Crt7UoUR6QgrFrN7j8rmSQpUTNWNSitSwWvsWGf1qZ5t');
