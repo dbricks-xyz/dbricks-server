@@ -6,7 +6,6 @@ WORKDIR /app
 COPY package*.json yarn.lock ./
 RUN yarn
 COPY . .
-RUN echo MAINNET_NODE_URL='https://rough-thrumming-haze.solana-mainnet.quiknode.pro/9e0eb0a4e3f28f489f1e15e22559bb89bfb8d319/' >> .env
 RUN yarn build && yarn postbuild
 
 ################################################################################
