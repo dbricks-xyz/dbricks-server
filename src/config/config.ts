@@ -41,7 +41,7 @@ if (NETWORK === 'mainnet') {
   SOLEND_MARKET_OWNER_ID = new PublicKey('DdZR6zRFiUt4S5mg7AV1uKB2z1f1WzcNYCaTEEWPAuby');
   CONNECTION_URL = process.env.MAINNET_NODE_URL
     ? process.env.MAINNET_NODE_URL
-    : 'https://rough-thrumming-haze.solana-mainnet.quiknode.pro/9e0eb0a4e3f28f489f1e15e22559bb89bfb8d319/';
+    : 'https://solana-api.projectserum.com';
   console.log('Connected to', CONNECTION_URL.substring(0, 20));
 } else if (NETWORK === 'devnet') {
   SERUM_PROG_ID = new PublicKey('DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY');

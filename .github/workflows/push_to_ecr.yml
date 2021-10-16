@@ -22,6 +22,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
+    - name: Insert node url
+      run: |
+        sed -i -- 's|https://solana-api.projectserum.com|${{ secrets.MAINNET_NODE_URL }}|g' src/config/config.ts
+        cat src/config/config.ts
+
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
